@@ -213,6 +213,33 @@ namespace SWLOR.Game.Server.Service.PerkService
         }
 
         /// <summary>
+        /// Adds a requirement that the player must have a minimum rank in ANY ONE of the given skills.
+        /// </summary>
+        /// <param name="requiredRank">The rank required in at least one of the skills.</param>
+        /// <param name="types">The skills that can satisfy the requirement.</param>
+        /// <returns>A perk builder with the configured options.</returns>
+        public PerkBuilder RequirementAnySkill(int requiredRank, params SkillType[] types)
+        {
+            var requirement = new PerkRequirementAnySkill(requiredRank, types);
+            _activeLevel.Requirements.Add(requirement);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a requirement that the player must have acquired a minimum amount of total SP.
+        /// </summary>
+        /// <param name="requiredTotalSP">The total SP required.</param>
+        /// <returns>A perk builder with the configured options.</returns>
+        public PerkBuilder RequirementTotalSP(int requiredTotalSP)
+        {
+            var requirement = new PerkRequirementTotalSP(requiredTotalSP);
+            _activeLevel.Requirements.Add(requirement);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds an action to run when an item is equipped and the player has this perk.
         /// </summary>
         /// <param name="equipAction">The action to run when an item is equipped.</param>
