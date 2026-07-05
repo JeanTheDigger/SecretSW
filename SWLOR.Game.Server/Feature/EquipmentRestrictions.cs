@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SWLOR.Game.Server.Core;
+using SWLOR.Game.Server.Enumeration;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.PerkService;
@@ -52,6 +53,53 @@ namespace SWLOR.Game.Server.Feature
             }
             
             EventsPlugin.SkipEvent();
+        }
+
+        /// <summary>
+        /// Heavy armor blocks Force-tree abilities. Warn Force-sensitive players when they equip a
+        /// heavy piece, and break any active Force concentration ability.
+        /// </summary>
+        [NWNEventHandler(ScriptName.OnModuleEquip)]
+        public static void WarnForceUsersOnHeavyArmorEquip()
+        {
+            var player = GetPCItemLastEquippedBy();
+            if (!GetIsPC(player) || GetIsDM(player) || GetIsDMPossessed(player))
+                return;
+
+            var item = GetPCItemLastEquipped();
+            var isHeavyPiece = false;
+            for (var ip = GetFirstItemProperty(item); GetIsItemPropertyValid(ip); ip = GetNextItemProperty(item))
+            {
+                if (GetItemPropertyType(ip) != ItemPropertyType.UseLimitationPerk)
+                    continue;
+
+                var perkType = (PerkType)GetItemPropertySubType(ip);
+                if (perkType == PerkType.BreastplateProficiency ||
+                    perkType == PerkType.HelmetProficiency ||
+                    perkType == PerkType.BracerProficiency ||
+                    perkType == PerkType.LeggingProficiency)
+                {
+                    isHeavyPiece = true;
+                    break;
+                }
+            }
+
+            if (!isHeavyPiece)
+                return;
+
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            if (dbPlayer.CharacterType != CharacterType.ForceSensitive)
+                return;
+
+            var concentration = Ability.GetActiveConcentration(player);
+            if (concentration.Feat != FeatType.Invalid &&
+                Ability.IsForceAbility(Ability.GetAbilityDetail(concentration.Feat)))
+            {
+                Ability.EndConcentrationAbility(player);
+            }
+
+            SendMessageToPC(player, ColorToken.Red("The Force cannot flow while you wear heavy armor. Force abilities are unavailable until you remove it."));
         }
 
         private static bool IsItemSwapping(uint creature, uint item, InventorySlot slot)

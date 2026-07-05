@@ -9,6 +9,7 @@ using SWLOR.Game.Server.Service.SkillService;
 using SWLOR.Game.Server.Service.StatusEffectService;
 using SWLOR.NWN.API.Engine;
 using SWLOR.NWN.API.NWScript.Enum;
+using SWLOR.NWN.API.NWScript.Enum.Item;
 using SWLOR.NWN.API.NWScript.Enum.VisualEffect;
 
 namespace SWLOR.Game.Server.Service
@@ -104,6 +105,54 @@ namespace SWLOR.Game.Server.Service
         /// <param name="effectivePerkLevel">The activator's effective perk level.</param>
         /// <param name="targetLocation">The target location of the perk feat.</param>
         /// <returns>true if successful, false otherwise</returns>
+        /// <summary>
+        /// Determines whether an ability belongs to the Force tree (Universal, Light, or Dark).
+        /// Saber techniques and other perks are not Force-tree abilities.
+        /// </summary>
+        public static bool IsForceAbility(AbilityDetail ability)
+        {
+            if (ability.EffectiveLevelPerkType == PerkType.Invalid)
+                return false;
+
+            var category = Perk.GetPerkDetails(ability.EffectiveLevelPerkType).Category;
+            return category == PerkCategoryType.ForceUniversal ||
+                   category == PerkCategoryType.ForceLight ||
+                   category == PerkCategoryType.ForceDark;
+        }
+
+        /// <summary>
+        /// Determines whether the creature is wearing any heavy-line armor piece
+        /// (breastplate, helmet, bracer, or legging lines). Heavy armor blocks Force-tree abilities.
+        /// </summary>
+        public static bool IsWearingHeavyArmor(uint creature)
+        {
+            var slots = new[] { InventorySlot.Chest, InventorySlot.Head, InventorySlot.Arms, InventorySlot.Boots };
+
+            foreach (var slot in slots)
+            {
+                var item = GetItemInSlot(slot, creature);
+                if (!GetIsObjectValid(item))
+                    continue;
+
+                for (var ip = GetFirstItemProperty(item); GetIsItemPropertyValid(ip); ip = GetNextItemProperty(item))
+                {
+                    if (GetItemPropertyType(ip) != ItemPropertyType.UseLimitationPerk)
+                        continue;
+
+                    var perkType = (PerkType)GetItemPropertySubType(ip);
+                    if (perkType == PerkType.BreastplateProficiency ||
+                        perkType == PerkType.HelmetProficiency ||
+                        perkType == PerkType.BracerProficiency ||
+                        perkType == PerkType.LeggingProficiency)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool CanUseAbility(
             uint activator,
             uint target,
@@ -118,6 +167,13 @@ namespace SWLOR.Game.Server.Service
                 !ability.CanBeUsedInSpace)
             {
                 SendMessageToPC(activator, "This ability cannot be used in space.");
+                return false;
+            }
+
+            // Heavy armor smothers the Force. Saber techniques are unaffected.
+            if (IsForceAbility(ability) && IsWearingHeavyArmor(activator))
+            {
+                SendMessageToPC(activator, "The Force cannot flow while you wear heavy armor.");
                 return false;
             }
 
@@ -224,6 +280,13 @@ namespace SWLOR.Game.Server.Service
             if (!GetCommandable(activator))
             {
                 SendMessageToPC(activator, "You cannot take actions at this time.");
+                return false;
+            }
+
+            // Heavy armor smothers the Force. Saber techniques are unaffected.
+            if (IsForceAbility(ability) && IsWearingHeavyArmor(activator))
+            {
+                SendMessageToPC(activator, "The Force cannot flow while you wear heavy armor.");
                 return false;
             }
 
