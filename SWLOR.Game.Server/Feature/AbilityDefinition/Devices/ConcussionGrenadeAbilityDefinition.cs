@@ -82,8 +82,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                     vfx = EffectLinkEffects(vfx, EffectVisualEffect(VisualEffect.Vfx_Fnf_Screen_Shake));
                     ExplosiveImpact(activator, location, vfx, "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        Impact(activator, target, perBonus, -1);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        Impact(activator, target, 20 + perMod * 4 / 3, -1);
                     });
                 });
         }
@@ -107,8 +107,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                     vfx = EffectLinkEffects(vfx, EffectVisualEffect(VisualEffect.Vfx_Fnf_Screen_Shake));
                     ExplosiveImpact(activator, location, vfx, "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        var perDMG = perBonus + 15;
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        var perDMG = 35 + perMod * 4 / 3;
                         Impact(activator, target, perDMG, 8);
                     });
                 });
@@ -133,8 +133,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                     vfx = EffectLinkEffects(vfx, EffectVisualEffect(VisualEffect.Vfx_Fnf_Screen_Shake));
                     ExplosiveImpact(activator, location, vfx, "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        var perDMG = perBonus + 30;
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        var perDMG = 50 + perMod * 4 / 3;
                         Impact(activator, target, perDMG, 12);
                     });
                 });

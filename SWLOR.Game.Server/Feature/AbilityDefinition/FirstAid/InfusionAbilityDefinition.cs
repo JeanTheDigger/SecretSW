@@ -45,8 +45,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
         private void Impact(uint activator, uint target, int amount, string effectTag)
         {
             const float Duration = 24f;
-            var will = GetAbilityScore(activator, AbilityType.Willpower) - 10;
-            amount += will;
+            var willMod = GetAbilityModifier(AbilityType.Willpower, activator);
+            amount += 10 + willMod * 4 / 3;
 
             RemoveEffectByTag(target, Tier1Tag, Tier2Tag);
 

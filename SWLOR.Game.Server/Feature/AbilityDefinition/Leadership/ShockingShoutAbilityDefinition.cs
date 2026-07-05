@@ -50,8 +50,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                         {
                             count++;
 
-                            var social = GetAbilityScore(activator, AbilityType.Social);
-                            var dc = 12 + (social / 2);
+                            var socMod = GetAbilityModifier(AbilityType.Social, activator);
+                            var dc = 22 + socMod * 2 / 3;
                             const float BaseDuration = 2f;
                             var bonusDuration = GetAbilityModifier(AbilityType.Social, activator) * 0.5f;
                             var duration = BaseDuration + bonusDuration;

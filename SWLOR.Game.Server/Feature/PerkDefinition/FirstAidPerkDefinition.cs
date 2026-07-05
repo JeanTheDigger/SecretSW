@@ -168,7 +168,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.Resuscitation1)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (WIL)% HP. Consumes medical supplies on use.")
+                .Description("Revives an unconscious target with (20 + WIL modifier)% HP. Consumes medical supplies on use.")
                 .Price(4)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.FirstAid, 30)
@@ -176,7 +176,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.Resuscitation2)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (2*WIL)% HP. Consumes medical supplies on use.")
+                .Description("Revives an unconscious target with (40 + 2x WIL modifier)% HP. Consumes medical supplies on use.")
                 .Price(4)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.FirstAid, 40)
@@ -309,7 +309,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Infusion")
 
                 .AddPerkLevel()
-                .Description("Grants your target regeneration which heals 60 HP every six seconds for 24 seconds. Consumes stim pack on use.")
+                .Description("Grants your target regeneration which heals 60 HP, scaling with your Willpower modifier, every six seconds for 24 seconds. Consumes stim pack on use.")
                 .Price(3)
                 .DroidAISlots(2)
                 .RequirementSkill(SkillType.FirstAid, 25)
@@ -317,7 +317,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.Infusion1)
 
                 .AddPerkLevel()
-                .Description("Grants your target regeneration which heals 120 HP every six seconds for 24 seconds. Consumes stim pack on use.")
+                .Description("Grants your target regeneration which heals 120 HP, scaling with your Willpower modifier, every six seconds for 24 seconds. Consumes stim pack on use.")
                 .Price(4)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.FirstAid, 45)

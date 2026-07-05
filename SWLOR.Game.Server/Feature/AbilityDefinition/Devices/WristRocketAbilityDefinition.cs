@@ -78,8 +78,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .IsHostileAbility()
                 .HasImpactAction((activator,target, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    Impact(activator, target, perBonus, -1);
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    Impact(activator, target, 20 + perMod * 4 / 3, -1);
 
                     Enmity.ModifyEnmity(activator, target, 180);
                     CombatPoint.AddCombatPoint(activator, target, SkillType.Devices, 3);
@@ -101,8 +101,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .IsHostileAbility()
                 .HasImpactAction((activator, target, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    var perDMG = 25 + perBonus;
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    var perDMG = 45 + perMod * 4 / 3;
                     Impact(activator, target, perDMG, 8);
 
                     Enmity.ModifyEnmity(activator, target, 280);
@@ -125,8 +125,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .IsHostileAbility()
                 .HasImpactAction((activator, target, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    var perDMG = 50 + perBonus * 2;
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    var perDMG = 90 + perMod * 8 / 3;
                     Impact(activator, target, perDMG, 12);
 
                     Enmity.ModifyEnmity(activator, target, 380);

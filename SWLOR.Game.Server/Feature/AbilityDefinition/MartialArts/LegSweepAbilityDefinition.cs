@@ -58,6 +58,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.MartialArts);
+            dmg += GetAbilityModifier(GetHasFeat(FeatType.FlurryStyle, activator) ? AbilityType.Perception : AbilityType.Might, activator);
 
             Enmity.ModifyEnmityOnAll(activator, 250 * level);
             CombatPoint.AddCombatPoint(activator, target, SkillType.MartialArts, 3);

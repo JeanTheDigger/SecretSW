@@ -173,12 +173,12 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.RousingShout)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (SOC)% HP.")
+                .Description("Revives an unconscious target with (20 + SOC modifier)% HP.")
                 .Price(2)
                 .RequirementSkill(SkillType.Leadership, 30)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (2*SOC)% HP.")
+                .Description("Revives an unconscious target with (40 + 2x SOC modifier)% HP.")
                 .Price(2)
                 .RequirementSkill(SkillType.Leadership, 45);
         }
@@ -293,7 +293,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Shocking Shout")
 
                 .AddPerkLevel()
-                .Description("Attempts to stun all nearby enemies for 2 seconds with a will check of 12+SOC/2. (Max: 6 targets)")
+                .Description("Attempts to stun all nearby enemies for 2 seconds, scaling with your Social modifier, with a will check of 22 + 2/3 of your Social modifier. (Max: 6 targets)")
                 .Price(3)
                 .RequirementSkill(SkillType.Leadership, 25)
                 .RequirementCharacterType(CharacterType.Standard)

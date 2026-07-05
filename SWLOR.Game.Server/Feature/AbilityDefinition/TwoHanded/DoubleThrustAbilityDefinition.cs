@@ -55,6 +55,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.TwoHanded);
+            dmg += GetAbilityModifier(AbilityType.Might, activator);
 
             var attackerStat = GetAbilityScore(activator, AbilityType.Might);
             var attack = Stat.GetAttack(activator, AbilityType.Might, SkillType.TwoHanded);

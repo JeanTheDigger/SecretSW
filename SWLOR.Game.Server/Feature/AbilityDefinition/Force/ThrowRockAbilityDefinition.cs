@@ -27,25 +27,24 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
         private static void ImpactAction(uint activator, uint target, int level, Location targetLocation)
         {
             var dmg = 0;
-            var willBonus = GetAbilityScore(activator, AbilityType.Willpower);
-            var perBonus = GetAbilityScore(activator, AbilityType.Perception);
+            var willMod = GetAbilityModifier(AbilityType.Willpower, activator);
 
             switch (level)
             {
                 case 1:
-                    dmg = willBonus;
+                    dmg = 20 + willMod * 4 / 3;
                     break;
                 case 2:
-                    dmg = 10 + willBonus * 3 / 2;
+                    dmg = 40 + willMod * 2;
                     break;
                 case 3:
-                    dmg = 15 + willBonus * 2;
+                    dmg = 55 + willMod * 8 / 3;
                     break;
                 case 4:
-                    dmg = 20 + willBonus * 5 / 2;
+                    dmg = 70 + willMod * 10 / 3;
                     break;
                 case 5:
-                    dmg = 25 + willBonus * 3;
+                    dmg = 85 + willMod * 4;
                     break;
             }
 

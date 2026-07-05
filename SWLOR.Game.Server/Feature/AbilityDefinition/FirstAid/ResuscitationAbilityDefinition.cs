@@ -42,7 +42,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
 
         private void Impact(uint activator, uint target, int tier)
         {
-            var willpower = GetAbilityScore(activator, AbilityType.Willpower);
+            var willMod = GetAbilityModifier(AbilityType.Willpower, activator);
             var targetMaxHP = GetMaxHitPoints(target);
             int hp;
 
@@ -52,10 +52,10 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
                     hp = 0;
                     break;
                 case 2:
-                    hp = (int)(willpower * 0.01f * targetMaxHP);
+                    hp = (int)((20 + willMod * 4f / 3f) * 0.01f * targetMaxHP);
                     break;
                 case 3:
-                    hp = (int)(2 * willpower * 0.01f * targetMaxHP);
+                    hp = (int)((40 + willMod * 8f / 3f) * 0.01f * targetMaxHP);
                     break;
             }
 

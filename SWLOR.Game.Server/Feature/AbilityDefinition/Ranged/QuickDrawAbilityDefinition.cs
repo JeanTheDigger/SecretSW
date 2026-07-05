@@ -57,6 +57,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Ranged
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.Ranged);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
 
             var attackerStat = Combat.GetPerkAdjustedAbilityScore(activator);

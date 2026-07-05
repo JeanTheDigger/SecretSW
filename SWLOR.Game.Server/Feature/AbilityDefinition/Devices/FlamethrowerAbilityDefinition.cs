@@ -90,8 +90,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .BreaksStealth()
                 .HasImpactAction((activator, _, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    Impact(activator, targetLocation, perBonus, -1);
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    Impact(activator, targetLocation, 20 + perMod * 4 / 3, -1);
                 });
         }
 
@@ -107,8 +107,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .BreaksStealth()
                 .HasImpactAction((activator, _, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    int perDMG = 20 + (perBonus * 3 / 2);
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    var perDMG = 50 + perMod * 2;
                     Impact(activator, targetLocation, perDMG, 8);
                 });
         }
@@ -125,8 +125,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 .BreaksStealth()
                 .HasImpactAction((activator, _, _, targetLocation) =>
                 {
-                    var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                    var perDMG = 40 + (perBonus * 2);
+                    var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                    var perDMG = 80 + perMod * 8 / 3;
                     Impact(activator, targetLocation, perDMG, 12);
                 });
         }

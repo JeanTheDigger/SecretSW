@@ -62,6 +62,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.Force);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             const float Delay = 1.2f;
             ClearAllActions();

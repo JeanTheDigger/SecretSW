@@ -57,19 +57,19 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             BiowarePosition.TurnToFaceObject(target, activator);
 
             AssignCommand(activator, () => ActionPlayAnimation(Animation.SaberThrow, 2));
-            var willBonus = GetAbilityScore(activator, AbilityType.Willpower);
-            var perBonus = GetAbilityScore(activator, AbilityType.Perception);
+            var willMod = GetAbilityModifier(AbilityType.Willpower, activator);
+            var perMod = GetAbilityModifier(AbilityType.Perception, activator);
 
             switch (level)
             {
                 case 1:
-                    dmg = (willBonus + perBonus) / 2;
+                    dmg = 20 + (willMod + perMod) * 2 / 3;
                     break;
                 case 2:
-                    dmg = 20 + ((willBonus + perBonus) * 3 / 4);
+                    dmg = 50 + (willMod + perMod);
                     break;
                 case 3:
-                    dmg = 40 + (willBonus + perBonus);
+                    dmg = 80 + (willMod + perMod) * 4 / 3;
                     break;
             }
 

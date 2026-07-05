@@ -86,13 +86,13 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Vfx_Fnf_Electric_Explosion), "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus = perBonus * 3 / 2;
+                            perMod = perMod * 3 / 2;
                         }
-                        Impact(activator, target, perBonus, -1);
+                        Impact(activator, target, 20 + perMod * 4 / 3, -1);
                     });
                 });
         }
@@ -114,13 +114,13 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Vfx_Fnf_Electric_Explosion), "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus = perBonus * 3 / 2;
+                            perMod = perMod * 3 / 2;
                         }
-                        var perDMG = 15 + (perBonus * 3 / 2);
+                        var perDMG = 45 + perMod * 2;
                         Impact(activator, target, perDMG, 10);
                     });
                 });
@@ -143,13 +143,13 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Vfx_Fnf_Electric_Explosion), "explosion1", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus = perBonus * 3 / 2;
+                            perMod = perMod * 3 / 2;
                         }
-                        var perDMG = 30 + (perBonus * 2);
+                        var perDMG = 70 + perMod * 8 / 3;
                         Impact(activator, target, perDMG, 14);
                     });
                 });

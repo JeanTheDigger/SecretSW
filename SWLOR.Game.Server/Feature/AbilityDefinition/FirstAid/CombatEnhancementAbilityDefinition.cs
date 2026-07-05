@@ -45,9 +45,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
                 }
             }
 
-            var willpowerMod = GetAbilityScore(activator, AbilityType.Willpower);
-            const float BaseLength = 900f;
-            var length = BaseLength + willpowerMod * 15f;
+            var willpowerMod = GetAbilityModifier(AbilityType.Willpower, activator);
+            const float BaseLength = 1200f;
+            var length = BaseLength + willpowerMod * 20f;
 
             var effect = EffectLinkEffects(
                 EffectAbilityIncrease(AbilityType.Might, baseAmount),

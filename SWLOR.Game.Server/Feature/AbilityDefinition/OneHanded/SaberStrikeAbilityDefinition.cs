@@ -64,6 +64,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.OneHanded);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             var stat = AbilityType.Perception;
 

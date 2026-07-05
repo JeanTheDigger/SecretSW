@@ -80,8 +80,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Fnf_Fireball), "explosion2", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        Impact(activator, target, perBonus, -1, 0f);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        Impact(activator, target, 20 + perMod * 4 / 3, -1, 0f);
                     });
                 });
         }
@@ -103,8 +103,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Fnf_Fireball), "explosion2", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        var perDMG = 20 + (perBonus * 3 / 2);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        var perDMG = 50 + perMod * 2;
                         Impact(activator, target, perDMG, 8, 30f);
                     });
                 });
@@ -127,8 +127,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 {
                     ExplosiveImpact(activator, location, EffectVisualEffect(VisualEffect.Fnf_Fireball), "explosion2", RadiusSize.Large, (target) =>
                     {
-                        var perBonus = GetAbilityScore(activator, AbilityType.Perception);
-                        var perDMG = 40 + (perBonus * 2);
+                        var perMod = GetAbilityModifier(AbilityType.Perception, activator);
+                        var perDMG = 80 + perMod * 8 / 3;
                         Impact(activator, target, perDMG, 12, 60f);
                     });
                 });
