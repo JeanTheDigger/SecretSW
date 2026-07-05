@@ -338,5 +338,8 @@
         ForceBreach = 321,
         ForceAffliction = 322,
         ForceChoke = 323,
+
+        // Capital ships are COMMANDED, not flown: gates on Leadership.
+        CapitalCommand = 324,
     }
 }

@@ -30,8 +30,25 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             ShockingShout();
             Rejuvenation();
             FrenziedShout();
+            CapitalCommand();
 
             return _builder.Build();
+        }
+
+        private void CapitalCommand()
+        {
+            _builder.Create(PerkCategoryType.Leadership, PerkType.CapitalCommand)
+                .Name("Capital Command")
+
+                .AddPerkLevel()
+                .Description("Certifies you to command light capital ships (gunboat and corvette-class hulls). Capital ships are commanded, not flown.")
+                .Price(3)
+                .RequirementSkill(SkillType.Leadership, 30)
+
+                .AddPerkLevel()
+                .Description("Certifies you to command heavy capital warships (Thranta, Trireme, Crusader-class hulls). Faction commissioning ceremonies are handled by staff until the commission system arrives.")
+                .Price(4)
+                .RequirementSkill(SkillType.Leadership, 45);
         }
 
         private void CityManagement()
