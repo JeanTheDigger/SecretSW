@@ -261,6 +261,10 @@ namespace SWLOR.Game.Server.Service.AbilityService
         PommelStrike = 126,
         [RecastGroup("Form Switch", "Form Switch", true)]
         FormSwitch = 127,
+        // All twelve stance signature actives share one group so swapping stances
+        // mid-fight cannot weave multiple capstones.
+        [RecastGroup("Stance Signature", "Signature", true)]
+        StanceSignature = 128,
     }
 
     public class RecastGroupAttribute: Attribute

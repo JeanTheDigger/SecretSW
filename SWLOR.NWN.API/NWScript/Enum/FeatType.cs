@@ -1821,6 +1821,20 @@ namespace SWLOR.NWN.API.NWScript.Enum
         DoctrineTempest = 1890,     // row: Reward3
         DoctrineTerasKasi = 1894,   // row: ReviveBeast1
         DoctrineMarksman = 1895,    // row: ReviveBeast2
+
+        // Stance signature actives (level-6 capstones), on dead beast-ability rows.
+        SarlaccSweep = 1913,        // row: Bite1
+        DuelistsEnd = 1914,         // row: Bite2
+        CircleOfShelter = 1915,     // row: Bite3
+        HawkBatSwoop = 1916,        // row: Bite4
+        FallingAvalanche = 1917,    // row: Bite5
+        NimanBalance = 1943,        // row: Claw1
+        Vaapad = 1944,              // row: Claw2
+        Riposte = 1945,             // row: Claw3
+        StaggeringAdvance = 1946,   // row: Claw4
+        TwinCyclone = 1947,         // row: Claw5
+        ForceLock = 1908,           // row: SpinningClaw1
+        ExecutionShot = 1909,       // row: SpinningClaw2
         Doublehand2 = 1840,
         Doublehand3 = 1841,
         Doublehand4 = 1842,

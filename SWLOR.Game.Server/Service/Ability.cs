@@ -177,6 +177,13 @@ namespace SWLOR.Game.Server.Service
                 return false;
             }
 
+            // Teräs Käsi's Force Lock: a struck Force user briefly cannot channel.
+            if (IsForceAbility(ability) && StatusEffect.HasStatusEffect(activator, StatusEffectType.ForceLock))
+            {
+                SendMessageToPC(activator, "Your connection to the Force has been disrupted!");
+                return false;
+            }
+
             // Must have appropriate levels in the perk to use the ability.
             if (effectivePerkLevel <= 0 || ability.AbilityLevel > effectivePerkLevel)
             {
@@ -287,6 +294,13 @@ namespace SWLOR.Game.Server.Service
             if (IsForceAbility(ability) && IsWearingHeavyArmor(activator))
             {
                 SendMessageToPC(activator, "The Force cannot flow while you wear heavy armor.");
+                return false;
+            }
+
+            // Teräs Käsi's Force Lock: a struck Force user briefly cannot channel.
+            if (IsForceAbility(ability) && StatusEffect.HasStatusEffect(activator, StatusEffectType.ForceLock))
+            {
+                SendMessageToPC(activator, "Your connection to the Force has been disrupted!");
                 return false;
             }
 

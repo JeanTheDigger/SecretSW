@@ -626,7 +626,10 @@ namespace SWLOR.Game.Server.Native
                     criticalBonus += stance.CritMod;
             }
 
-            return criticalBonus;
+            // Crit-economy ceiling: weapon threat + Improved Critical + Precision Aim +
+            // a level-6 stance (up to 20%) can otherwise stack past the point where
+            // every swing threatens - crits must stay an event, not the baseline.
+            return Math.Min(criticalBonus, 75);
         }
 
         private static AbilityType GetWeaponStyleAbilityType(CNWSItem weapon, CNWSCreature attacker)

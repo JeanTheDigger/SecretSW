@@ -119,6 +119,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             int gate5 = 75,
             int gate6 = 90)
         {
+            var (signatureFeat, signatureName) = _signatures[perkType];
             _builder.Create(PerkCategoryType.LightsaberForms, perkType)
                 .Name(name)
                 // A purchase or refund invalidates the cached stance level; drop the stance.
@@ -161,10 +162,23 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .RequirementCharacterType(CharacterType.ForceSensitive)
 
                 .AddPerkLevel()
-                .Description(descriptions[5])
+                .Description($"{descriptions[5]} Grants the signature technique: {signatureName}.")
                 .Price(6)
                 .RequirementAnySkill(gate6, SkillType.OneHanded, SkillType.TwoHanded)
-                .RequirementCharacterType(CharacterType.ForceSensitive);
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(signatureFeat);
         }
+
+        // The level-6 capstone active of each form.
+        private static readonly Dictionary<PerkType, (FeatType, string)> _signatures = new()
+        {
+            [PerkType.FormShiiCho] = (FeatType.SarlaccSweep, "Sarlacc Sweep"),
+            [PerkType.FormMakashi] = (FeatType.DuelistsEnd, "Duelist's End"),
+            [PerkType.FormSoresu] = (FeatType.CircleOfShelter, "Circle of Shelter"),
+            [PerkType.FormAtaru] = (FeatType.HawkBatSwoop, "Hawk-Bat Swoop"),
+            [PerkType.FormDjemSo] = (FeatType.FallingAvalanche, "Falling Avalanche"),
+            [PerkType.FormNiman] = (FeatType.NimanBalance, "Balance"),
+            [PerkType.FormJuyo] = (FeatType.Vaapad, "Vaapad"),
+        };
     }
 }

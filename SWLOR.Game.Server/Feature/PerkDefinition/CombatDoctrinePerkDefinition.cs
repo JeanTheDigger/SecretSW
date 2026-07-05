@@ -91,6 +91,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             SkillType gateSkill,
             string[] descriptions)
         {
+            var (signatureFeat, signatureName) = _signatures[perkType];
             _builder.Create(PerkCategoryType.CombatDoctrines, perkType)
                 .Name(name)
                 // A purchase or refund invalidates the cached stance level; drop the stance.
@@ -133,10 +134,21 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .RequirementCharacterType(CharacterType.Standard)
 
                 .AddPerkLevel()
-                .Description(descriptions[5])
+                .Description($"{descriptions[5]} Grants the signature technique: {signatureName}.")
                 .Price(6)
                 .RequirementSkill(gateSkill, 90)
-                .RequirementCharacterType(CharacterType.Standard);
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(signatureFeat);
         }
+
+        // The level-6 capstone active of each doctrine.
+        private static readonly Dictionary<PerkType, (FeatType, string)> _signatures = new()
+        {
+            [PerkType.DoctrineDuelist] = (FeatType.Riposte, "Riposte"),
+            [PerkType.DoctrineJuggernaut] = (FeatType.StaggeringAdvance, "Staggering Advance"),
+            [PerkType.DoctrineTempest] = (FeatType.TwinCyclone, "Twin Cyclone"),
+            [PerkType.DoctrineTerasKasi] = (FeatType.ForceLock, "Force Lock"),
+            [PerkType.DoctrineMarksman] = (FeatType.ExecutionShot, "Execution Shot"),
+        };
     }
 }
