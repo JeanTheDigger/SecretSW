@@ -1135,6 +1135,18 @@ namespace SWLOR.Game.Server.Service
                 SendMessageToPC(activator, "Invalid target.");
                 return;
             }
+
+            // Ring-1 safe orbits: no ship-to-ship violence between players. Space PvP
+            // is deliberate (rings 2-3), never accidental. Repair modules stay usable.
+            if (GetIsPC(activator) && GetIsObjectValid(target) && GetIsPC(target) && activator != target &&
+                shipModuleDetails.PowerType == ShipModulePowerType.High &&
+                shipModuleDetails.Type != ShipModuleType.HullRepairer &&
+                shipModuleDetails.Type != ShipModuleType.ShieldRepairer &&
+                GetSpaceRing(GetArea(activator)) == SpaceRingType.SafeOrbit)
+            {
+                SendMessageToPC(activator, "The orbital defense grid disables your weapons. Ship combat between pilots is only possible in contested space.");
+                return;
+            }
             
             // Check to ensure activator is within maximum distance.
             var maxDistance = shipModuleDetails.ModuleMaxDistanceAction == null ? 10f : shipModuleDetails.ModuleMaxDistanceAction(activator, activatorShipStatus, target, targetShipStatus, shipModule.ModuleBonus);
@@ -1227,6 +1239,51 @@ namespace SWLOR.Game.Server.Service
                 return 50;
 
             return shipDetail.MaxHull >= 90 ? 30 : 15;
+        }
+
+        /// <summary>
+        /// The area-scoped local variable declaring which space ring an area belongs to.
+        /// </summary>
+        public const string SpaceRingVariable = "SPACE_RING";
+
+        /// <summary>
+        /// Retrieves the space ring of an area. Unset or invalid values are safe orbits -
+        /// every legacy orbit is ring 1 until deliberately re-tiered.
+        /// </summary>
+        public static SpaceRingType GetSpaceRing(uint area)
+        {
+            var ring = GetLocalInt(area, SpaceRingVariable);
+
+            return ring is >= (int)SpaceRingType.SafeOrbit and <= (int)SpaceRingType.DeepSpace
+                ? (SpaceRingType)ring
+                : SpaceRingType.SafeOrbit;
+        }
+
+        // A ship killer earns endgame SP for the same victim at most once per this window.
+        private static readonly TimeSpan SamePilotVictimWindow = TimeSpan.FromHours(1);
+        private static readonly Dictionary<(string, string), DateTime> _recentShipKillCredits = new();
+
+        /// <summary>
+        /// Awards endgame SP for destroying another player's ship in ring 2 or 3, routed
+        /// to Piloting. The same victim pays out at most once per hour per killer.
+        /// </summary>
+        private static void ProcessShipPvPKill(uint killer, uint victim, SpaceRingType ring)
+        {
+            if (ring == SpaceRingType.SafeOrbit)
+                return;
+            if (!GetIsPC(killer) || GetIsDM(killer) || !GetIsPC(victim) || GetIsDM(victim) || killer == victim)
+                return;
+
+            var killerId = GetObjectUUID(killer);
+            var victimId = GetObjectUUID(victim);
+            var now = DateTime.UtcNow;
+
+            if (_recentShipKillCredits.TryGetValue((killerId, victimId), out var lastCredit) &&
+                now - lastCredit < SamePilotVictimWindow)
+                return;
+
+            _recentShipKillCredits[(killerId, victimId)] = now;
+            Skill.GiveEndgameSP(killer, SkillType.Piloting, ring == SpaceRingType.DeepSpace ? 2 : 1);
         }
 
         /// <summary>
@@ -1860,14 +1917,16 @@ namespace SWLOR.Game.Server.Service
 
 
         /// <summary>
-        /// Applies death to a creature.
-        /// If this is a PC:
-        ///     - The ship modules will either drop or be destroyed.
-        ///     - The ship will require repairs
-        ///     - The pilot will be killed (inflicting default death system penalties)
-        ///     - Everyone inside the ship instance will be killed (inflicting default death system penalties)
-        ///     - The ship will relocate back to the last dock it was at
-        /// If this is an NPC, they will be killed and explode in spectacular fashion.
+        /// Applies death to a creature's ship, with consequences scaled by the space ring:
+        /// - Ring 1 (safe orbit): a repair bill. Modules and passengers survive; the
+        ///   defense grid tows the frame back to its last dock.
+        /// - Ring 2 (contested lane): the module-loss economy. Every module has a chance
+        ///   to drop at the kill site and all are lost regardless; passengers die.
+        /// - Ring 3 (deep space): FRAME LOSS. All modules drop as wreckage, passengers
+        ///   escape by pod to their home points, and the ship - record and property -
+        ///   is permanently destroyed. Pilots who have not passed the Trials take ring-2
+        ///   consequences instead: no Padawan ship can ever be permanently destroyed.
+        /// The pilot always takes the ordinary ground death penalty.
         /// </summary>
         [NWNEventHandler(ScriptName.OnModuleDeath)]
         public static void ApplyDeath()
@@ -1879,10 +1938,8 @@ namespace SWLOR.Game.Server.Service
 
             ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), creature);
 
-            // When a player dies, they have a chance to drop every module installed on their ship.
             if (GetIsPC(creature))
             {
-                const int ChanceToDropModule = 65;
                 var deathLocation = GetLocation(creature);
                 var playerId = GetObjectUUID(creature);
                 var dbPlayer = DB.Get<Player>(playerId);
@@ -1890,40 +1947,62 @@ namespace SWLOR.Game.Server.Service
                 var dbProperty = DB.Get<WorldProperty>(dbPlayerShip.PropertyId);
                 var instance = Property.GetRegisteredInstance(dbPlayerShip.PropertyId);
 
-                // Give a chance to drop each installed module.
-                foreach (var (_, shipModule) in dbPlayerShip.Status.HighPowerModules)
+                var ring = GetSpaceRing(GetArea(creature));
+
+                // The tier gate: an unflagged pilot in deep space degrades to ring-2 stakes.
+                if (ring == SpaceRingType.DeepSpace && !dbPlayer.HasCompletedTrials)
+                    ring = SpaceRingType.ContestedLane;
+
+                var killer = GetLastHostileActor(creature);
+                ProcessShipPvPKill(killer, creature, ring);
+
+                // Contested lanes: 65% drop chance per module. Deep space: the whole
+                // loadout hits space as wreckage. Safe orbits: nothing drops.
+                var chanceToDropModule = ring switch
                 {
-                    if (Random.D100(1) <= ChanceToDropModule)
+                    SpaceRingType.ContestedLane => 65,
+                    SpaceRingType.DeepSpace => 100,
+                    _ => 0
+                };
+
+                if (ring != SpaceRingType.SafeOrbit)
+                {
+                    foreach (var (_, shipModule) in dbPlayerShip.Status.HighPowerModules)
                     {
-                        var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
-                        CopyObject(deserialized, deathLocation);
-                        DestroyObject(deserialized);
+                        if (Random.D100(1) <= chanceToDropModule)
+                        {
+                            var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
+                            CopyObject(deserialized, deathLocation);
+                            DestroyObject(deserialized);
+                        }
+
+                        var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
+                        moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
+
                     }
 
-                    var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
-                    moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
-
-                }
-
-                foreach (var (_, shipModule) in dbPlayerShip.Status.LowPowerModules)
-                {
-                    if (Random.D100(1) <= ChanceToDropModule)
+                    foreach (var (_, shipModule) in dbPlayerShip.Status.LowPowerModules)
                     {
-                        var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
-                        CopyObject(deserialized, deathLocation);
-                        DestroyObject(deserialized);
+                        if (Random.D100(1) <= chanceToDropModule)
+                        {
+                            var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
+                            CopyObject(deserialized, deathLocation);
+                            DestroyObject(deserialized);
+                        }
+
+                        var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
+                        moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
                     }
 
-                    var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
-                    moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
+                    // The player loses all modules regardless of whether they dropped.
+                    dbPlayerShip.Status.HighPowerModules.Clear();
+                    dbPlayerShip.Status.LowPowerModules.Clear();
+                    dbPlayerShip.PlayerHotBars.Clear();
                 }
 
-                // Player always loses all modules regardless if they actually dropped.
-                dbPlayerShip.Status.HighPowerModules.Clear();
-                dbPlayerShip.Status.LowPowerModules.Clear();
-                dbPlayerShip.PlayerHotBars.Clear();
                 dbPlayerShip.Status.Hull = 1;
                 dbPlayerShip.Status.Shield = 0;
+                dbPlayerShip.Status.ConditionStep = 0;
 
                 // Exit space mode
                 ClearCurrentTarget(creature);
@@ -1950,27 +2029,66 @@ namespace SWLOR.Game.Server.Service
                     dbPlayer.SerializedHotBar = CreaturePlugin.SerializeQuickbar(creature);
                 }
 
+                var shipId = dbPlayer.ActiveShipId;
                 _shipClones.Remove(dbPlayer.ActiveShipId);
                 dbPlayer.ActiveShipId = Guid.Empty.ToString();
 
-                // Removing the current position of the ship will automatically send it back to the last dock it was at.
-                if (dbProperty.Positions.ContainsKey(PropertyLocationType.CurrentPosition))
+                if (ring == SpaceRingType.DeepSpace)
                 {
-                    dbProperty.Positions.Remove(PropertyLocationType.CurrentPosition);
+                    // FRAME LOSS. Passengers escape by pod; the ship - record and
+                    // property - is destroyed permanently. Characters never perma-die
+                    // in space: pods always reach a dock.
+                    DB.Set(dbPlayer);
+
+                    foreach (var player in instance.Players)
+                    {
+                        ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
+                        FloatingTextStringOnCreature(ColorToken.Red("The ship is breaking apart! Your escape pod hurls you clear."), player, false);
+                        Death.SendToHomePoint(player);
+                    }
+
+                    // Give the pods a moment to clear the instance before it ceases to exist.
+                    DelayCommand(6f, () =>
+                    {
+                        Property.DeleteProperty(dbProperty);
+                        DB.Delete<PlayerShip>(shipId);
+                    });
+
+                    Messaging.SendMessageNearbyToPlayers(creature,
+                        ColorToken.Red($"{GetName(creature)}'s ship has been destroyed. The frame is lost."));
                 }
-
-                // Update the changes
-                DB.Set(dbProperty);
-                DB.Set(dbPlayerShip);
-                DB.Set(dbPlayer);
-
-                // Murder everyone inside the ship's instance.
-                foreach (var player in instance.Players)
+                else
                 {
-                    ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
-                    ApplyEffectToObject(DurationType.Instant, EffectDeath(), player);
+                    // Removing the current position of the ship will automatically send it back to the last dock it was at.
+                    if (dbProperty.Positions.ContainsKey(PropertyLocationType.CurrentPosition))
+                    {
+                        dbProperty.Positions.Remove(PropertyLocationType.CurrentPosition);
+                    }
 
-                    FloatingTextStringOnCreature(ColorToken.Red("The ship has exploded!"), player, false);
+                    // Update the changes
+                    DB.Set(dbProperty);
+                    DB.Set(dbPlayerShip);
+                    DB.Set(dbPlayer);
+
+                    if (ring == SpaceRingType.SafeOrbit)
+                    {
+                        // The defense grid tows everyone in. A repair bill, not a funeral.
+                        foreach (var player in instance.Players)
+                        {
+                            FloatingTextStringOnCreature(ColorToken.Orange("The ship shudders violently - the orbital defense grid tows it back to dock."), player, false);
+                        }
+                    }
+                    else
+                    {
+                        // Contested lanes: everyone inside the ship goes down with it.
+                        foreach (var player in instance.Players)
+                        {
+                            ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
+                            ApplyEffectToObject(DurationType.Instant, EffectDeath(), player);
+
+                            FloatingTextStringOnCreature(ColorToken.Red("The ship has exploded!"), player, false);
+                        }
+                    }
                 }
 
                 DestroyPilotClone(creature);
