@@ -466,7 +466,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceLightning3)
 
                 .AddPerkLevel()
-                .Description("Deals 3 DMG, scaling with your Willpower Score, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
+                .Description("Deals 30 DMG, scaling with your Willpower Score, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 50)
                 .RequirementCharacterType(CharacterType.ForceSensitive)

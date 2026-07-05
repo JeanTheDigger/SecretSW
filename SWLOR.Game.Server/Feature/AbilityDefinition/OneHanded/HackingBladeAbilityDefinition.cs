@@ -42,6 +42,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
 
             int dmg;
             int dc;
+            float bleedLength;
 
             switch (level)
             {
@@ -49,14 +50,17 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
                 case 1:
                     dmg = 6;
                     dc = 10;
+                    bleedLength = 30f;
                     break;
                 case 2:
                     dmg = 15;
                     dc = 15;
+                    bleedLength = 60f;
                     break;
                 case 3:
                     dmg = 22;
                     dc = 20;
+                    bleedLength = 60f;
                     break;
             }
 
@@ -82,7 +86,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
 
             if (checkResult == SavingThrowResultType.Failed)
             {
-                StatusEffect.Apply(activator, target, StatusEffectType.Bleed, 60f);
+                StatusEffect.Apply(activator, target, StatusEffectType.Bleed, bleedLength);
             }
             
             Enmity.ModifyEnmity(activator, target, 100 * level + damage);

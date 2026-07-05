@@ -416,7 +416,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.WristRocket1)
 
                 .AddPerkLevel()
-                .Description("Inflicts 25 fire DMG, scaling with your Perception Score, to a single target. Also has an 8DC fortitude check to inflict Knockdown for 3 seconds.")
+                .Description("Inflicts 25 fire DMG, scaling with your Perception Score, to a single target. Also has an 8DC fortitude check to inflict Knockdown for 2 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 25)
@@ -424,7 +424,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.WristRocket2)
 
                 .AddPerkLevel()
-                .Description("Inflicts 50 fire DMG, scaling with your Perception Score, to a single target. Also has a 12DC fortitude check to inflict Knockdown for 3 seconds.")
+                .Description("Inflicts 50 fire DMG, scaling with your Perception Score, to a single target. Also has a 12DC fortitude check to inflict Knockdown for 2 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 40)
