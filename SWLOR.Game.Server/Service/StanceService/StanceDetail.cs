@@ -39,5 +39,9 @@ namespace SWLOR.Game.Server.Service.StanceService
 
         // Flat DMG removed from weapon attacks (defensive forms trade damage away).
         public int DamagePenalty { get; set; }
+
+        // Added to all saving throws while active, applied as a tagged effect on activation
+        // and removed when the stance drops (Teräs Käsi's discipline against the Force).
+        public int SavingThrowMod { get; set; }
     }
 }

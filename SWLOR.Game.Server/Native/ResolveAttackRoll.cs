@@ -617,9 +617,9 @@ namespace SWLOR.Game.Server.Native
                     criticalBonus += CrushingMasteryBonus;
             }
 
-            // Lightsaber form crit bonuses
-            if (weapon != null && (Item.LightsaberBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
-                                   Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem)))
+            // Stance crit bonuses (lightsaber forms / combat doctrines). GetActiveStance
+            // returns null unless the wielded weapon matches the active stance's family,
+            // and Teräs Käsi's empty-hand stance works with no weapon at all.
             {
                 var stance = Stance.GetActiveStance(attacker.m_idSelf);
                 if (stance != null)

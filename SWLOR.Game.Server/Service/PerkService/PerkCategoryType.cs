@@ -141,6 +141,9 @@ namespace SWLOR.Game.Server.Service.PerkService
 
         [PerkCategory("Lightsaber Forms", true)]
         LightsaberForms = 45,
+
+        [PerkCategory("Combat Doctrines", true)]
+        CombatDoctrines = 46,
     }
 
     public class PerkCategoryAttribute : Attribute

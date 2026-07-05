@@ -405,9 +405,8 @@ namespace SWLOR.Game.Server.Native
                     dmgValues[CombatDamageType.Physical] += mightMod;
             }
 
-            // Lightsaber form bonuses
-            if (Item.LightsaberBaseItemTypes.Contains(baseItemType) ||
-                Item.SaberstaffBaseItemTypes.Contains(baseItemType))
+            // Stance bonuses (lightsaber forms / combat doctrines). GetActiveStance returns
+            // null unless the wielded weapon matches the active stance's weapon family.
             {
                 var stance = Stance.GetActiveStance(attacker.m_idSelf);
                 if (stance != null)

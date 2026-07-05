@@ -1814,6 +1814,13 @@ namespace SWLOR.NWN.API.NWScript.Enum
         FormSoresu = 1892,          // row: Growl
         FormAtaru = 1893,           // row: SoothePet
         FormJuyo = 1897,            // row: CallBeast
+
+        // Standard combat doctrine toggles, on more orphaned feat.2da rows.
+        DoctrineDuelist = 1888,     // row: Reward1
+        DoctrineJuggernaut = 1889,  // row: Reward2
+        DoctrineTempest = 1890,     // row: Reward3
+        DoctrineTerasKasi = 1894,   // row: ReviveBeast1
+        DoctrineMarksman = 1895,    // row: ReviveBeast2
         Doublehand2 = 1840,
         Doublehand3 = 1841,
         Doublehand4 = 1842,

@@ -314,5 +314,12 @@
         FormDjemSo = 305,
         FormNiman = 306,
         FormJuyo = 307,
+
+        // Standard combat doctrines (the class mirror of the lightsaber forms)
+        DoctrineDuelist = 308,
+        DoctrineJuggernaut = 309,
+        DoctrineTempest = 310,
+        DoctrineTerasKasi = 311,
+        DoctrineMarksman = 312,
     }
 }

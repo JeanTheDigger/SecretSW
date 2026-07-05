@@ -4,25 +4,24 @@ using SWLOR.Game.Server.Service.AbilityService;
 using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.NWN.API.NWScript.Enum;
 
-namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
+namespace SWLOR.Game.Server.Feature.AbilityDefinition.CombatDoctrine
 {
     /// <summary>
-    /// The toggle abilities for the seven lightsaber forms. Activating a form deactivates any
-    /// other; the shared recast group enforces the six-second switch lockout.
+    /// The toggle abilities for the Standard combat doctrines. Activating a doctrine
+    /// deactivates any other stance (forms included); the shared recast group enforces
+    /// the six-second switch lockout.
     /// </summary>
-    public class LightsaberFormAbilityDefinition : IAbilityListDefinition
+    public class CombatDoctrineAbilityDefinition : IAbilityListDefinition
     {
         private readonly AbilityBuilder _builder = new();
 
         public Dictionary<FeatType, AbilityDetail> BuildAbilities()
         {
-            BuildToggle(FeatType.FormShiiCho, PerkType.FormShiiCho, "Form I: Shii-Cho");
-            BuildToggle(FeatType.FormMakashi, PerkType.FormMakashi, "Form II: Makashi");
-            BuildToggle(FeatType.FormSoresu, PerkType.FormSoresu, "Form III: Soresu");
-            BuildToggle(FeatType.FormAtaru, PerkType.FormAtaru, "Form IV: Ataru");
-            BuildToggle(FeatType.FormDjemSo, PerkType.FormDjemSo, "Form V: Djem So");
-            BuildToggle(FeatType.FormNiman, PerkType.FormNiman, "Form VI: Niman");
-            BuildToggle(FeatType.FormJuyo, PerkType.FormJuyo, "Form VII: Juyo");
+            BuildToggle(FeatType.DoctrineDuelist, PerkType.DoctrineDuelist, "Duelist Doctrine");
+            BuildToggle(FeatType.DoctrineJuggernaut, PerkType.DoctrineJuggernaut, "Juggernaut");
+            BuildToggle(FeatType.DoctrineTempest, PerkType.DoctrineTempest, "Tempest");
+            BuildToggle(FeatType.DoctrineTerasKasi, PerkType.DoctrineTerasKasi, "Teräs Käsi");
+            BuildToggle(FeatType.DoctrineMarksman, PerkType.DoctrineMarksman, "Marksman Doctrine");
 
             return _builder.Build();
         }
@@ -36,7 +35,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 .IsCastedAbility()
                 .HasCustomValidation((activator, target, level, location) =>
                 {
-                    // Deactivating the current form is always allowed; taking a stance needs a saber.
+                    // Deactivating the current stance is always allowed; taking one needs the weapon.
                     if (Stance.GetActiveStanceType(activator) != perk)
                         return Stance.ValidateStanceWeapon(activator, perk);
 
