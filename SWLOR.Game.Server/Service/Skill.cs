@@ -77,7 +77,8 @@ namespace SWLOR.Game.Server.Service
             SkillType skill, 
             int xp, 
             bool ignoreBonuses = false,
-            bool applyHenchmanPenalty = true)
+            bool applyHenchmanPenalty = true,
+            bool isEndgamePath = false)
         {
             if (skill == SkillType.Invalid || xp <= 0 || !GetIsPC(player) || GetIsDM(player)) return;
 
@@ -187,14 +188,14 @@ namespace SWLOR.Game.Server.Service
 
                 if (details.ContributesToSkillCap)
                 {
-                    // Past the Phase 1 boundary, activity XP no longer converts to ranks.
-                    // Endgame ranks come from the event and deep-content paths (GiveEndgameSP).
-                    // Banked XP is retained.
-                    if (!inPhase1)
+                    // Past the Phase 1 boundary, activity XP no longer converts to ranks - except for
+                    // endgame-path XP (deep gathering nodes, exotic recipes), which is throttled by its
+                    // content instead. Banked XP is retained either way.
+                    if (!inPhase1 && !isEndgamePath)
                         break;
 
-                    // The daily allowance gates Phase 1 conversions. Banked XP carries to the next day.
-                    if (dbPlayer.RanksGainedToday >= DailyRankLimit)
+                    // The daily allowance gates all Phase 1 conversions. Banked XP carries to the next day.
+                    if (inPhase1 && dbPlayer.RanksGainedToday >= DailyRankLimit)
                         break;
                 }
 

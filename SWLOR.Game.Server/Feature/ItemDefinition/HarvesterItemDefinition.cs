@@ -148,8 +148,9 @@ namespace SWLOR.Game.Server.Feature.ItemDefinition
                         var delta = veinLevel - dbSkill.Rank;
                         var deltaXP = Skill.GetDeltaXP(delta);
 
-                        // Give XP for each item gathered
-                        Skill.GiveSkillXP(user, SkillType.Gathering, deltaXP * itemsGathered, false, false);
+                        // Give XP for each item gathered. Veins above level 50 (deep nodes) are the
+                        // endgame gathering path and convert past the Phase 1 boundary.
+                        Skill.GiveSkillXP(user, SkillType.Gathering, deltaXP * itemsGathered, false, false, veinLevel > 50);
                     }
 
                     ExecuteScript(ScriptName.OnHarvesterUsed, user);
