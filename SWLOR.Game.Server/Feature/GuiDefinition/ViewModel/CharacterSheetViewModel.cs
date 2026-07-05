@@ -27,7 +27,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         IGuiRefreshable<StatusEffectRemovedRefreshEvent>,
         IGuiRefreshable<BeastGainXPRefreshEvent>
     {
-        private const int MaxUpgrades = 10;
+        private const int MaxUpgrades = 12;
         private uint _target;
 
         public bool IsPlayerMode
@@ -638,7 +638,8 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var playerId = GetObjectUUID(_target);
                 var dbPlayer = DB.Get<Player>(playerId);
 
-                SP = $"{dbPlayer.TotalSPAcquired} / {Skill.SkillCap} ({dbPlayer.UnallocatedSP})";
+                var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+                SP = $"{dbPlayer.TotalSPAcquired} / {spCap} ({dbPlayer.UnallocatedSP})";
                 APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";
             }
             else if (BeastMastery.IsPlayerBeast(_target))
@@ -702,9 +703,10 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var playerId = GetObjectUUID(_target);
             var dbPlayer = DB.Get<Player>(playerId);
 
-            SP = $"{dbPlayer.TotalSPAcquired} / {Skill.SkillCap} ({dbPlayer.UnallocatedSP})";
+            var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+            SP = $"{dbPlayer.TotalSPAcquired} / {spCap} ({dbPlayer.UnallocatedSP})";
             APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";
-            
+
             RefreshStats();
         }
 

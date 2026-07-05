@@ -133,6 +133,8 @@ namespace SWLOR.Game.Server.Entity
         public int STMRegen { get; set; }
         public int XPDebt { get; set; }
         public int DMXPBonus { get; set; }
+        public int RanksGainedToday { get; set; }
+        public DateTime LastDailyReset { get; set; }
         [Indexed]
         public bool IsDeleted { get; set; }
         public bool IsUsingDualPistolMode { get; set; }

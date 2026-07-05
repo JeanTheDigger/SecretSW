@@ -247,7 +247,8 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             if (IsInMyPerksMode)
             {
                 AvailableSP = $"Available SP: {dbPlayer.UnallocatedSP}";
-                TotalSP = $"Total SP: {dbPlayer.TotalSPAcquired} / {Skill.SkillCap}";
+                var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+                TotalSP = $"Total SP: {dbPlayer.TotalSPAcquired} / {spCap}";
             }
             else if (IsInBeastPerksMode)
             {

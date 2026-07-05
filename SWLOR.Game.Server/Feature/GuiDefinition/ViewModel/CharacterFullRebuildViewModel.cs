@@ -590,10 +590,13 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var index = NuiGetEventArrayIndex();
             var skillType = _skills[index];
             var skill = Skill.GetSkillDetails(skillType);
+            var playerId = GetObjectUUID(Player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            var effectiveMaxRank = Skill.GetEffectiveMaxRank(dbPlayer, skillType);
             var amount = _remainingSkillPoints >= 1 ? 1 : 0;
             var currentValue = _skillDistributionPoints[index] + amount;
-            if (currentValue > skill.MaxRank)
-                currentValue = skill.MaxRank;
+            if (currentValue > effectiveMaxRank)
+                currentValue = effectiveMaxRank;
 
             _skillDistributionPoints[index] = currentValue;
 
@@ -606,10 +609,13 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var index = NuiGetEventArrayIndex();
             var skillType = _skills[index];
             var skill = Skill.GetSkillDetails(skillType);
+            var playerId = GetObjectUUID(Player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            var effectiveMaxRank = Skill.GetEffectiveMaxRank(dbPlayer, skillType);
             var amount = _remainingSkillPoints >= 10 ? 10 : _remainingSkillPoints;
             var currentValue = _skillDistributionPoints[index] + amount;
-            if (currentValue > skill.MaxRank)
-                currentValue = skill.MaxRank;
+            if (currentValue > effectiveMaxRank)
+                currentValue = effectiveMaxRank;
 
             _skillDistributionPoints[index] = currentValue;
 
