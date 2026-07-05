@@ -1832,6 +1832,11 @@ namespace SWLOR.NWN.API.NWScript.Enum
         ForceAffliction = 1869,     // row: Bulwark
         ForceChoke = 1896,          // row: ReviveBeast3
 
+        // Devices Phase-2 tech, on the shield proficiency orphan rows.
+        CarboniteProjector = 1415,  // row: ShieldProficiency1
+        CombatJetpack = 1416,       // row: ShieldProficiency2
+        OrbitalStrike = 1417,       // row: ShieldProficiency3
+
         // Stance signature actives (level-6 capstones), on dead beast-ability rows.
         SarlaccSweep = 1913,        // row: Bite1
         DuelistsEnd = 1914,         // row: Bite2

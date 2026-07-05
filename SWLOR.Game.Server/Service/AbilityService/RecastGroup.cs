@@ -277,6 +277,12 @@ namespace SWLOR.Game.Server.Service.AbilityService
         ForceAffliction = 133,
         [RecastGroup("Force Choke", "F. Choke", true)]
         ForceChoke = 134,
+        [RecastGroup("Carbonite Projector", "Carbonite", true)]
+        CarboniteProjector = 135,
+        [RecastGroup("Combat Jetpack", "Jetpack", true)]
+        CombatJetpack = 136,
+        [RecastGroup("Orbital Strike", "Orb. Strike", true)]
+        OrbitalStrike = 137,
     }
 
     public class RecastGroupAttribute: Attribute

@@ -27,8 +27,71 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             Flamethrower();
             WristRocket();
             DeflectorShield();
+            CarboniteProjector();
+            CombatJetpack();
+            OrbitalStrike();
 
             return _builder.Build();
+        }
+
+        // ==========================================================================
+        // Devices Phase-2 tech. All three are marquee event tech: level 1 requires
+        // an unlock item from the event economy, and the Devices gates sit past
+        // rank 50, inheriting the Trials gate.
+        // ==========================================================================
+
+        private void CarboniteProjector()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.CarboniteProjector)
+                .Name("Carbonite Projector")
+
+                .AddPerkLevel()
+                .Description("Flash-freezes a target in carbonite for 2 seconds (they cannot act; a long immunity follows - the marquee tech hold, priced under the CC rules).")
+                .Price(5)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 60)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.CarboniteProjector)
+
+                .AddPerkLevel()
+                .Description("Your carbonite freeze lasts 3 seconds.")
+                .Price(6)
+                .RequirementSkill(SkillType.Devices, 80)
+                .RequirementCharacterType(CharacterType.Standard);
+        }
+
+        private void CombatJetpack()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.CombatJetpack)
+                .Name("Combat Jetpack")
+
+                .AddPerkLevel()
+                .Description("Rocket to a position up to 20 meters away - mobility as equipment.")
+                .Price(5)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 65)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.CombatJetpack)
+
+                .AddPerkLevel()
+                .Description("The burn carries you onward: +25% movement speed for 6 seconds after landing.")
+                .Price(6)
+                .RequirementSkill(SkillType.Devices, 85)
+                .RequirementCharacterType(CharacterType.Standard);
+        }
+
+        private void OrbitalStrike()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.OrbitalStrike)
+                .Name("Orbital Strike")
+
+                .AddPerkLevel()
+                .Description("Paint a position for orbital bombardment: 6 seconds later, heavy fire damage strikes everything hostile in the area. 5-minute cycle. The counterplay is leaving.")
+                .Price(6)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 90)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.OrbitalStrike);
         }
 
         private void DemolitionExpert()

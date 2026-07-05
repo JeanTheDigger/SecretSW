@@ -346,7 +346,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.ImplantNeural, PerkType.ImplantOcular, PerkType.ImplantDermal,
             PerkType.ImplantSkeletal, PerkType.ImplantCardio, PerkType.ImplantServo,
             PerkType.ImplantCortical,
-            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort
+            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort,
+            PerkType.CarboniteProjector, PerkType.CombatJetpack, PerkType.OrbitalStrike
         };
 
         /// <summary>

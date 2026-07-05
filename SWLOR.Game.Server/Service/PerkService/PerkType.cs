@@ -346,5 +346,10 @@
         DoctrineInterceptor = 325,
         DoctrineStrike = 326,
         DoctrineEscort = 327,
+
+        // Devices Phase-2 tech
+        CarboniteProjector = 328,
+        CombatJetpack = 329,
+        OrbitalStrike = 330,
     }
 }
