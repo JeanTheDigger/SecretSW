@@ -486,8 +486,10 @@ namespace SWLOR.Game.Server.Native
             }
             else if (Item.StaffBaseItemTypes.Contains(baseItemType))
             {
-                if (attacker.m_pStats.HasFeat((ushort)FeatType.FlurryStyle) == 1)
-                    return attacker.m_pStats.GetDEXStat();
+                // Crushing Style is the Might staff stance; it re-maps damage to Might.
+                if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1 ||
+                    attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
+                    return attacker.m_pStats.GetSTRStat();
             }
 
             return -1;

@@ -500,13 +500,13 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Crushing Style")
 
                 .AddPerkLevel()
-                .Description("Your attacks with a staff now gain a DMG bonus equal to your MGT modifier. In addition, your critical chance is raised by 15%.")
+                .Description("A Might-focused staff stance: your staff attacks deal Might-based damage and gain a DMG bonus equal to your MGT modifier.")
                 .Price(1)
                 .RequirementCannotHavePerk(PerkType.FlurryStyle)
                 .GrantsFeat(FeatType.CrushingStyle)
 
                 .AddPerkLevel()
-                .Description("Your MGT DMG bonus is increased to twice your MGT modifier, and critical chance is increased by a further 15%.")
+                .Description("Your MGT DMG bonus is increased to twice your MGT modifier, and your critical chance with staves is raised by 25%.")
                 .Price(4)
                 .RequirementSkill(SkillType.MartialArts, 35)
                 .GrantsFeat(FeatType.CrushingMastery);

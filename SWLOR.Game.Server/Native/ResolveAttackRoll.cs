@@ -61,8 +61,7 @@ namespace SWLOR.Game.Server.Native
         private const int ImprovedCriticalBonus = 5;
         private const int PrecisionAim1Bonus = 2;
         private const int PrecisionAim2Bonus = 4;
-        private const int CrushingStyleBonus = 15;
-        private const int CrushingMasteryBonus = 15;
+        private const int CrushingMasteryBonus = 25;
 
         // Deflection constants
         private const int SaberDeflectChance = 5;
@@ -611,8 +610,6 @@ namespace SWLOR.Game.Server.Native
             {
                 if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
                     criticalBonus += CrushingMasteryBonus;
-                else if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1)
-                    criticalBonus += CrushingStyleBonus;
             }
 
             return criticalBonus;
@@ -625,12 +622,6 @@ namespace SWLOR.Game.Server.Native
 
             if (weapon == null)
                 return AbilityType.Invalid;
-
-            if (Item.StaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (attacker.m_pStats.HasFeat((ushort)FeatType.FlurryStyle) == 1)
-                    return AbilityType.Agility;
-            }
 
             return AbilityType.Invalid;
         }

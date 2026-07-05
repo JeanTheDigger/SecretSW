@@ -23,7 +23,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
 
         private void ImpactAction(uint activator, int baseRecovery)
         {
-            var bonusRecovery = GetAbilityModifier(AbilityType.Willpower, activator) * 8;
+            var bonusRecovery = GetAbilityModifier(AbilityType.Willpower, activator) * 4;
             var recovery = baseRecovery + bonusRecovery;
 
             ApplyEffectToObject(DurationType.Instant, EffectHeal(recovery), activator);

@@ -32,7 +32,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
             Effect eKolto = EffectRegenerate(regenAmount, 6f);
             eKolto = TagEffect(eKolto, "kolto_regen");
 
-            ApplyEffectToObject(DurationType.Temporary, eKolto, target, 45f);
+            ApplyEffectToObject(DurationType.Temporary, eKolto, target, 30f);
             ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Healing_G), target);
 
             CombatPoint.AddCombatPointToAllTagged(activator, SkillType.Devices, 3);

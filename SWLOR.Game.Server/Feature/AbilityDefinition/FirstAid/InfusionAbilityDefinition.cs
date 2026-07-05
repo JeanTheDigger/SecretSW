@@ -67,7 +67,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
                 .HasRecastDelay(RecastGroup.Infusion, 60f)
                 .HasActivationDelay(2f)
                 .HasMaxRange(30.0f)
-                .RequirementStamina(6)
+                .RequirementStamina(8)
                 .UsesAnimation(Animation.LoopingGetMid)
                 .IsCastedAbility()
                 .HasCustomValidation((activator, target, level, location) =>
@@ -88,7 +88,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
                 .HasRecastDelay(RecastGroup.Infusion, 60f)
                 .HasActivationDelay(2f)
                 .HasMaxRange(30.0f)
-                .RequirementStamina(8)
+                .RequirementStamina(10)
                 .UsesAnimation(Animation.LoopingGetMid)
                 .IsCastedAbility()
                 .HasCustomValidation((activator, target, level, location) =>

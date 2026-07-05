@@ -362,13 +362,14 @@ namespace SWLOR.Game.Server.Service
                 return (GetHasFeat(FeatType.ZenMarksmanship, attacker) && (willpower > might)) ? willpower : might;
             }
 
-            // Staff: there are 3 style perks for staff so it has to be handled slightly differently.
+            // Staff: Crushing Style is the Might stance and re-maps damage to Might.
+            // Otherwise the weapon table applies (staves deal Perception-based damage).
             if (Item.StaffBaseItemTypes.Contains(weaponType))
             {
-                if (GetHasFeat(FeatType.FlurryStyle, attacker)) return GetAbilityScore(attacker, AbilityType.Perception);
-                if (GetHasFeat(FeatType.CrushingMastery, attacker)) return 3 * GetAbilityScore(attacker, AbilityType.Might);
-                if (GetHasFeat(FeatType.CrushingStyle, attacker)) return 2 * GetAbilityScore(attacker, AbilityType.Might);
-                return GetAbilityScore(attacker, AbilityType.Might);
+                if (GetHasFeat(FeatType.CrushingStyle, attacker) || GetHasFeat(FeatType.CrushingMastery, attacker))
+                    return GetAbilityScore(attacker, AbilityType.Might);
+
+                return GetAbilityScore(attacker, AbilityType.Perception);
             }
 
             //Handle weapon types without ability adjustment perks as well for consistency.
