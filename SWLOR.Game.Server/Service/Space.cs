@@ -1615,7 +1615,7 @@ namespace SWLOR.Game.Server.Service
         /// </summary>
         /// <param name="defender">The defender to check</param>
         /// <returns>The evasion of the ship</returns>
-        private static int GetShipEvasion(uint defender)
+        public static int GetShipEvasion(uint defender)
         {
             var defenderShipStatus = GetShipStatus(defender);
             var bonus = defenderShipStatus.Evasion;
