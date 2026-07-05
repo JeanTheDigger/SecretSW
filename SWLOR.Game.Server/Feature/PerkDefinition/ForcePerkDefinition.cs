@@ -35,8 +35,106 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             ThrowRock();
             ForceLeap();
             ForceInspiration();
+            ForceBarrier();
+            ForceBreach();
+            ForceAffliction();
+            ForceChoke();
 
             return _builder.Build();
+        }
+
+        private void ForceBarrier()
+        {
+            _builder.Create(PerkCategoryType.ForceUniversal, PerkType.ForceBarrier)
+                .Name("Force Barrier")
+
+                .AddPerkLevel()
+                .Description("Surrounds you with an absorbing barrier of 15 + 2x WIL modifier temporary HP for 60 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 10)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceBarrier)
+
+                .AddPerkLevel()
+                .Description("Your barrier improves to 30 + 3x WIL modifier temporary HP.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 25)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your barrier improves to 45 + 4x WIL modifier temporary HP.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 40)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceBreach()
+        {
+            _builder.Create(PerkCategoryType.ForceUniversal, PerkType.ForceBreach)
+                .Name("Force Breach")
+
+                .AddPerkLevel()
+                .Description("Strips up to 2 beneficial effects (barriers, buffs, concealment) from a target.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 20)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceBreach)
+
+                .AddPerkLevel()
+                .Description("Your breach strips up to 4 beneficial effects.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 35)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceAffliction()
+        {
+            _builder.Create(PerkCategoryType.ForceDark, PerkType.ForceAffliction)
+                .Name("Affliction")
+
+                .AddPerkLevel()
+                .Description("Inflicts a creeping sickness dealing WIL-modifier damage every tick for 18 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 15)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceAffliction)
+
+                .AddPerkLevel()
+                .Description("Your affliction deals 2x WIL-modifier damage per tick for 24 seconds.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 30)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your affliction deals 3x WIL-modifier damage per tick for 30 seconds and briefly slows the target.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 45)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceChoke()
+        {
+            _builder.Create(PerkCategoryType.ForceDark, PerkType.ForceChoke)
+                .Name("Force Choke")
+
+                .AddPerkLevel()
+                .Description("Grips a target's throat: 10 + 2x WIL modifier Force damage, slowing and shaking their aim for 5 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 25)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceChoke)
+
+                .AddPerkLevel()
+                .Description("Your grip deals 20 + 3x WIL modifier damage over 6 seconds of strangled stagger.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 40)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your grip deals 30 + 4x WIL modifier damage over 7 seconds, with -15 accuracy.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 50)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
         }
 
         private void ForcePush()

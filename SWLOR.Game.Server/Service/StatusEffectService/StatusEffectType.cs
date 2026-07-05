@@ -83,5 +83,6 @@
         AdrenalStim2 = 78,
         AdrenalStim3 = 79,
         ForceLock = 80,
+        ForceAffliction = 81,
     }
 }

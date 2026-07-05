@@ -1826,6 +1826,12 @@ namespace SWLOR.NWN.API.NWScript.Enum
         JumpJet = 1863,             // row: ShieldBash1
         Overclock = 1864,           // row: ShieldBash2
 
+        // Force kit gap fills, on the remaining orphaned rows.
+        ForceBarrier = 1860,        // row: ShieldMaster
+        ForceBreach = 1865,         // row: ShieldBash3
+        ForceAffliction = 1869,     // row: Bulwark
+        ForceChoke = 1896,          // row: ReviveBeast3
+
         // Stance signature actives (level-6 capstones), on dead beast-ability rows.
         SarlaccSweep = 1913,        // row: Bite1
         DuelistsEnd = 1914,         // row: Bite2

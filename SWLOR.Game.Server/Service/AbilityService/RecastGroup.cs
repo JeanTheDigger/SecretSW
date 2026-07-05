@@ -269,6 +269,14 @@ namespace SWLOR.Game.Server.Service.AbilityService
         JumpJet = 129,
         [RecastGroup("Overclock", "Overclock", true)]
         Overclock = 130,
+        [RecastGroup("Force Barrier", "F. Barrier", true)]
+        ForceBarrier = 131,
+        [RecastGroup("Force Breach", "F. Breach", true)]
+        ForceBreach = 132,
+        [RecastGroup("Affliction", "Affliction", true)]
+        ForceAffliction = 133,
+        [RecastGroup("Force Choke", "F. Choke", true)]
+        ForceChoke = 134,
     }
 
     public class RecastGroupAttribute: Attribute

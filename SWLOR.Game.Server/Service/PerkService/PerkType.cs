@@ -300,7 +300,7 @@
         ForceTouch = 293,
         Innervate = 294,
         ForceLink = 295,
-        // 296 is free
+        ForceBarrier = 296,
         Research = 297,
         AdrenalStim = 298,
         ResearchProjects = 299,
@@ -333,5 +333,10 @@
 
         // Space
         FlightStances = 320,
+
+        // Force kit gap fills
+        ForceBreach = 321,
+        ForceAffliction = 322,
+        ForceChoke = 323,
     }
 }
