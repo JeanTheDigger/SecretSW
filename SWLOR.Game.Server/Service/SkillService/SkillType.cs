@@ -142,12 +142,15 @@ namespace SWLOR.Game.Server.Service.SkillService
             false)]
         Leadership = 12,
 
+        // Beast Mastery has been removed from the game. The enum value and 2DA row are retained
+        // for serialized player-data integrity; the skill is inactive and no longer contributes
+        // to the skill cap. Droids (Engineering) carry the companion niche.
         [Skill(SkillCategoryType.Combat,
             "Beast Mastery",
             50,
-            true,
+            false,
             "Ability to tame wild animals, raise them, and train them.",
-            true,
+            false,
             false,
             false)]
         BeastMastery = 13,
