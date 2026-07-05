@@ -775,7 +775,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Improved Two Weapon Fighting (Two-Handed)")
 
                 .AddPerkLevel()
-                .Description("Grants an additional off-hand attack when dual wielding or using a double-sided weapon, and reduces the two-weapon fighting penalty to 0%/-10%. [Cross Skill]")
+                .Description("Grants an additional off-hand attack when dual wielding or using a double-sided weapon. [Cross Skill]")
                 .Price(4)
                 .RequirementSkill(SkillType.TwoHanded, 40)
                 .RequirementCannotHavePerk(PerkType.ImprovedTwoWeaponFightingOneHanded)

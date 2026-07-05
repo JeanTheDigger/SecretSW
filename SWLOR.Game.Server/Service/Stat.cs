@@ -1648,11 +1648,6 @@ namespace SWLOR.Game.Server.Service
                 return Perk.GetPerkLevel(pc, PerkType.FlurryStyle);
             }
 
-            static int GetShieldBonus(uint pc)
-            {
-                return Perk.GetPerkLevel(pc, PerkType.ShieldMaster);
-            }
-
             if (GetIsDM(creature) || GetIsDMPossessed(creature))
                 return;
 
@@ -1716,9 +1711,6 @@ namespace SWLOR.Game.Server.Service
                 perkType = PerkType.SaberstaffMastery;
             }
 
-            if (Item.ShieldBaseItemTypes.Contains(offHandType)) 
-                numberOfAttacks += GetShieldBonus(creature);
-
             var effectiveMasteryLevel = Perk.GetPerkLevel(creature, perkType);
             numberOfAttacks += effectiveMasteryLevel;
 
@@ -1741,7 +1733,7 @@ namespace SWLOR.Game.Server.Service
             {
                 if (Item.OneHandedMeleeItemTypes.Contains(offhandType))
                     critMod += Perk.GetPerkLevel(player, PerkType.WailingBlows) * 3; // 15% for WB
-                else if(offhandType == BaseItem.Invalid || Item.ShieldBaseItemTypes.Contains(offhandType))
+                else if(offhandType == BaseItem.Invalid)
                     critMod += Perk.GetPerkLevel(player, PerkType.Duelist);
             }
 
@@ -1841,30 +1833,6 @@ namespace SWLOR.Game.Server.Service
             }
 
             return control;
-        }
-
-        /// <summary>
-        /// Calculates the base value for a particular type of saving throw.
-        /// This does not factor in stat modifiers.
-        /// </summary>
-        /// <param name="player">The player to check</param>
-        /// <param name="type">The type of saving throw.</param>
-        /// <param name="offHandItem">The off hand item equipped to the left hand.</param>
-        /// <returns>The base saving throw value</returns>
-        public static int CalculateBaseSavingThrow(uint player, SavingThrow type, uint offHandItem = OBJECT_INVALID)
-        {
-            if (!GetIsPC(player) || GetIsDM(player) || GetIsDMPossessed(player))
-                return 0;
-
-            var offHandType = GetBaseItemType(offHandItem);
-            var amount = 0;
-
-            if (Item.ShieldBaseItemTypes.Contains(offHandType))
-            {
-                amount += Perk.GetPerkLevel(player, PerkType.ShieldResistance);
-            }
-
-            return amount;
         }
 
         /// <summary>

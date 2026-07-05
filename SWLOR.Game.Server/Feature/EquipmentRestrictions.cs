@@ -161,6 +161,12 @@ namespace SWLOR.Game.Server.Feature
 
             var itemType = GetBaseItemType(item);
 
+            // Shields have been removed from the game. Legacy shield items can no longer be equipped.
+            if (Item.ShieldBaseItemTypes.Contains(itemType))
+            {
+                return "Shields have been removed from the game.";
+            }
+
             // Droids may only equip items in specific slots if the item has the Use Limitation Race: Droid item property.
             // They are unable to equip any items in these slots if this item property is missing.
             // Non-Droids may not equip any items which have this item property.

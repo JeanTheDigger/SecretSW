@@ -66,7 +66,10 @@ namespace SWLOR.Game.Server.Native
 
         // Deflection constants
         private const int SaberDeflectChance = 5;
-        private const int ShieldDeflectChance = 10;
+
+        // CNWSCombatAttackData.m_nWeaponAttackType value for off-hand attacks.
+        // Double-sided weapons (saberstaff/twin blade) also report their second-blade swings as this type.
+        private const int OffHandWeaponAttackType = 2;
 
         // NPC object ID constant
         private const uint NpcActionTargetId = 2130706432;
@@ -270,7 +273,7 @@ namespace SWLOR.Game.Server.Native
                 accuracyModifiers += CalculateBackstabBonus(attacker, defender);
 
                 // Dual wield and weapon style modifiers
-                var percentageModifier = CalculateDualWieldAndStyleModifiers(attacker, weapon);
+                var percentageModifier = CalculateDualWieldAndStyleModifiers(attacker, weapon, pAttackData);
 
                 // Combat Mode - Power Attack (-5 ACC)
                 if (attacker.m_nCombatMode == PowerAttackMode)
@@ -511,28 +514,27 @@ namespace SWLOR.Game.Server.Native
             return 0;
         }
 
-        private static int CalculateDualWieldAndStyleModifiers(CNWSCreature attacker, CNWSItem weapon)
+        private static int CalculateDualWieldAndStyleModifiers(CNWSCreature attacker, CNWSItem weapon, CNWSCombatAttackData attackData)
         {
             var percentageModifier = 0;
             var offhand = attacker.m_pInventory.GetItemInSlot((uint)EquipmentSlot.LeftHand);
 
             if (weapon == null) return percentageModifier;
 
-            var bDoubleWeapon = Item.TwinBladeBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
-                               Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem);
-            var hasImprovedTwoWeaponFighting = attacker.m_pStats.HasFeat((ushort)FeatType.ImprovedTwoWeaponFighting) == 1;
-            var isShieldEquipped = offhand != null && Item.ShieldBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
-            var isDualKatarsEquipped = Item.KatarBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) &&
-                                      offhand != null && Item.KatarBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
-
-            // Apply dual wield penalty
-            if (bDoubleWeapon || !isShieldEquipped || !isDualKatarsEquipped)
+            // Multi-blade configurations pay the two-weapon penalty on their EXTRA swings only:
+            // main-hand attacks are always clean, dual-wield pays it on off-hand attacks, and
+            // double-sided weapons (saberstaffs, twin blades) pay it on second-blade attacks.
+            // Dual katars are exempt - paired blades are the martial art's baseline.
+            if (attackData.m_nWeaponAttackType == OffHandWeaponAttackType)
             {
-                if (!hasImprovedTwoWeaponFighting || weapon == offhand)
-                    percentageModifier += TwoWeaponPenalty;
+                var isDualKatarsEquipped = Item.KatarBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) &&
+                                          offhand != null && Item.KatarBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
 
-                var logMessage = $"Applying dual wield penalty. Offhand weapon: {(offhand?.GetFirstName().GetSimple() ?? weapon?.GetFirstName().GetSimple())}: {percentageModifier}";
-                Log.Write(LogGroup.Attack, logMessage);
+                if (!isDualKatarsEquipped)
+                {
+                    percentageModifier += TwoWeaponPenalty;
+                    Log.Write(LogGroup.Attack, $"Applying two-weapon penalty to extra swing: {TwoWeaponPenalty}%");
+                }
             }
 
             // Staff Flurry penalty
@@ -549,7 +551,7 @@ namespace SWLOR.Game.Server.Native
                 (Item.OneHandedMeleeItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
                  Item.ThrowingWeaponBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem)))
             {
-                var isDuelistValid = offhand == null || Item.ShieldBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
+                var isDuelistValid = offhand == null;
                 if (isDuelistValid)
                 {
                     percentageModifier += DuelistBonus;
@@ -568,22 +570,15 @@ namespace SWLOR.Game.Server.Native
                 return false;
 
             var defenderWeapon = defender.m_pInventory.GetItemInSlot((uint)EquipmentSlot.RightHand);
-            var defenderOffhand = defender.m_pInventory.GetItemInSlot((uint)EquipmentSlot.LeftHand);
             var saberBlock = defenderWeapon != null && Item.LightsaberBaseItemTypes.Contains((BaseItem)defenderWeapon.m_nBaseItem);
-            var shieldBlock = defenderOffhand != null &&
-                             defender.m_pStats.HasFeat((ushort)FeatType.Bulwark) == 1 &&
-                             Item.ShieldBaseItemTypes.Contains((BaseItem)defenderOffhand.m_nBaseItem);
 
-            if (!saberBlock && !shieldBlock)
+            if (!saberBlock)
                 return false;
 
             defender.m_ScriptVars.SetInt(new CExoString("RESOLVE_ATTACK_ROLL_DEFLECT_BLASTER"), 1);
 
             var deflectRoll = Random.Next(1, 100);
-            var deflectChance = 0;
-
-            if (saberBlock) deflectChance += SaberDeflectChance;
-            if (shieldBlock) deflectChance += ShieldDeflectChance;
+            var deflectChance = SaberDeflectChance;
 
             var deflected = deflectRoll <= deflectChance;
 

@@ -152,7 +152,6 @@ namespace SWLOR.Game.Server.Service
                 _defaultPerksByTier[level][PerkType.BeltProficiency] = level;
                 _defaultPerksByTier[level][PerkType.RingProficiency] = level;
                 _defaultPerksByTier[level][PerkType.NecklaceProficiency] = level;
-                _defaultPerksByTier[level][PerkType.ShieldProficiency] = level;
                 _defaultPerksByTier[level][PerkType.BreastplateProficiency] = level;
                 _defaultPerksByTier[level][PerkType.HelmetProficiency] = level;
                 _defaultPerksByTier[level][PerkType.BracerProficiency] = level;

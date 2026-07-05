@@ -158,7 +158,6 @@ namespace SWLOR.Game.Server.Feature
             CreaturePlugin.AddFeatByLevel(player, FeatType.ArmorProficiencyLight, 1);
             CreaturePlugin.AddFeatByLevel(player, FeatType.ArmorProficiencyMedium, 1);
             CreaturePlugin.AddFeatByLevel(player, FeatType.ArmorProficiencyHeavy, 1);
-            CreaturePlugin.AddFeatByLevel(player, FeatType.ShieldProficiency, 1);
             CreaturePlugin.AddFeatByLevel(player, FeatType.WeaponProficiencyExotic, 1);
             CreaturePlugin.AddFeatByLevel(player, FeatType.WeaponProficiencyMartial, 1);
             CreaturePlugin.AddFeatByLevel(player, FeatType.WeaponProficiencySimple, 1);

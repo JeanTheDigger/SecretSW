@@ -22,7 +22,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             HelmetProficiency();
             BracerProficiency();
             LeggingProficiency();
-            HeavyShieldProficiency();
             TunicProficiency();
             CapProficiency();
             GloveProficiency();
@@ -402,46 +401,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .TriggerRefund(player =>
                 {
                     UnequipArmorIfRequirementsNotMet(player, PerkType.LeggingProficiency, InventorySlot.Boots);
-                });
-        }
-
-        private void HeavyShieldProficiency()
-        {
-            _builder.Create(PerkCategoryType.ArmorHeavy, PerkType.ShieldProficiency)
-                .Name("Shield Proficiency")
-
-                .AddPerkLevel()
-                .Description("Grants the ability to equip tier 1 Shields")
-                .Price(1)
-                .GrantsFeat(FeatType.ShieldProficiency1)
-
-                .AddPerkLevel()
-                .Description("Grants the ability to equip tier 2 Shields")
-                .Price(1)
-                .RequirementSkill(SkillType.Armor, 10)
-                .GrantsFeat(FeatType.ShieldProficiency2)
-
-                .AddPerkLevel()
-                .Description("Grants the ability to equip tier 3 Shields")
-                .Price(1)
-                .RequirementSkill(SkillType.Armor, 20)
-                .GrantsFeat(FeatType.ShieldProficiency3)
-
-                .AddPerkLevel()
-                .Description("Grants the ability to equip tier 4 Shields")
-                .Price(1)
-                .RequirementSkill(SkillType.Armor, 30)
-                .GrantsFeat(FeatType.ShieldProficiency4)
-
-                .AddPerkLevel()
-                .Description("Grants the ability to equip tier 5 Shields")
-                .Price(1)
-                .RequirementSkill(SkillType.Armor, 40)
-                .GrantsFeat(FeatType.ShieldProficiency5)
-
-                .TriggerRefund(player =>
-                {
-                    UnequipArmorIfRequirementsNotMet(player, PerkType.ShieldProficiency, InventorySlot.LeftHand);
                 });
         }
 
