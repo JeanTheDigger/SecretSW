@@ -8,6 +8,7 @@ using SWLOR.Game.Server.Feature.GuiDefinition.RefreshEvent;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.ChatCommandService;
+using SWLOR.Game.Server.Service.WorldEventService;
 using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.LogService;
 using Faction = SWLOR.Game.Server.Service.Faction;
@@ -28,6 +29,9 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         {
             CopyTargetItem();
             Day();
+            EventOpen();
+            EventClose();
+            EventList();
             Night();
             GetPlot();
             Kill();
@@ -91,6 +95,76 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SetTime(8, 0, 0, 0);
+                });
+        }
+
+        private void EventOpen()
+        {
+            _builder.Create("eventopen")
+                .Description("Opens a world event in your current area. Usage: /eventopen <pve|pvp> <minutes>")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 2)
+                        return "Usage: /eventopen <pve|pvp> <minutes>";
+
+                    var type = args[0].ToLower();
+                    if (type != "pve" && type != "pvp")
+                        return "Event type must be 'pve' or 'pvp'.";
+
+                    if (!int.TryParse(args[1], out var minutes) || minutes < 1 || minutes > 1440)
+                        return "Minutes must be a number between 1 and 1440.";
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    var area = GetArea(user);
+                    var type = args[0].ToLower() == "pvp"
+                        ? WorldEventType.PvP
+                        : WorldEventType.PvE;
+                    var minutes = int.Parse(args[1]);
+
+                    WorldEvent.OpenEvent(area, type, minutes);
+                    SendMessageToPC(user, $"Event opened in {GetName(area)} for {minutes} minutes.");
+                });
+        }
+
+        private void EventClose()
+        {
+            _builder.Create("eventclose")
+                .Description("Closes the world event in your current area.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) =>
+                {
+                    var area = GetArea(user);
+                    if (!WorldEvent.IsEventZone(area))
+                    {
+                        SendMessageToPC(user, "There is no active event in this area.");
+                        return;
+                    }
+
+                    WorldEvent.CloseEvent(area);
+                    SendMessageToPC(user, $"Event closed in {GetName(area)}.");
+                });
+        }
+
+        private void EventList()
+        {
+            _builder.Create("eventlist")
+                .Description("Lists all active world events.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) =>
+                {
+                    var any = false;
+                    foreach (var description in WorldEvent.GetActiveEventDescriptions())
+                    {
+                        SendMessageToPC(user, description);
+                        any = true;
+                    }
+
+                    if (!any)
+                        SendMessageToPC(user, "There are no active events.");
                 });
         }
 

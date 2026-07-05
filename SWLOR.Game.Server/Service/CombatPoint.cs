@@ -209,6 +209,30 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Returns, for each player who earned combat points against the given creature,
+        /// the skill they used most. Used by the event system to route endgame SP to the
+        /// skills players actually used during an objective.
+        /// </summary>
+        /// <param name="creature">The creature to look up.</param>
+        /// <returns>A map of player to their most-used skill.</returns>
+        public static Dictionary<uint, SkillType> GetTopContributionSkills(uint creature)
+        {
+            var result = new Dictionary<uint, SkillType>();
+            if (!_creatureCombatPointTracker.ContainsKey(creature))
+                return result;
+
+            foreach (var (player, skills) in _creatureCombatPointTracker[creature])
+            {
+                if (skills.Count <= 0)
+                    continue;
+
+                result[player] = skills.OrderByDescending(x => x.Value).First().Key;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Adds a combat point for a player to an NPC on a skill.
         /// </summary>
         /// <param name="player">The player receiving the point</param>

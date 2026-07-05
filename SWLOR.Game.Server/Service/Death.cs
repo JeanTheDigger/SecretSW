@@ -55,6 +55,9 @@ namespace SWLOR.Game.Server.Service
             }
             else
             {
+                // Lethal kills inside PvP event zones feed the Phase-2 endgame SP economy.
+                WorldEvent.ProcessPvPKill(hostile, player);
+
                 const string RespawnMessage = "You have died. Wait for another player to revive you or respawn to go to your registered medical center.";
                 PopUpDeathGUIPanel(player, true, true, 0, RespawnMessage);
 
