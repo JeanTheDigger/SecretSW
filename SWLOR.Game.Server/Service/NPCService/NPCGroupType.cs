@@ -143,6 +143,10 @@ namespace SWLOR.Game.Server.Service.NPCService
 		Tatooine_AncientSandworm = 66,
         [NPCGroup("Trials Guardian")]
         TrialsGuardian = 67,
+        [NPCGroup("Space Pirates")]
+        SpacePirate = 68,
+        [NPCGroup("Raider Ace")]
+        SpaceRaiderAce = 69,
     }
 
     public class NPCGroupAttribute : Attribute
