@@ -59,8 +59,10 @@ namespace SWLOR.Game.Server.Service
                 WorldEvent.ProcessPvPKill(hostile, player);
 
                 // Perma-death: dying inside an active event zone removes the character from play.
+                // Only those who have passed the Trials wager their life - the Order protects
+                // learners; an unflagged character in an event zone takes an ordinary death.
                 // The character is moved to limbo for admin review - never deleted automatically.
-                if (WorldEvent.IsEventZone(GetArea(player)))
+                if (WorldEvent.IsEventZone(GetArea(player)) && HasCompletedTrials(player))
                 {
                     ProcessPermaDeath(player);
                     WriteAudit(player);
@@ -98,6 +100,18 @@ namespace SWLOR.Game.Server.Service
         /// The waypoint tag of the out-of-play holding area for perma-dead characters.
         /// </summary>
         public const string PermaDeathLimboWaypoint = "PERMADEATH_LIMBO";
+
+        /// <summary>
+        /// Determines whether a character has passed the Trials and is therefore exposed
+        /// to perma-death inside event zones.
+        /// </summary>
+        private static bool HasCompletedTrials(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+
+            return dbPlayer != null && dbPlayer.HasCompletedTrials;
+        }
 
         /// <summary>
         /// Flags a character as perma-dead and moves them to the limbo area.

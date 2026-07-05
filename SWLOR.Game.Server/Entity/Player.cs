@@ -139,6 +139,7 @@ namespace SWLOR.Game.Server.Entity
         public bool IsDeleted { get; set; }
         [Indexed]
         public bool IsPermaDead { get; set; }
+        public bool HasCompletedTrials { get; set; }
         public bool IsUsingDualPistolMode { get; set; }
         public DateTime? DatePerkRefundAvailable { get; set; }
         [Indexed]

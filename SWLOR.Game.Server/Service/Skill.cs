@@ -47,7 +47,8 @@ namespace SWLOR.Game.Server.Service
         /// <summary>
         /// Retrieves the rank ceiling currently in effect for a skill, based on the player's phase.
         /// Non-cap skills (languages) always use their full MaxRank. Cap-contributing skills are
-        /// limited to Phase1PerSkillCap until the player crosses the Phase 1 boundary.
+        /// limited to Phase1PerSkillCap until the player crosses the Phase 1 boundary AND has
+        /// completed the Trials - reaching 350 SP unlocks the Trials, not the ranks themselves.
         /// </summary>
         /// <param name="dbPlayer">The player entity to evaluate.</param>
         /// <param name="skill">The skill to evaluate.</param>
@@ -59,7 +60,7 @@ namespace SWLOR.Game.Server.Service
             if (!details.ContributesToSkillCap)
                 return details.MaxRank;
 
-            return dbPlayer.TotalSPAcquired >= Phase1Cap
+            return dbPlayer.TotalSPAcquired >= Phase1Cap && dbPlayer.HasCompletedTrials
                 ? details.MaxRank
                 : Math.Min(Phase1PerSkillCap, details.MaxRank);
         }
@@ -266,7 +267,7 @@ namespace SWLOR.Game.Server.Service
 
             if (!details.ContributesToSkillCap)
                 return;
-            if (dbPlayer.TotalSPAcquired < Phase1Cap)
+            if (dbPlayer.TotalSPAcquired < Phase1Cap || !dbPlayer.HasCompletedTrials)
                 return;
 
             var pcSkill = dbPlayer.Skills[skill];

@@ -32,6 +32,8 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             EventOpen();
             EventClose();
             EventList();
+            GrantKnighthood();
+            RevokeKnighthood();
             PermaRestore();
             Night();
             GetPlot();
@@ -96,6 +98,73 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SetTime(8, 0, 0, 0);
+                });
+        }
+
+        private void GrantKnighthood()
+        {
+            _builder.Create("grantknighthood")
+                .Description("Marks a character as having completed the Trials, unlocking Phase 2: ranks 51-100, event SP, and perma-death exposure. Stands in for the Trials quest chain until that content exists.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has already completed the Trials.");
+                        return;
+                    }
+
+                    if (dbPlayer.TotalSPAcquired < Skill.Phase1Cap)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has not finished Phase 1 ({dbPlayer.TotalSPAcquired}/{Skill.Phase1Cap} SP). The Trials unlock at {Skill.Phase1Cap}.");
+                        return;
+                    }
+
+                    dbPlayer.HasCompletedTrials = true;
+                    DB.Set(dbPlayer);
+
+                    SendMessageToPC(target, ColorToken.Green("You have passed the Trials. The path to mastery - and its dangers - are open to you."));
+                    SendMessageToPC(user, $"{GetName(target)} has been granted knighthood.");
+                    Log.Write(LogGroup.DM, $"{GetName(user)} granted knighthood to {GetName(target)} ({playerId}).");
+                });
+        }
+
+        private void RevokeKnighthood()
+        {
+            _builder.Create("revokeknighthood")
+                .Description("Clears a character's Trials completion flag, returning them to Phase 1 rules (mistake correction).")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (!dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has not completed the Trials.");
+                        return;
+                    }
+
+                    dbPlayer.HasCompletedTrials = false;
+                    DB.Set(dbPlayer);
+
+                    SendMessageToPC(user, $"{GetName(target)}'s knighthood has been revoked.");
+                    Log.Write(LogGroup.DM, $"{GetName(user)} revoked knighthood from {GetName(target)} ({playerId}).");
                 });
         }
 
