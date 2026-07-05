@@ -89,24 +89,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             }
         }
 
-        public bool IsInMyPerksMode
-        {
-            get => Get<bool>();
-            set => Set(value);
-        }
-
-        public bool IsInBeastPerksMode
-        {
-            get => Get<bool>();
-            set => Set(value);
-        }
-
-        public bool HasBeast
-        {
-            get => Get<bool>();
-            set => Set(value);
-        }
-
         private int _selectedPerkIndex;
         private int SelectedPerkIndex
         {
@@ -202,8 +184,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
         protected override void Initialize(GuiPayloadBase initialPayload)
         {
-            IsInMyPerksMode = true;
-            IsInBeastPerksMode = false;
             _initialLoadDone = false;
             SelectedPerkCategoryId = 0;
             SearchText = string.Empty;
@@ -224,7 +204,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
         private void LoadCategories()
         {
-            var groupType = IsInMyPerksMode ? PerkGroupType.Player : PerkGroupType.Beast;
+            var groupType = PerkGroupType.Player;
             var categories = new GuiBindingList<GuiComboEntry>
             {
                 new("<All Categories>", 0)
@@ -244,18 +224,9 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var dbPlayer = DB.Get<Player>(playerId);
             var now = DateTime.UtcNow;
 
-            if (IsInMyPerksMode)
-            {
-                AvailableSP = $"Available SP: {dbPlayer.UnallocatedSP}";
-                var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
-                TotalSP = $"Total SP: {dbPlayer.TotalSPAcquired} / {spCap}";
-            }
-            else if (IsInBeastPerksMode)
-            {
-                var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                AvailableSP = $"Available SP: {dbBeast.UnallocatedSP}";
-                TotalSP = $"Total SP: {dbBeast.Level} / {BeastMastery.MaxLevel}";
-            }
+            AvailableSP = $"Available SP: {dbPlayer.UnallocatedSP}";
+            var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+            TotalSP = $"Total SP: {dbPlayer.TotalSPAcquired} / {spCap}";
 
             var dateRefundAvailable = dbPlayer.DatePerkRefundAvailable ?? now;
             var isRefundAvailable = dateRefundAvailable <= now;
@@ -264,7 +235,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 : Time.GetTimeToWaitLongIntervals(now, dateRefundAvailable, true);
             ResetNextAvailable = $"Reset Available: {dateRefundAvailableText} [# Available: {Currency.GetCurrency(Player, CurrencyType.PerkRefundToken)}]";
             IsRefundEnabled = false;
-            HasBeast = !string.IsNullOrWhiteSpace(dbPlayer.ActiveBeastId);
         }
 
         private void LoadPerks()
@@ -282,9 +252,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var perkDetailSelected = new GuiBindingList<bool>();
             var pageNumbers = new GuiBindingList<GuiComboEntry>();
 
-            var group = IsInMyPerksMode
-                ? PerkGroupType.Player
-                : PerkGroupType.Beast;
+            var group = PerkGroupType.Player;
             var perkList = SelectedPerkCategoryId == 0
                 ? Perk.GetAllActivePerks(group)
                 : Perk.GetActivePerksInCategory(group, (PerkCategoryType)SelectedPerkCategoryId);
@@ -311,28 +279,9 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
             foreach (var (type, detail) in perkList)
             {
-                int rank;
-
-                if (IsInMyPerksMode)
-                {
-                    rank = dbPlayer.Perks.ContainsKey(type)
-                        ? dbPlayer.Perks[type]
-                        : 0;
-                }
-                else
-                {
-                    var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                    if (dbBeast == null)
-                    {
-                        rank = 0;
-                    }
-                    else
-                    {
-                        rank = dbBeast.Perks.ContainsKey(type)
-                            ? dbBeast.Perks[type]
-                            : 0;
-                    }
-                }
+                var rank = dbPlayer.Perks.ContainsKey(type)
+                    ? dbPlayer.Perks[type]
+                    : 0;
 
                 var nextUpgrade = detail.PerkLevels.ContainsKey(rank + 1)
                     ? detail.PerkLevels[rank + 1]
@@ -448,30 +397,12 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var selectedPerk = _filteredPerks[index];
 
             var detail = Perk.GetPerkDetails(selectedPerk);
-            int unallocatedSP;
-            int rank;
 
             // Build the strings used for the details and requirements list.
-            if (IsInMyPerksMode)
-            {
-                rank = dbPlayer.Perks.ContainsKey(selectedPerk)
-                    ? dbPlayer.Perks[selectedPerk]
-                    : 0;
-
-                unallocatedSP = dbPlayer.UnallocatedSP;
-            }
-            else
-            {
-                var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                if (dbBeast == null)
-                    return;
-
-                rank = dbBeast.Perks.ContainsKey(selectedPerk)
-                    ? dbBeast.Perks[selectedPerk]
-                    : 0;
-
-                unallocatedSP = dbBeast.UnallocatedSP;
-            }
+            var rank = dbPlayer.Perks.ContainsKey(selectedPerk)
+                ? dbPlayer.Perks[selectedPerk]
+                : 0;
+            var unallocatedSP = dbPlayer.UnallocatedSP;
 
             var currentUpgrade = detail.PerkLevels.ContainsKey(rank)
                 ? detail.PerkLevels[rank]
@@ -503,7 +434,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
         private void GrantFeats(PerkLevel nextLevel)
         {
-            var target = IsInMyPerksMode ? Player : GetAssociate(AssociateType.Henchman, Player);
+            var target = Player;
             if (!GetIsObjectValid(target))
                 return;
 
@@ -524,9 +455,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
         private void AddFeatToHotBar(FeatType feat)
         {
-            if (!IsInMyPerksMode)
-                return;
-
             var qbs = PlayerQuickBarSlot.UseFeat(feat);
 
             // Try to add the new feat to the player's hotbar.
@@ -557,7 +485,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         // Applies any Purchase triggers associated with this perk.
         private void ApplyPurchasePerkTriggers(int perkLevel, PerkType selectedPerk)
         {
-            var target = IsInMyPerksMode ? Player : GetAssociate(AssociateType.Henchman, Player);
+            var target = Player;
             if (!GetIsObjectValid(target))
                 return;
 
@@ -573,27 +501,13 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
         public Action OnClickBuyUpgrade() => () =>
         {
-            int rank;
             var selectedPerk = _filteredPerks[_selectedPerkIndex];
 
             var playerId = GetObjectUUID(Player);
             var dbPlayer = DB.Get<Player>(playerId);
-            if (IsInMyPerksMode)
-            {
-                rank = dbPlayer.Perks.ContainsKey(selectedPerk)
-                    ? dbPlayer.Perks[selectedPerk]
-                    : 0;
-            }
-            else
-            {
-                var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                if (dbBeast == null)
-                    return;
-
-                rank = dbBeast.Perks.ContainsKey(selectedPerk)
-                    ? dbBeast.Perks[selectedPerk]
-                    : 0;
-            }
+            var rank = dbPlayer.Perks.ContainsKey(selectedPerk)
+                ? dbPlayer.Perks[selectedPerk]
+                : 0;
             
             var detail = Perk.GetPerkDetails(selectedPerk);
             
@@ -614,26 +528,11 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     dbPlayer = DB.Get<Player>(playerId);
                     selectedPerk = _filteredPerks[_selectedPerkIndex];
                     detail = Perk.GetPerkDetails(selectedPerk);
-                    int unallocatedSP;
 
-                    if (IsInMyPerksMode)
-                    {
-                        rank = dbPlayer.Perks.ContainsKey(selectedPerk)
-                            ? dbPlayer.Perks[selectedPerk]
-                            : 0;
-                        unallocatedSP = dbPlayer.UnallocatedSP;
-                    }
-                    else
-                    {
-                        var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                        if (dbBeast == null)
-                            return;
-
-                        rank = dbBeast.Perks.ContainsKey(selectedPerk)
-                            ? dbBeast.Perks[selectedPerk]
-                            : 0;
-                        unallocatedSP = dbBeast.UnallocatedSP;
-                    }
+                    rank = dbPlayer.Perks.ContainsKey(selectedPerk)
+                        ? dbPlayer.Perks[selectedPerk]
+                        : 0;
+                    var unallocatedSP = dbPlayer.UnallocatedSP;
 
                     nextUpgrade = detail.PerkLevels.ContainsKey(rank + 1)
                         ? detail.PerkLevels[rank + 1]
@@ -669,26 +568,11 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     }
 
                     // All validation passes. Perform the upgrade.
-                    if (IsInMyPerksMode)
-                    {
-                        dbPlayer.Perks[selectedPerk] = rank + 1;
-                        dbPlayer.UnallocatedSP -= nextUpgrade.Price;
-                        DB.Set(dbPlayer);
+                    dbPlayer.Perks[selectedPerk] = rank + 1;
+                    dbPlayer.UnallocatedSP -= nextUpgrade.Price;
+                    DB.Set(dbPlayer);
 
-                        unallocatedSP = dbPlayer.UnallocatedSP;
-                    }
-                    else
-                    {
-                        var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                        if (dbBeast == null)
-                            return;
-
-                        dbBeast.Perks[selectedPerk] = rank + 1;
-                        dbBeast.UnallocatedSP -= nextUpgrade.Price;
-                        DB.Set(dbBeast);
-
-                        unallocatedSP = dbBeast.UnallocatedSP;
-                    }
+                    unallocatedSP = dbPlayer.UnallocatedSP;
 
                     var newRank = rank + 1;
                     GrantFeats(nextUpgrade);
@@ -736,7 +620,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var dbPlayer = DB.Get<Player>(playerId);
                 var selectedPerk = _filteredPerks[SelectedPerkIndex];
                 var perkDetail = Perk.GetPerkDetails(selectedPerk);
-                var target = IsInMyPerksMode ? Player : GetAssociate(AssociateType.Henchman, Player);
+                var target = Player;
 
                 if (Currency.GetCurrency(Player, CurrencyType.PerkRefundToken) <= 0)
                 {
@@ -762,38 +646,16 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                         return;
                     }
 
-                    if (IsInMyPerksMode)
-                    {
-                        var perkLevel = dbPlayer.Perks[selectedPerk];
-                        var refundAmount = perkDetail.PerkLevels
-                            .Where(x => x.Key <= perkLevel)
-                            .Sum(x => x.Value.Price);
-                        
-                        dbPlayer.UnallocatedSP += refundAmount;
-                        dbPlayer.Perks.Remove(selectedPerk);
+                    var perkLevel = dbPlayer.Perks[selectedPerk];
+                    var refundAmount = perkDetail.PerkLevels
+                        .Where(x => x.Key <= perkLevel)
+                        .Sum(x => x.Value.Price);
 
-                        Log.Write(LogGroup.PerkRefund, $"REFUND - {playerId} - Refunded Date {DateTime.UtcNow} - Level {perkLevel} - PerkID {selectedPerk}");
-                        FloatingTextStringOnCreature($"Perk refunded! You reclaimed {refundAmount} SP.", Player, false);
-                    }
-                    else
-                    {
-                        var dbBeast = DB.Get<Beast>(dbPlayer.ActiveBeastId);
-                        if (dbBeast == null)
-                            return;
+                    dbPlayer.UnallocatedSP += refundAmount;
+                    dbPlayer.Perks.Remove(selectedPerk);
 
-                        var perkLevel = dbBeast.Perks[selectedPerk];
-                        var refundAmount = perkDetail.PerkLevels
-                            .Where(x => x.Key <= perkLevel)
-                            .Sum(x => x.Value.Price);
-
-                        dbBeast.UnallocatedSP += refundAmount;
-                        dbBeast.Perks.Remove(selectedPerk);
-
-                        DB.Set(dbBeast);
-
-                        Log.Write(LogGroup.PerkRefund, $"REFUND Beast - {dbBeast.Id} (Owner: {dbPlayer.Id}) - Refunded Date {DateTime.UtcNow} - Level {perkLevel} - PerkID {selectedPerk}");
-                        FloatingTextStringOnCreature($"Perk refunded! Your beast reclaimed {refundAmount} SP.", Player, false);
-                    }
+                    Log.Write(LogGroup.PerkRefund, $"REFUND - {playerId} - Refunded Date {DateTime.UtcNow} - Level {perkLevel} - PerkID {selectedPerk}");
+                    FloatingTextStringOnCreature($"Perk refunded! You reclaimed {refundAmount} SP.", Player, false);
 
                     dbPlayer.DatePerkRefundAvailable = DateTime.UtcNow.AddHours(1);
                     DB.Set(dbPlayer);
@@ -851,23 +713,5 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             LoadDetails();
         }
 
-        public Action OnClickMyPerks() => () =>
-        {
-            IsInMyPerksMode = true;
-            IsInBeastPerksMode = false;
-            SelectedPerkCategoryId = 0;
-            LoadCategories();
-            LoadDetails();
-            LoadPerks();
-        };
-        public Action OnClickBeastPerks() => () =>
-        {
-            IsInMyPerksMode = false;
-            IsInBeastPerksMode = true;
-            SelectedPerkCategoryId = 0;
-            LoadCategories();
-            LoadDetails();
-            LoadPerks();
-        };
     }
 }

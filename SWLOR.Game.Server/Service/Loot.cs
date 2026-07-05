@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SWLOR.Game.Server.Core;
-using SWLOR.Game.Server.Service.BeastMasteryService;
 using SWLOR.Game.Server.Service.LogService;
 using SWLOR.Game.Server.Service.LootService;
 using SWLOR.Game.Server.Service.PerkService;
@@ -301,8 +300,6 @@ namespace SWLOR.Game.Server.Service
             var container = CreateObject(ObjectType.Placeable, "corpse", spawnLocation);
             SetLocalObject(container, CorpseBodyVariable, self);
             SetName(container, $"{GetName(self)}'s Corpse");
-            SetLocalInt(container, BeastMastery.BeastTypeVariable, GetLocalInt(self, BeastMastery.BeastTypeVariable));
-            SetLocalInt(container, BeastMastery.BeastLevelVariable, npcStats.Level);
 
             AssignCommand(container, () =>
             {
@@ -373,8 +370,7 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
-        /// When the loot corpse is closed, either spawn an "Extract" placeable to be used with Beast Mastery DNA extraction
-        /// or remove the dead creature from the game.
+        /// When the loot corpse is closed and emptied, remove the dead creature from the game.
         /// </summary>
         [NWNEventHandler(ScriptName.OnCorpseClosed)]
         public static void CloseCorpseContainer()
@@ -382,35 +378,15 @@ namespace SWLOR.Game.Server.Service
             var container = OBJECT_SELF;
             var firstItem = GetFirstItemInInventory(container);
             var corpseOwner = GetLocalObject(container, CorpseBodyVariable);
-            var beastTypeId = GetLocalInt(container, BeastMastery.BeastTypeVariable);
-            var level = GetLocalInt(container, BeastMastery.BeastLevelVariable);
 
             if (!GetIsObjectValid(firstItem))
             {
                 DestroyObject(container);
 
-                if (beastTypeId <= 0)
+                AssignCommand(corpseOwner, () =>
                 {
-                    AssignCommand(corpseOwner, () =>
-                    {
-                        SetIsDestroyable();
-                    });
-                }
-                else
-                {
-                    var beastType = (BeastType)beastTypeId;
-                    var beastDetail = BeastMastery.GetBeastDetail(beastType);
-                    var extractCorpse = CreateObject(ObjectType.Placeable, BeastMastery.ExtractCorpseObjectResref, GetLocation(container));
-                    SetLocalObject(extractCorpse, CorpseBodyVariable, corpseOwner);
-                    SetLocalInt(extractCorpse, BeastMastery.BeastTypeVariable, beastTypeId);
-                    SetLocalInt(extractCorpse, BeastMastery.BeastLevelVariable, level);
-                    
-                    AssignCommand(extractCorpse, () =>
-                    {
-                        ScheduleCorpseCleanup(extractCorpse);
-                    });
-                    SetName(extractCorpse, $"Extract DNA: {beastDetail.Name}");
-                }
+                    SetIsDestroyable();
+                });
             }
         }
 

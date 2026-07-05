@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using SWLOR.Game.Server.Enumeration;
-using SWLOR.Game.Server.Service.BeastMasteryService;
 using SWLOR.Game.Server.Service.SkillService;
 using SWLOR.NWN.API.NWScript.Enum;
 
@@ -208,32 +207,6 @@ namespace SWLOR.Game.Server.Service.PerkService
         public PerkBuilder RequirementCannotHavePerk(PerkType cannotHavePerkType)
         {
             var requirement = new PerkRequirementCannotHavePerk(cannotHavePerkType);
-            _activeLevel.Requirements.Add(requirement);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Adds a requirement that the beast must meet a level requirement.
-        /// </summary>
-        /// <param name="level">The level to require</param>
-        /// <returns>A perk builder with the configured options.</returns>
-        public PerkBuilder RequirementBeastLevel(int level)
-        {
-            var requirement = new PerkRequirementBeastLevel(level);
-            _activeLevel.Requirements.Add(requirement);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Adds a requirement that the beast must be of a certain role.
-        /// </summary>
-        /// <param name="role">The type of role to require</param>
-        /// <returns>A perk builder with the configured options.</returns>
-        public PerkBuilder RequirementBeastRole(BeastRoleType role)
-        {
-            var requirement = new PerkRequirementBeastRole(role);
             _activeLevel.Requirements.Add(requirement);
 
             return this;

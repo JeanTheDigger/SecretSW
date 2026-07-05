@@ -17,7 +17,6 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             //MoveDoor();
             EnmityDebugger();
             GetObjectId();
-            ResetBeast();
 
             return _builder.Build();
         }
@@ -95,25 +94,6 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SendMessageToPC(user, $"{GetName(target)} oid = {target}");
-                });
-        }
-
-        private void ResetBeast()
-        {
-            _builder.Create("resetbeast")
-                .Description("")
-                .Permissions(AuthorizationLevel.Admin)
-                .RequiresTarget()
-                .Action((user, target, location, args) =>
-                {
-                    var playerId = GetObjectUUID(user);
-                    var dbPlayer = DB.Get<Player>(playerId);
-                    
-                    dbPlayer.ActiveBeastId = string.Empty;
-                    DB.Set(dbPlayer);
-
-                    DB.Delete<Beast>(dbPlayer.ActiveBeastId);
-
                 });
         }
     }

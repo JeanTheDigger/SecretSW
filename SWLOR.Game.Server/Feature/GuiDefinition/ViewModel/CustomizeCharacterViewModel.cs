@@ -204,10 +204,9 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         public Action OnSavePortraitClick() => () =>
         {
             var isDroid = Droid.IsDroid(_target);
-            var isBeast = BeastMastery.IsPlayerBeast(_target);
             var portraitId = Cache.GetPortraitByInternalId(_activePortraitInternalId);
 
-            if (isDroid || isBeast || string.IsNullOrWhiteSpace(CustomPortraitFile))
+            if (isDroid || string.IsNullOrWhiteSpace(CustomPortraitFile))
             {
                 SetPortraitId(_target, portraitId);
             }
@@ -225,14 +224,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 constructedDroid.PortraitId = portraitId;
 
                 Droid.SaveConstructedDroid(controller, constructedDroid);
-            }
-            else if (isBeast)
-            {
-                var beastId = BeastMastery.GetBeastId(_target);
-                var dbBeast = DB.Get<Beast>(beastId);
-
-                dbBeast.PortraitId = portraitId;
-                DB.Set(dbBeast);
             }
 
             Gui.PublishRefreshEvent(Player, new ChangePortraitRefreshEvent());
@@ -259,14 +250,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 constructedDroid.SoundSetId = soundSetId;
 
                 Droid.SaveConstructedDroid(controller, constructedDroid);
-            }
-            else if (BeastMastery.IsPlayerBeast(_target))
-            {
-                var beastId = BeastMastery.GetBeastId(_target);
-                var dbBeast = DB.Get<Beast>(beastId);
-
-                dbBeast.SoundSetId = soundSetId;
-                DB.Set(dbBeast);
             }
         };
     }
