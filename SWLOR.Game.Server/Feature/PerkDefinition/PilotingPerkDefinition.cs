@@ -12,6 +12,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             var builder = new PerkBuilder();
             Starships(builder);
             FlightStances(builder);
+            FlightDoctrines(builder);
             DefensiveModules(builder);
             OffensiveModules(builder);
             EnergyManagement(builder);
@@ -20,6 +21,42 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             IntuitivePiloting(builder);
 
             return builder.Build();
+        }
+
+        // The three flight doctrine arcs (class-neutral). Levels 1-3 are the Phase-1 arc;
+        // levels 4-6 unlock via flight recorders looted from events, on top of Phase-2
+        // Piloting gates.
+        private void FlightDoctrines(PerkBuilder builder)
+        {
+            BuildFlightDoctrine(builder, PerkType.DoctrineInterceptor, "Interceptor Doctrine",
+                "The dogfighter's art: +{0} accuracy while flying a FIGHTER-class hull.");
+
+            BuildFlightDoctrine(builder, PerkType.DoctrineStrike, "Strike Doctrine",
+                "The capital-killer's art: +{0} damage on all ordnance weapons (missiles, torpedoes, bombs), on any hull.");
+
+            BuildFlightDoctrine(builder, PerkType.DoctrineEscort, "Escort Doctrine",
+                "The wingmate's art: +{0} evasion while flying a FIGHTER-class hull.");
+        }
+
+        private static void BuildFlightDoctrine(PerkBuilder builder, PerkType perkType, string name, string template)
+        {
+            var perLevel = perkType == PerkType.DoctrineStrike ? 2 : 1;
+            var gates = new[] { 15, 30, 45, 60, 75, 90 };
+            var prices = new[] { 2, 3, 3, 5, 5, 6 };
+
+            var perk = builder.Create(PerkCategoryType.Piloting, perkType)
+                .Name(name);
+
+            for (var level = 1; level <= 6; level++)
+            {
+                perk.AddPerkLevel()
+                    .Description(string.Format(template, perLevel * level))
+                    .Price(prices[level - 1])
+                    .RequirementSkill(SkillType.Piloting, gates[level - 1]);
+
+                if (level == 4)
+                    perk.RequirementUnlocked();
+            }
         }
 
         private void FlightStances(PerkBuilder builder)

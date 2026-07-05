@@ -1624,6 +1624,51 @@ namespace SWLOR.Game.Server.Service
             _flightStances.Remove(pilot);
         }
 
+        /// <summary>
+        /// Interceptor doctrine: +1 accuracy per level, but only at a FIGHTER's stick -
+        /// dogfighting is a fighter pilot's art.
+        /// </summary>
+        private static int GetInterceptorBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            var status = GetShipStatus(pilot);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Fighter)
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineInterceptor);
+        }
+
+        /// <summary>
+        /// Escort doctrine: +1 evasion per level, but only at a FIGHTER's stick -
+        /// flying loose formation is a fighter pilot's art.
+        /// </summary>
+        private static int GetEscortBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            var status = GetShipStatus(pilot);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Fighter)
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineEscort);
+        }
+
+        /// <summary>
+        /// Strike doctrine: +2 ordnance module damage per level, on ANY frame -
+        /// bombers are transports, and the capital-killer's art travels with the pilot.
+        /// Consulted by every ordnance weapon module.
+        /// </summary>
+        public static int GetStrikeOrdnanceBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineStrike) * 2;
+        }
+
         private static int GetFlightStanceAccuracyMod(uint pilot)
         {
             return GetFlightStance(pilot) switch
@@ -1661,6 +1706,9 @@ namespace SWLOR.Game.Server.Service
             // Flight stance: attack runs hot, evasive flies loose.
             bonus += GetFlightStanceAccuracyMod(attacker);
 
+            // Interceptor doctrine: the dogfighter's edge.
+            bonus += GetInterceptorBonus(attacker);
+
             var stat = GetAbilityScore(attacker, AbilityType.Agility);
             int level;
 
@@ -1692,6 +1740,9 @@ namespace SWLOR.Game.Server.Service
 
             // Flight stance: attack runs hot, evasive flies loose.
             bonus += GetFlightStanceEvasionMod(defender);
+
+            // Escort doctrine: loose-formation flying.
+            bonus += GetEscortBonus(defender);
             var stat = GetAbilityScore(defender, AbilityType.Agility);
             int level;
 

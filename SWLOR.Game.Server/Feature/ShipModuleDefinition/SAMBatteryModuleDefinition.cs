@@ -65,7 +65,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                     var defenseBonus = targetShipStatus.ExplosiveDefense * 2;
                     var defense = Space.GetShipDefense(target, defenseBonus);
                     var defenderStat = GetAbilityScore(target, AbilityType.Vitality);
-                    var moduleDamage = dmg + moduleBonus / 2;
+                    var moduleDamage = dmg + moduleBonus / 2 + Space.GetStrikeOrdnanceBonus(activator);
                     var damage = Combat.CalculateDamage(
                         attack,
                         moduleDamage,

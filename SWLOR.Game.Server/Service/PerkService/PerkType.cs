@@ -341,5 +341,10 @@
 
         // Capital ships are COMMANDED, not flown: gates on Leadership.
         CapitalCommand = 324,
+
+        // Flight doctrines (class-neutral pilot arcs)
+        DoctrineInterceptor = 325,
+        DoctrineStrike = 326,
+        DoctrineEscort = 327,
     }
 }

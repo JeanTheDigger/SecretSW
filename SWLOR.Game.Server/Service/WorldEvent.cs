@@ -334,7 +334,9 @@ namespace SWLOR.Game.Server.Service
         private static readonly PerkType[] _formUnlocks =
         {
             PerkType.FormShiiCho, PerkType.FormMakashi, PerkType.FormSoresu,
-            PerkType.FormAtaru, PerkType.FormDjemSo, PerkType.FormNiman, PerkType.FormJuyo
+            PerkType.FormAtaru, PerkType.FormDjemSo, PerkType.FormNiman, PerkType.FormJuyo,
+            // Flight doctrines are class-neutral - they roll in both pools.
+            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort
         };
 
         private static readonly PerkType[] _standardUnlocks =
@@ -343,7 +345,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.DoctrineTerasKasi, PerkType.DoctrineMarksman,
             PerkType.ImplantNeural, PerkType.ImplantOcular, PerkType.ImplantDermal,
             PerkType.ImplantSkeletal, PerkType.ImplantCardio, PerkType.ImplantServo,
-            PerkType.ImplantCortical
+            PerkType.ImplantCortical,
+            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort
         };
 
         /// <summary>
@@ -368,7 +371,12 @@ namespace SWLOR.Game.Server.Service
             var perkName = perkDetail.Name;
 
             string itemName, itemDescription;
-            if (isForceSensitive)
+            if (perkDetail.Category == PerkCategoryType.Piloting)
+            {
+                itemName = $"Flight Recorder: {perkName}";
+                itemDescription = $"A named ace's flight recorder, its telemetry a masterclass in {perkName}. Using it opens the path to the doctrine's higher levels.";
+            }
+            else if (isForceSensitive)
             {
                 itemName = $"Holocron: {perkName}";
                 itemDescription = $"An ancient holocron holding a master's insight into {perkName}. Using it opens the path to the form's higher levels.";
