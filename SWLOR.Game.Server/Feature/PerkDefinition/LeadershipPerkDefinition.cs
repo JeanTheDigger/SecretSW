@@ -293,9 +293,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Shocking Shout")
 
                 .AddPerkLevel()
-                .Description("Attempts to stun all nearby enemies for 2 seconds, scaling with your Social modifier, with a will check of 22 + 2/3 of your Social modifier. (Max: 6 targets)")
+                .Description("Attempts to stun all nearby enemies for 2 seconds (scaling with your Social modifier, up to 4 seconds) with a will check of 22 + 2/3 of your Social modifier. Costs 5 STM. (Max: 6 targets)")
                 .Price(3)
-                .RequirementSkill(SkillType.Leadership, 25)
+                .RequirementSkill(SkillType.Leadership, 40)
                 .RequirementCharacterType(CharacterType.Standard)
                 .GrantsFeat(FeatType.ShockingShout);
         }

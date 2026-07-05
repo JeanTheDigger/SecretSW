@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.AbilityService;
 using SWLOR.Game.Server.Service.PerkService;
@@ -26,6 +27,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                 .Name("Shocking Shout")
                 .Level(1)
                 .HasRecastDelay(RecastGroup.ShockingShout, 120f)
+                .RequirementStamina(5)
                 .HasActivationDelay(0.5f)
                 .UsesAnimation(Animation.FireForgetTaunt)
                 .HasImpactAction((activator, target, level, location) =>
@@ -53,8 +55,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                             var socMod = GetAbilityModifier(AbilityType.Social, activator);
                             var dc = 22 + socMod * 2 / 3;
                             const float BaseDuration = 2f;
-                            var bonusDuration = GetAbilityModifier(AbilityType.Social, activator) * 0.5f;
-                            var duration = BaseDuration + bonusDuration;
+                            const float MaxDuration = 4f;
+                            var bonusDuration = GetAbilityModifier(AbilityType.Social, activator) * 0.25f;
+                            var duration = Math.Min(BaseDuration + bonusDuration, MaxDuration);
 
                             var checkResult = WillSave(nearest, dc, SavingThrowType.None, activator);
                             if (checkResult == SavingThrowResultType.Failed)

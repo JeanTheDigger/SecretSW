@@ -794,18 +794,18 @@ namespace SWLOR.Game.Server.Service
                 if (GetIsObjectValid(source))
                 {
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersStrike);
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            attack += sourceSOC;
+                            attack += 20 + sourceSOCMod * 4 / 3;
                             break;
                         case 2:
-                            attack += (int)(sourceSOC * 1.5f);
+                            attack += 30 + sourceSOCMod * 2;
                             break;
                         case 3:
-                            attack += sourceSOC * 2;
+                            attack += 40 + sourceSOCMod * 8 / 3;
                             break;
                     }
                 }
@@ -1320,19 +1320,19 @@ namespace SWLOR.Game.Server.Service
                 var source = StatusEffect.GetEffectData<uint>(creature, StatusEffectType.SoldiersSpeed);
                 if (GetIsObjectValid(source))
                 {
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersSpeed);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            evasionBonus += sourceSOC / 2;
+                            evasionBonus += 10 + sourceSOCMod * 2 / 3;
                             break;
                         case 2:
-                            evasionBonus += sourceSOC;
+                            evasionBonus += 20 + sourceSOCMod * 4 / 3;
                             break;
                         case 3:
-                            evasionBonus += (int)(sourceSOC * 1.5f);
+                            evasionBonus += 30 + sourceSOCMod * 2;
                             break;
                     }
 
@@ -1372,17 +1372,17 @@ namespace SWLOR.Game.Server.Service
 
                 if (GetIsObjectValid(source))
                 {
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersPrecision);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            return sourceSOC / 2;
+                            return 10 + sourceSOCMod * 2 / 3;
                         case 2:
-                            return sourceSOC;
+                            return 20 + sourceSOCMod * 4 / 3;
                         case 3:
-                            return (int)(sourceSOC * 1.5f);
+                            return 30 + sourceSOCMod * 2;
                     }
                 }
             }

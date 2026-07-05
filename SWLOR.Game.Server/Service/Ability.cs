@@ -784,6 +784,36 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Toggled auras drain a small amount of FP while active.
+        /// When the leader can no longer pay the upkeep, all of their auras drop.
+        /// </summary>
+        [NWNEventHandler(ScriptName.OnIntervalPC6Seconds)]
+        public static void ProcessAuraUpkeep()
+        {
+            const int FPUpkeepPerAura = 1;
+            var player = OBJECT_SELF;
+
+            if (!GetIsPC(player) || GetIsDM(player) || GetIsDMPossessed(player))
+                return;
+            if (!_playerAuras.ContainsKey(player))
+                return;
+
+            var aura = _playerAuras[player];
+            if (aura.Auras.Count <= 0)
+                return;
+
+            var upkeep = FPUpkeepPerAura * aura.Auras.Count;
+            if (Stat.GetCurrentFP(player) < upkeep)
+            {
+                RemoveAllAuras(player);
+                SendMessageToPC(player, "You no longer have the focus to maintain your auras.");
+                return;
+            }
+
+            Stat.ReduceFP(player, upkeep);
+        }
+
+        /// <summary>
         /// When a player enters the server, apply the Aura AOE effect.
         /// </summary>
         [NWNEventHandler(ScriptName.OnModuleEnter)]
