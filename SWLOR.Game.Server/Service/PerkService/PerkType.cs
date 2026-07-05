@@ -330,5 +330,8 @@
         ImplantCardio = 317,
         ImplantServo = 318,
         ImplantCortical = 319,
+
+        // Space
+        FlightStances = 320,
     }
 }

@@ -11,6 +11,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
         {
             var builder = new PerkBuilder();
             Starships(builder);
+            FlightStances(builder);
             DefensiveModules(builder);
             OffensiveModules(builder);
             EnergyManagement(builder);
@@ -19,6 +20,17 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             IntuitivePiloting(builder);
 
             return builder.Build();
+        }
+
+        private void FlightStances(PerkBuilder builder)
+        {
+            builder.Create(PerkCategoryType.Piloting, PerkType.FlightStances)
+                .Name("Flight Stances")
+
+                .AddPerkLevel()
+                .Description("Grants the attack, evasive, and balanced flight stances, switched with the /flightmode command while piloting. Attack: +10 accuracy, -10 evasion. Evasive: the reverse.")
+                .Price(1)
+                .RequirementSkill(SkillType.Piloting, 5);
         }
 
         private void Starships(PerkBuilder builder)

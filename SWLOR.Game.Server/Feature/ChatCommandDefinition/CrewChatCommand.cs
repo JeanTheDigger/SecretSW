@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SWLOR.Game.Server.Enumeration;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.ChatCommandService;
+using SWLOR.Game.Server.Service.SpaceService;
 
 namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
 {
@@ -38,6 +39,31 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SpaceCrew.DamageControl(user);
+                });
+
+            _builder.Create("flightmode")
+                .Description("Sets your flight stance while piloting: /flightmode <attack|evasive|balanced>. Requires the Flight Stances perk.")
+                .Permissions(AuthorizationLevel.Player)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 1)
+                        return "Usage: /flightmode <attack|evasive|balanced>";
+
+                    var mode = args[0].ToLower();
+                    if (mode != "attack" && mode != "evasive" && mode != "balanced")
+                        return "Stance must be 'attack', 'evasive', or 'balanced'.";
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    var stance = args[0].ToLower() switch
+                    {
+                        "attack" => FlightStanceType.Attack,
+                        "evasive" => FlightStanceType.Evasive,
+                        _ => FlightStanceType.Balanced
+                    };
+                    Space.SetFlightStance(user, stance);
                 });
 
             return _builder.Build();

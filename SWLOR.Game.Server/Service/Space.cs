@@ -844,6 +844,7 @@ namespace SWLOR.Game.Server.Service
             SetCreatureAppearanceType(player, dbPlayer.OriginalAppearanceType);
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
             CreaturePlugin.SetMovementRateFactor(player, 1.0f);
+            ClearFlightStance(player);
             Enmity.RemoveCreatureEnmity(player);
 
             // Save the ship's hot bar and unassign the active ship Id.
@@ -1577,6 +1578,72 @@ namespace SWLOR.Game.Server.Service
             };
         }
 
+        // Flight stances are runtime pilot state - cleared whenever space mode ends.
+        private static readonly Dictionary<uint, FlightStanceType> _flightStances = new();
+
+        /// <summary>
+        /// Retrieves a pilot's current flight stance (Balanced when unset).
+        /// </summary>
+        public static FlightStanceType GetFlightStance(uint pilot)
+        {
+            return _flightStances.TryGetValue(pilot, out var stance) ? stance : FlightStanceType.Balanced;
+        }
+
+        /// <summary>
+        /// Sets a pilot's flight stance. Requires the Flight Stances perk and space mode.
+        /// </summary>
+        public static void SetFlightStance(uint pilot, FlightStanceType stance)
+        {
+            if (!IsPlayerInSpaceMode(pilot))
+            {
+                SendMessageToPC(pilot, "Flight stances only matter at the stick. Board a ship first.");
+                return;
+            }
+
+            if (Perk.GetPerkLevel(pilot, PerkType.FlightStances) <= 0)
+            {
+                SendMessageToPC(pilot, "You have not trained in flight stances. (Piloting perk: Flight Stances)");
+                return;
+            }
+
+            _flightStances[pilot] = stance;
+            var description = stance switch
+            {
+                FlightStanceType.Attack => "ATTACK: +10 accuracy, -10 evasion.",
+                FlightStanceType.Evasive => "EVASIVE: +10 evasion, -10 accuracy.",
+                _ => "BALANCED: no modifiers."
+            };
+            SendMessageToPC(pilot, ColorToken.Cyan($"Flight stance set - {description}"));
+        }
+
+        /// <summary>
+        /// Clears a pilot's flight stance (space-mode exit and death paths).
+        /// </summary>
+        public static void ClearFlightStance(uint pilot)
+        {
+            _flightStances.Remove(pilot);
+        }
+
+        private static int GetFlightStanceAccuracyMod(uint pilot)
+        {
+            return GetFlightStance(pilot) switch
+            {
+                FlightStanceType.Attack => 10,
+                FlightStanceType.Evasive => -10,
+                _ => 0
+            };
+        }
+
+        private static int GetFlightStanceEvasionMod(uint pilot)
+        {
+            return GetFlightStance(pilot) switch
+            {
+                FlightStanceType.Attack => -10,
+                FlightStanceType.Evasive => 10,
+                _ => 0
+            };
+        }
+
         /// <summary>
         /// Calculates the accuracy of a ship.
         /// Does not take into account any equipped gear on the player, only modules attached to the ship.
@@ -1590,6 +1657,9 @@ namespace SWLOR.Game.Server.Service
 
             // Condition-track penalty: each step costs 5 accuracy.
             bonus -= attackerShipStatus.ConditionStep * 5;
+
+            // Flight stance: attack runs hot, evasive flies loose.
+            bonus += GetFlightStanceAccuracyMod(attacker);
 
             var stat = GetAbilityScore(attacker, AbilityType.Agility);
             int level;
@@ -1619,6 +1689,9 @@ namespace SWLOR.Game.Server.Service
         {
             var defenderShipStatus = GetShipStatus(defender);
             var bonus = defenderShipStatus.Evasion;
+
+            // Flight stance: attack runs hot, evasive flies loose.
+            bonus += GetFlightStanceEvasionMod(defender);
             var stat = GetAbilityScore(defender, AbilityType.Agility);
             int level;
 
@@ -2069,6 +2142,7 @@ namespace SWLOR.Game.Server.Service
                 SetCreatureAppearanceType(creature, dbPlayer.OriginalAppearanceType);
                 CreaturePlugin.SetMovementRate(creature, MovementRate.PC);
                 CreaturePlugin.SetMovementRateFactor(creature, 1.0f);
+                ClearFlightStance(creature);
                 Enmity.RemoveCreatureEnmity(creature);
                 
                 // Remove all module feats from the player.
