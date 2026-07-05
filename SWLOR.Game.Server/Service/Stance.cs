@@ -36,43 +36,64 @@ namespace SWLOR.Game.Server.Service
             Register(PerkType.FormShiiCho, sabers,
                 new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 5 },
                 new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 10 },
-                new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 10, CritMod = 5 });
+                new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 10, CritMod = 5 },
+                new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 15, CritMod = 5 },
+                new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 15, CritMod = 10 },
+                new StanceDetail { Name = "Form I: Shii-Cho", AccuracyMod = 20, CritMod = 10 });
 
             // Form II: Makashi - duelist precision.
             Register(PerkType.FormMakashi, sabers,
                 new StanceDetail { Name = "Form II: Makashi", CritMod = 5 },
                 new StanceDetail { Name = "Form II: Makashi", CritMod = 5, AccuracyMod = 5 },
-                new StanceDetail { Name = "Form II: Makashi", CritMod = 10, AccuracyMod = 5 });
+                new StanceDetail { Name = "Form II: Makashi", CritMod = 10, AccuracyMod = 5 },
+                new StanceDetail { Name = "Form II: Makashi", CritMod = 15, AccuracyMod = 5 },
+                new StanceDetail { Name = "Form II: Makashi", CritMod = 15, AccuracyMod = 10 },
+                new StanceDetail { Name = "Form II: Makashi", CritMod = 20, AccuracyMod = 10 });
 
             // Form III: Soresu - the wall. Trades damage for defense and deflection.
             Register(PerkType.FormSoresu, sabers,
                 new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 3, DamagePenalty = 2 },
                 new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 6, DeflectMod = 5, DamagePenalty = 2 },
-                new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 9, DeflectMod = 10, DamagePenalty = 2 });
+                new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 9, DeflectMod = 10, DamagePenalty = 2 },
+                new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 12, DeflectMod = 15, DamagePenalty = 2 },
+                new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 15, DeflectMod = 20, DamagePenalty = 2 },
+                new StanceDetail { Name = "Form III: Soresu", DefensePhysicalMod = 18, DeflectMod = 25, DamagePenalty = 2 });
 
             // Form IV: Ataru - mobility. Evasion at the cost of standing defense.
             Register(PerkType.FormAtaru, sabers,
                 new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 5, DefensePhysicalMod = -3 },
                 new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 10, FlatDMG = 2, DefensePhysicalMod = -3 },
-                new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 15, FlatDMG = 4, DefensePhysicalMod = -3 });
+                new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 15, FlatDMG = 4, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 20, FlatDMG = 6, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 25, FlatDMG = 8, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Form IV: Ataru", EvasionMod = 30, FlatDMG = 10, DefensePhysicalMod = -3 });
 
             // Form V: Shien / Djem So - power. The ONLY form that re-maps the damage stat (to Might).
             Register(PerkType.FormDjemSo, sabers,
                 new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 1 },
                 new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 2 },
-                new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 2, AccuracyMod = 5 });
+                new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 2, AccuracyMod = 5 },
+                new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 3, AccuracyMod = 5 },
+                new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 3, AccuracyMod = 10 },
+                new StanceDetail { Name = "Form V: Djem So", DamageStatOverride = AbilityType.Might, MgtModDMGHalves = 4, AccuracyMod = 10 });
 
             // Form VI: Niman - balance and Force economy.
             Register(PerkType.FormNiman, sabers,
                 new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 1 },
                 new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 2 },
-                new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 2, AccuracyMod = 5, EvasionMod = 5 });
+                new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 2, AccuracyMod = 5, EvasionMod = 5 },
+                new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 3, AccuracyMod = 5, EvasionMod = 5 },
+                new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 4, AccuracyMod = 10, EvasionMod = 10 },
+                new StanceDetail { Name = "Form VI: Niman", FPRegenPerTick = 5, AccuracyMod = 10, EvasionMod = 10 });
 
             // Form VII: Juyo - ferocity with self-risk.
             Register(PerkType.FormJuyo, sabers,
                 new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 4, DefensePhysicalMod = -3 },
                 new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 8, DefensePhysicalMod = -5 },
-                new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 12, CritMod = 5, DefensePhysicalMod = -8 });
+                new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 12, CritMod = 5, DefensePhysicalMod = -8 },
+                new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 16, CritMod = 5, DefensePhysicalMod = -8 },
+                new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 20, CritMod = 10, DefensePhysicalMod = -10 },
+                new StanceDetail { Name = "Form VII: Juyo", FlatDMG = 24, CritMod = 15, DefensePhysicalMod = -10 });
 
             // Duelist Doctrine - single-combat precision with a blade (Makashi's mirror).
             Register(PerkType.DoctrineDuelist,
@@ -80,7 +101,10 @@ namespace SWLOR.Game.Server.Service
                     Item.VibrobladeBaseItemTypes, Item.FinesseVibrobladeBaseItemTypes),
                 new StanceDetail { Name = "Duelist Doctrine", CritMod = 5 },
                 new StanceDetail { Name = "Duelist Doctrine", CritMod = 5, AccuracyMod = 5 },
-                new StanceDetail { Name = "Duelist Doctrine", CritMod = 10, AccuracyMod = 5 });
+                new StanceDetail { Name = "Duelist Doctrine", CritMod = 10, AccuracyMod = 5 },
+                new StanceDetail { Name = "Duelist Doctrine", CritMod = 15, AccuracyMod = 5 },
+                new StanceDetail { Name = "Duelist Doctrine", CritMod = 15, AccuracyMod = 10 },
+                new StanceDetail { Name = "Duelist Doctrine", CritMod = 20, AccuracyMod = 10 });
 
             // Juggernaut - overwhelming force behind heavy steel (Djem So's mirror; these
             // weapons already run on Might, so no stat re-map is needed).
@@ -89,7 +113,10 @@ namespace SWLOR.Game.Server.Service
                     Item.HeavyVibrobladeBaseItemTypes, Item.PolearmBaseItemTypes),
                 new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 1 },
                 new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 2 },
-                new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 2, AccuracyMod = 5 });
+                new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 2, AccuracyMod = 5 },
+                new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 3, AccuracyMod = 5 },
+                new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 3, AccuracyMod = 10 },
+                new StanceDetail { Name = "Juggernaut", MgtModDMGHalves = 4, AccuracyMod = 10 });
 
             // Tempest - twin-blade rhythm and constant motion (Ataru's mirror).
             Register(PerkType.DoctrineTempest,
@@ -97,16 +124,22 @@ namespace SWLOR.Game.Server.Service
                     Item.TwinBladeBaseItemTypes),
                 new StanceDetail { Name = "Tempest", EvasionMod = 5, DefensePhysicalMod = -3 },
                 new StanceDetail { Name = "Tempest", EvasionMod = 10, FlatDMG = 2, DefensePhysicalMod = -3 },
-                new StanceDetail { Name = "Tempest", EvasionMod = 15, FlatDMG = 4, DefensePhysicalMod = -3 });
+                new StanceDetail { Name = "Tempest", EvasionMod = 15, FlatDMG = 4, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Tempest", EvasionMod = 20, FlatDMG = 6, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Tempest", EvasionMod = 25, FlatDMG = 8, DefensePhysicalMod = -3 },
+                new StanceDetail { Name = "Tempest", EvasionMod = 30, FlatDMG = 10, DefensePhysicalMod = -3 });
 
             // Teräs Käsi - the anti-Force martial art. Discipline hardens the mind and body
-            // against powers; the anti-Force signatures arrive with the Phase-2 levels.
+            // against powers; the anti-Force signatures arrive with the Stage-5d actives.
             Register(PerkType.DoctrineTerasKasi,
                 Weapons("Katars or empty hands are required to take this stance.",
                     Item.KatarBaseItemTypes, new List<BaseItem> { BaseItem.Invalid }),
                 new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 2 },
                 new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 4, EvasionMod = 5 },
-                new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 6, EvasionMod = 5 });
+                new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 6, EvasionMod = 5 },
+                new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 8, EvasionMod = 5 },
+                new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 10, EvasionMod = 10 },
+                new StanceDetail { Name = "Teräs Käsi", SavingThrowMod = 12, EvasionMod = 10 });
 
             // Marksman Doctrine - the aimed stance. Breath control and trigger discipline.
             Register(PerkType.DoctrineMarksman,
@@ -114,7 +147,10 @@ namespace SWLOR.Game.Server.Service
                     Item.PistolBaseItemTypes, Item.RifleBaseItemTypes, Item.ThrowingWeaponBaseItemTypes),
                 new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 5 },
                 new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 10 },
-                new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 10, CritMod = 5 });
+                new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 10, CritMod = 5 },
+                new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 15, CritMod = 5 },
+                new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 15, CritMod = 10 },
+                new StanceDetail { Name = "Marksman Doctrine", AccuracyMod = 20, CritMod = 10 });
         }
 
         private static (HashSet<BaseItem>, string) Weapons(string requirementMessage, params List<BaseItem>[] families)
@@ -125,16 +161,14 @@ namespace SWLOR.Game.Server.Service
         private static void Register(
             PerkType stanceType,
             (HashSet<BaseItem>, string) weapons,
-            StanceDetail level1,
-            StanceDetail level2,
-            StanceDetail level3)
+            params StanceDetail[] levels)
         {
-            _stances[stanceType] = new Dictionary<int, StanceDetail>
+            _stances[stanceType] = new Dictionary<int, StanceDetail>();
+            for (var level = 1; level <= levels.Length; level++)
             {
-                [1] = level1,
-                [2] = level2,
-                [3] = level3
-            };
+                _stances[stanceType][level] = levels[level - 1];
+            }
+
             _stanceWeapons[stanceType] = weapons.Item1;
             _weaponRequirements[stanceType] = weapons.Item2;
         }
@@ -213,14 +247,17 @@ namespace SWLOR.Game.Server.Service
                 return;
             }
 
-            var level = Perk.GetPerkLevel(player, stanceType);
-            if (level <= 0 || !_stances.ContainsKey(stanceType))
+            if (!_stances.TryGetValue(stanceType, out var levels))
                 return;
 
-            if (level > 3)
-                level = 3;
+            var level = Perk.GetPerkLevel(player, stanceType);
+            if (level <= 0)
+                return;
 
-            var stance = _stances[stanceType][level];
+            if (level > levels.Count)
+                level = levels.Count;
+
+            var stance = levels[level];
             Deactivate(player);
             _activeTypes[player] = stanceType;
             _activeStances[player] = stance;
