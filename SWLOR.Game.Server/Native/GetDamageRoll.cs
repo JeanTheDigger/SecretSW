@@ -404,6 +404,18 @@ namespace SWLOR.Game.Server.Native
                 else if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1)
                     dmgValues[CombatDamageType.Physical] += mightMod;
             }
+
+            // Lightsaber form bonuses
+            if (Item.LightsaberBaseItemTypes.Contains(baseItemType) ||
+                Item.SaberstaffBaseItemTypes.Contains(baseItemType))
+            {
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null)
+                {
+                    dmgValues[CombatDamageType.Physical] +=
+                        stance.FlatDMG - stance.DamagePenalty + mightMod * stance.MgtModDMGHalves / 2;
+                }
+            }
         }
 
         private static int CalculateTargetSpecificDamage(void* pTarget, CNWSCreature attacker, CNWSItem weapon,
@@ -489,6 +501,14 @@ namespace SWLOR.Game.Server.Native
                 // Crushing Style is the Might staff stance; it re-maps damage to Might.
                 if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1 ||
                     attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
+                    return attacker.m_pStats.GetSTRStat();
+            }
+            else if (Item.LightsaberBaseItemTypes.Contains(baseItemType) ||
+                     Item.SaberstaffBaseItemTypes.Contains(baseItemType))
+            {
+                // Form V (Djem So) is the only form that re-maps a saber's damage stat.
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null && stance.DamageStatOverride == AbilityType.Might)
                     return attacker.m_pStats.GetSTRStat();
             }
 

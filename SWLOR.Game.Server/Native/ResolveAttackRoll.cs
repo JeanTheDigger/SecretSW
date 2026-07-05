@@ -579,6 +579,11 @@ namespace SWLOR.Game.Server.Native
             var deflectRoll = Random.Next(1, 100);
             var deflectChance = SaberDeflectChance;
 
+            // Soresu (and any form with a deflection package) improves the odds.
+            var defenderStance = Stance.GetActiveStance(defender.m_idSelf);
+            if (defenderStance != null)
+                deflectChance += defenderStance.DeflectMod;
+
             var deflected = deflectRoll <= deflectChance;
 
             var feedbackString = deflected ? "*success*" : "*failure*";
@@ -610,6 +615,15 @@ namespace SWLOR.Game.Server.Native
             {
                 if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
                     criticalBonus += CrushingMasteryBonus;
+            }
+
+            // Lightsaber form crit bonuses
+            if (weapon != null && (Item.LightsaberBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
+                                   Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem)))
+            {
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null)
+                    criticalBonus += stance.CritMod;
             }
 
             return criticalBonus;

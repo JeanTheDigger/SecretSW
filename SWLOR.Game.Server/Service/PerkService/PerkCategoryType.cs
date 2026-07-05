@@ -138,6 +138,9 @@ namespace SWLOR.Game.Server.Service.PerkService
 
         [PerkCategory("Beast - Force", false)] // Beast Mastery removed
         BeastForce = 44,
+
+        [PerkCategory("Lightsaber Forms", true)]
+        LightsaberForms = 45,
     }
 
     public class PerkCategoryAttribute : Attribute

@@ -39,6 +39,13 @@ namespace SWLOR.Game.Server.Feature
                     stmRegen += foodEffect.STMRegen;
                 }
 
+                // Form VI (Niman) restores FP while held.
+                var stance = Stance.GetActiveStance(player);
+                if (stance != null)
+                {
+                    fpRegen += stance.FPRegenPerTick;
+                }
+
                 if (hpRegen > 0 && GetCurrentHitPoints(player) < GetMaxHitPoints(player))
                 {
                     ApplyEffectToObject(DurationType.Instant, EffectHeal(hpRegen), player);

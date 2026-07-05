@@ -305,5 +305,14 @@
         AdrenalStim = 298,
         ResearchProjects = 299,
         PommelStrike = 300,
+
+        // Lightsaber forms (Phase-1 levels 1-3; Phase-2 signatures come with holocron content)
+        FormShiiCho = 301,
+        FormMakashi = 302,
+        FormSoresu = 303,
+        FormAtaru = 304,
+        FormDjemSo = 305,
+        FormNiman = 306,
+        FormJuyo = 307,
     }
 }

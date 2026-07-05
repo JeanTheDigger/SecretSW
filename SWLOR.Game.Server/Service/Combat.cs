@@ -372,6 +372,14 @@ namespace SWLOR.Game.Server.Service
                 return GetAbilityScore(attacker, AbilityType.Perception);
             }
 
+            // Lightsabers/saberstaffs: an active form may re-map the damage stat (Form V: Djem So).
+            if (Item.LightsaberBaseItemTypes.Contains(weaponType) || Item.SaberstaffBaseItemTypes.Contains(weaponType))
+            {
+                var stance = Stance.GetActiveStance(attacker);
+                if (stance != null && stance.DamageStatOverride != AbilityType.Invalid)
+                    return GetAbilityScore(attacker, stance.DamageStatOverride);
+            }
+
             //Handle weapon types without ability adjustment perks as well for consistency.
             return GetAbilityScore(attacker, Item.GetWeaponDamageAbilityType(weaponType));
         }

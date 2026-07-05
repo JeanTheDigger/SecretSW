@@ -259,6 +259,8 @@ namespace SWLOR.Game.Server.Service.AbilityService
         AdrenalStim = 125,
         [RecastGroup("Pommel Strike", "Pom. Strike", true)]
         PommelStrike = 126,
+        [RecastGroup("Form Switch", "Form Switch", true)]
+        FormSwitch = 127,
     }
 
     public class RecastGroupAttribute: Attribute

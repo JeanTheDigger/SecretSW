@@ -1008,6 +1008,14 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
 
+            // Lightsaber form physical defense
+            if (type == CombatDamageType.Physical)
+            {
+                var stanceDefense = Stance.GetActiveStance(creature);
+                if (stanceDefense != null)
+                    defenseBonus += stanceDefense.DefensePhysicalMod;
+            }
+
             defenseBonus = CalculateEffectDefense(creature, defenseBonus, type);
             defenseBonus = (int)(defenseBonus * rate) + equipmentDefense;
             return CalculateDefense(defenderStat, skillLevel, defenseBonus);
@@ -1111,6 +1119,14 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
             
+            // Lightsaber form physical defense
+            if (type == CombatDamageType.Physical)
+            {
+                var stanceDefense = Stance.GetActiveStance(creature.m_idSelf);
+                if (stanceDefense != null)
+                    defenseBonus += stanceDefense.DefensePhysicalMod;
+            }
+
             defenseBonus = CalculateEffectDefense(creature.m_idSelf, defenseBonus, type);
             defenseBonus = (int)(defenseBonus * rate) + equipmentDefense;
             return (int)(8 + (defenderStat * 1.5f) + skillLevel + defenseBonus);
@@ -1179,6 +1195,11 @@ namespace SWLOR.Game.Server.Service
             else if (GetActionMode(creature, ActionMode.ImprovedPowerAttack))
                 accuracyBonus -= 10;
 
+            // Lightsaber form accuracy
+            var stance = Stance.GetActiveStance(creature);
+            if (stance != null)
+                accuracyBonus += stance.AccuracyMod;
+
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
 
@@ -1239,6 +1260,11 @@ namespace SWLOR.Game.Server.Service
 
             accuracyBonus = CalculateEffectAccuracyNative(creature, accuracyBonus);
             
+            // Lightsaber form accuracy
+            var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
+            if (stanceNative != null)
+                accuracyBonus += stanceNative.AccuracyMod;
+
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
 
@@ -1429,6 +1455,11 @@ namespace SWLOR.Game.Server.Service
 
             Log.Write(LogGroup.Attack, $"Effect Evasion: {evasionBonus}");
 
+            // Lightsaber form evasion
+            var stance = Stance.GetActiveStance(creature);
+            if (stance != null)
+                evasionBonus += stance.EvasionMod;
+
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
 
@@ -1479,6 +1510,11 @@ namespace SWLOR.Game.Server.Service
 
             evasionBonus += CalculateEffectEvasion(creature.m_idSelf);
             
+            // Lightsaber form evasion
+            var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
+            if (stanceNative != null)
+                evasionBonus += stanceNative.EvasionMod;
+
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
 

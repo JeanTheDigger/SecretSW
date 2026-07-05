@@ -1804,6 +1804,16 @@ namespace SWLOR.NWN.API.NWScript.Enum
         ForceRage2 = 1837,
         StrongStyleLightsaber = 1838,
         StrongStyleSaberstaff = 1839,
+
+        // Lightsaber form toggles, reusing feat.2da rows orphaned by removed systems.
+        // Rename the rows when the HAKs are next rebuilt.
+        FormDjemSo = 1838,          // row: StrongStyleLightsaber
+        FormNiman = 1839,           // row: StrongStyleSaberstaff
+        FormShiiCho = 1887,         // row: Tame
+        FormMakashi = 1891,         // row: Snarl
+        FormSoresu = 1892,          // row: Growl
+        FormAtaru = 1893,           // row: SoothePet
+        FormJuyo = 1897,            // row: CallBeast
         Doublehand2 = 1840,
         Doublehand3 = 1841,
         Doublehand4 = 1842,
