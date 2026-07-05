@@ -46,6 +46,13 @@ namespace SWLOR.Game.Server.Feature
                     fpRegen += stance.FPRegenPerTick;
                 }
 
+                // A Cardio Regulator implant restores stamina.
+                var implants = Implant.GetImplantPackage(player);
+                if (implants != null)
+                {
+                    stmRegen += implants.STMRegenPerTick;
+                }
+
                 if (hpRegen > 0 && GetCurrentHitPoints(player) < GetMaxHitPoints(player))
                 {
                     ApplyEffectToObject(DurationType.Instant, EffectHeal(hpRegen), player);

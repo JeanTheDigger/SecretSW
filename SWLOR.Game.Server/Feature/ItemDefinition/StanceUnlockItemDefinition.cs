@@ -59,6 +59,12 @@ namespace SWLOR.Game.Server.Feature.ItemDefinition
                         return "The Force offers deeper paths than this datacron's regimented drills.";
                     }
 
+                    if (perkDetail.Category == PerkCategoryType.Cybernetics &&
+                        dbPlayer.CharacterType != CharacterType.Standard)
+                    {
+                        return "Cybernetics erode the Force connection. Your body refuses the machine.";
+                    }
+
                     if (dbPlayer.UnlockedPerks.ContainsKey(perkType))
                     {
                         return $"You have already mastered the teachings of {perkDetail.Name}.";

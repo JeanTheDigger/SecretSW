@@ -626,6 +626,13 @@ namespace SWLOR.Game.Server.Native
                     criticalBonus += stance.CritMod;
             }
 
+            // Implant crit bonuses (Ocular Targeting's prototype tier).
+            {
+                var implants = Implant.GetImplantPackage(attacker.m_idSelf);
+                if (implants != null)
+                    criticalBonus += implants.CritMod;
+            }
+
             // Crit-economy ceiling: weapon threat + Improved Critical + Precision Aim +
             // a level-6 stance (up to 20%) can otherwise stack past the point where
             // every swing threatens - crits must stay an event, not the baseline.

@@ -186,6 +186,19 @@ namespace SWLOR.Game.Server.Service.PerkService
         }
 
         /// <summary>
+        /// Adds a requirement that the player must have a free implant slot (or already
+        /// own this implant line) to purchase the perk.
+        /// </summary>
+        /// <returns>A perk builder with the configured options.</returns>
+        public PerkBuilder RequirementImplantSlot()
+        {
+            var requirement = new PerkRequirementImplantSlot(_activePerk.Type);
+            _activeLevel.Requirements.Add(requirement);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds a requirement that the player must have leveled a specific other perk.
         /// </summary>
         /// <param name="mustHavePerkType">The type of perk the player must have.</param>

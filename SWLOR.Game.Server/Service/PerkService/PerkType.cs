@@ -321,5 +321,14 @@
         DoctrineTempest = 310,
         DoctrineTerasKasi = 311,
         DoctrineMarksman = 312,
+
+        // Cybernetic implants (Standard-only; slot-limited passive lines)
+        ImplantNeural = 313,
+        ImplantOcular = 314,
+        ImplantDermal = 315,
+        ImplantSkeletal = 316,
+        ImplantCardio = 317,
+        ImplantServo = 318,
+        ImplantCortical = 319,
     }
 }

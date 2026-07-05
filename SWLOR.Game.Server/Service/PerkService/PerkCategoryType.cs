@@ -144,6 +144,9 @@ namespace SWLOR.Game.Server.Service.PerkService
 
         [PerkCategory("Combat Doctrines", true)]
         CombatDoctrines = 46,
+
+        [PerkCategory("Cybernetics", true)]
+        Cybernetics = 47,
     }
 
     public class PerkCategoryAttribute : Attribute

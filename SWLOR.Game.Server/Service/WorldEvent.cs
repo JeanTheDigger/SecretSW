@@ -337,16 +337,19 @@ namespace SWLOR.Game.Server.Service
             PerkType.FormAtaru, PerkType.FormDjemSo, PerkType.FormNiman, PerkType.FormJuyo
         };
 
-        private static readonly PerkType[] _doctrineUnlocks =
+        private static readonly PerkType[] _standardUnlocks =
         {
             PerkType.DoctrineDuelist, PerkType.DoctrineJuggernaut, PerkType.DoctrineTempest,
-            PerkType.DoctrineTerasKasi, PerkType.DoctrineMarksman
+            PerkType.DoctrineTerasKasi, PerkType.DoctrineMarksman,
+            PerkType.ImplantNeural, PerkType.ImplantOcular, PerkType.ImplantDermal,
+            PerkType.ImplantSkeletal, PerkType.ImplantCardio, PerkType.ImplantServo,
+            PerkType.ImplantCortical
         };
 
         /// <summary>
-        /// Fabricates a random stance unlock item matched to the player's class and places it
-        /// in their inventory. FS characters receive form holocrons; Standard characters
-        /// receive combat datacrons.
+        /// Fabricates a random unlock item matched to the player's class and places it in
+        /// their inventory. FS characters receive form holocrons; Standard characters
+        /// receive combat datacrons (doctrines) or prototype schematics (implants).
         /// </summary>
         public static void GiveStanceUnlockItem(uint player)
         {
@@ -359,20 +362,32 @@ namespace SWLOR.Game.Server.Service
                 return;
 
             var isForceSensitive = dbPlayer.CharacterType == CharacterType.ForceSensitive;
-            var pool = isForceSensitive ? _formUnlocks : _doctrineUnlocks;
+            var pool = isForceSensitive ? _formUnlocks : _standardUnlocks;
             var perkType = pool[Random.Next(pool.Length)];
-            var perkName = Perk.GetPerkDetails(perkType).Name;
-            var itemName = isForceSensitive
-                ? $"Holocron: {perkName}"
-                : $"Combat Datacron: {perkName}";
+            var perkDetail = Perk.GetPerkDetails(perkType);
+            var perkName = perkDetail.Name;
+
+            string itemName, itemDescription;
+            if (isForceSensitive)
+            {
+                itemName = $"Holocron: {perkName}";
+                itemDescription = $"An ancient holocron holding a master's insight into {perkName}. Using it opens the path to the form's higher levels.";
+            }
+            else if (perkDetail.Category == PerkCategoryType.Cybernetics)
+            {
+                itemName = $"Prototype Schematic: {perkName}";
+                itemDescription = $"Stolen prototype schematics for the {perkName} implant line. Using them opens the path to its prototype tiers.";
+            }
+            else
+            {
+                itemName = $"Combat Datacron: {perkName}";
+                itemDescription = $"A combat datacron recorded by a veteran of {perkName}. Using it opens the path to the doctrine's higher levels.";
+            }
 
             var item = CreateItemOnObject(StanceUnlockBaseResref, player);
             SetTag(item, StanceUnlockItemTag);
             SetName(item, itemName);
-            SetDescription(item,
-                isForceSensitive
-                    ? $"An ancient holocron holding a master's insight into {perkName}. Using it opens the path to the form's higher levels."
-                    : $"A combat datacron recorded by a veteran of {perkName}. Using it opens the path to the doctrine's higher levels.");
+            SetDescription(item, itemDescription);
             SetLocalInt(item, StanceUnlockPerkVariable, (int)perkType);
 
             SendMessageToPC(player, ColorToken.Cyan($"You have received: {itemName}!"));

@@ -1008,12 +1008,16 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
 
-            // Lightsaber form physical defense
+            // Stance and implant physical defense
             if (type == CombatDamageType.Physical)
             {
                 var stanceDefense = Stance.GetActiveStance(creature);
                 if (stanceDefense != null)
                     defenseBonus += stanceDefense.DefensePhysicalMod;
+
+                var implantDefense = Implant.GetImplantPackage(creature);
+                if (implantDefense != null)
+                    defenseBonus += implantDefense.DefensePhysicalMod;
             }
 
             defenseBonus = CalculateEffectDefense(creature, defenseBonus, type);
@@ -1119,12 +1123,16 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
             
-            // Lightsaber form physical defense
+            // Stance and implant physical defense
             if (type == CombatDamageType.Physical)
             {
                 var stanceDefense = Stance.GetActiveStance(creature.m_idSelf);
                 if (stanceDefense != null)
                     defenseBonus += stanceDefense.DefensePhysicalMod;
+
+                var implantDefense = Implant.GetImplantPackage(creature.m_idSelf);
+                if (implantDefense != null)
+                    defenseBonus += implantDefense.DefensePhysicalMod;
             }
 
             defenseBonus = CalculateEffectDefense(creature.m_idSelf, defenseBonus, type);
@@ -1195,10 +1203,14 @@ namespace SWLOR.Game.Server.Service
             else if (GetActionMode(creature, ActionMode.ImprovedPowerAttack))
                 accuracyBonus -= 10;
 
-            // Lightsaber form accuracy
+            // Stance and implant accuracy
             var stance = Stance.GetActiveStance(creature);
             if (stance != null)
                 accuracyBonus += stance.AccuracyMod;
+
+            var implants = Implant.GetImplantPackage(creature);
+            if (implants != null)
+                accuracyBonus += implants.AccuracyMod;
 
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
@@ -1260,10 +1272,14 @@ namespace SWLOR.Game.Server.Service
 
             accuracyBonus = CalculateEffectAccuracyNative(creature, accuracyBonus);
             
-            // Lightsaber form accuracy
+            // Stance and implant accuracy
             var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
             if (stanceNative != null)
                 accuracyBonus += stanceNative.AccuracyMod;
+
+            var implantsNative = Implant.GetImplantPackage(creature.m_idSelf);
+            if (implantsNative != null)
+                accuracyBonus += implantsNative.AccuracyMod;
 
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
@@ -1455,10 +1471,14 @@ namespace SWLOR.Game.Server.Service
 
             Log.Write(LogGroup.Attack, $"Effect Evasion: {evasionBonus}");
 
-            // Lightsaber form evasion
+            // Stance and implant evasion
             var stance = Stance.GetActiveStance(creature);
             if (stance != null)
                 evasionBonus += stance.EvasionMod;
+
+            var implants = Implant.GetImplantPackage(creature);
+            if (implants != null)
+                evasionBonus += implants.EvasionMod;
 
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
@@ -1510,10 +1530,14 @@ namespace SWLOR.Game.Server.Service
 
             evasionBonus += CalculateEffectEvasion(creature.m_idSelf);
             
-            // Lightsaber form evasion
+            // Stance and implant evasion
             var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
             if (stanceNative != null)
                 evasionBonus += stanceNative.EvasionMod;
+
+            var implantsNative = Implant.GetImplantPackage(creature.m_idSelf);
+            if (implantsNative != null)
+                evasionBonus += implantsNative.EvasionMod;
 
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
