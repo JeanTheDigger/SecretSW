@@ -32,6 +32,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             EventOpen();
             EventClose();
             EventList();
+            PermaRestore();
             Night();
             GetPlot();
             Kill();
@@ -95,6 +96,33 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SetTime(8, 0, 0, 0);
+                });
+        }
+
+        private void PermaRestore()
+        {
+            _builder.Create("permarestore")
+                .Description("Restores a perma-dead character, clearing their flag and returning them to their home point.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer == null || !dbPlayer.IsPermaDead)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} is not perma-dead.");
+                        return;
+                    }
+
+                    Death.RestorePermaDeadCharacter(target);
+                    SendMessageToPC(user, $"{GetName(target)} has been restored.");
                 });
         }
 

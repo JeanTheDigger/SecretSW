@@ -58,6 +58,15 @@ namespace SWLOR.Game.Server.Service
                 // Lethal kills inside PvP event zones feed the Phase-2 endgame SP economy.
                 WorldEvent.ProcessPvPKill(hostile, player);
 
+                // Perma-death: dying inside an active event zone removes the character from play.
+                // The character is moved to limbo for admin review - never deleted automatically.
+                if (WorldEvent.IsEventZone(GetArea(player)))
+                {
+                    ProcessPermaDeath(player);
+                    WriteAudit(player);
+                    return;
+                }
+
                 const string RespawnMessage = "You have died. Wait for another player to revive you or respawn to go to your registered medical center.";
                 PopUpDeathGUIPanel(player, true, true, 0, RespawnMessage);
 
@@ -83,6 +92,95 @@ namespace SWLOR.Game.Server.Service
             var xpLost = ApplyPenalties(player);
 
             WriteAudit(player, xpLost);
+        }
+
+        /// <summary>
+        /// The waypoint tag of the out-of-play holding area for perma-dead characters.
+        /// </summary>
+        public const string PermaDeathLimboWaypoint = "PERMADEATH_LIMBO";
+
+        /// <summary>
+        /// Flags a character as perma-dead and moves them to the limbo area.
+        /// The character file is never destroyed by the game - an admin either restores them
+        /// (bug escape hatch) or deletes them manually after review.
+        /// </summary>
+        private static void ProcessPermaDeath(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            dbPlayer.IsPermaDead = true;
+            DB.Set(dbPlayer);
+
+            ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
+            ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player)), player);
+            SendToLimbo(player);
+
+            SendMessageToPC(player, ColorToken.Red("You have fallen. Your story ends here, pending review by the staff."));
+            Log.Write(LogGroup.Death, $"PERMADEATH: {GetName(player)} ({playerId})");
+        }
+
+        /// <summary>
+        /// Moves a character to the perma-death limbo area and holds them there.
+        /// If the limbo waypoint is missing from the module, the character is held in place instead.
+        /// </summary>
+        private static void SendToLimbo(uint player)
+        {
+            var waypoint = GetWaypointByTag(PermaDeathLimboWaypoint);
+
+            if (GetIsObjectValid(waypoint))
+            {
+                var location = GetLocation(waypoint);
+                AssignCommand(player, () => ActionJumpToLocation(location));
+            }
+            else
+            {
+                Log.Write(LogGroup.Error, $"Perma-death limbo waypoint '{PermaDeathLimboWaypoint}' is missing from the module.");
+            }
+
+            DelayCommand(2f, () =>
+            {
+                ApplyEffectToObject(DurationType.Permanent, EffectCutsceneImmobilize(), player);
+            });
+        }
+
+        /// <summary>
+        /// Perma-dead characters who log in are routed straight back to limbo.
+        /// They remain available for admin review but never re-enter play.
+        /// </summary>
+        [NWNEventHandler(ScriptName.OnModuleEnter)]
+        public static void EnforcePermaDeath()
+        {
+            var player = GetEnteringObject();
+            if (!GetIsPC(player) || GetIsDM(player)) return;
+
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            if (dbPlayer == null || !dbPlayer.IsPermaDead) return;
+
+            SendMessageToPC(player, ColorToken.Red("This character has fallen and awaits staff review."));
+            DelayCommand(1f, () => SendToLimbo(player));
+        }
+
+        /// <summary>
+        /// Clears a character's perma-death state and returns them to their home point.
+        /// Used by the DM restore tooling.
+        /// </summary>
+        public static void RestorePermaDeadCharacter(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            dbPlayer.IsPermaDead = false;
+            DB.Set(dbPlayer);
+
+            for (var effect = GetFirstEffect(player); GetIsEffectValid(effect); effect = GetNextEffect(player))
+            {
+                if (GetEffectType(effect) == EffectTypeScript.CutsceneImmobilize)
+                    RemoveEffect(player, effect);
+            }
+
+            SendToHomePoint(player);
+            SendMessageToPC(player, "You have been restored by the staff. Welcome back.");
+            Log.Write(LogGroup.Death, $"PERMADEATH RESTORE: {GetName(player)} ({playerId})");
         }
 
         /// <summary>
@@ -170,8 +268,14 @@ namespace SWLOR.Game.Server.Service
             var dbPlayer = DB.Get<Player>(playerId);
             int multiplier;
 
-            // 300+
-            if (dbPlayer.TotalSPAcquired >= 300)
+            // 600+
+            if (dbPlayer.TotalSPAcquired >= 600)
+                multiplier = 65;
+            // 450 - 599
+            else if (dbPlayer.TotalSPAcquired >= 450)
+                multiplier = 55;
+            // 300 - 449
+            else if (dbPlayer.TotalSPAcquired >= 300)
                 multiplier = 45;
             // 200 - 299
             else if (dbPlayer.TotalSPAcquired >= 200)

@@ -137,6 +137,8 @@ namespace SWLOR.Game.Server.Entity
         public DateTime LastDailyReset { get; set; }
         [Indexed]
         public bool IsDeleted { get; set; }
+        [Indexed]
+        public bool IsPermaDead { get; set; }
         public bool IsUsingDualPistolMode { get; set; }
         public DateTime? DatePerkRefundAvailable { get; set; }
         [Indexed]
