@@ -246,7 +246,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Hard Slash")
 
                 .AddPerkLevel()
-                .Description("Instantly deals 16 DMG to your target.")
+                .Description("Instantly deals 16 DMG to your target and has a DC12 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(2)
                 .DroidAISlots(2)
                 .RequirementSkill(SkillType.TwoHanded, 5)
@@ -254,7 +254,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.HardSlash1)
 
                 .AddPerkLevel()
-                .Description("Instantly deals 24 DMG to your target.")
+                .Description("Instantly deals 24 DMG to your target and has a DC16 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.TwoHanded, 20)
@@ -262,7 +262,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.HardSlash2)
 
                 .AddPerkLevel()
-                .Description("Instantly deals 38 DMG to your target.")
+                .Description("Instantly deals 38 DMG to your target and has a DC20 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.TwoHanded, 35)

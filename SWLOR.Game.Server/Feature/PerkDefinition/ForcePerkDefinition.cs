@@ -376,14 +376,14 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Force Mind")
 
                 .AddPerkLevel()
-                .Description("Grants Stamina Point regeneration based on your Willpower Score, at the cost of your Willpower.")
+                .Description("Grants Stamina Point regeneration based on your Willpower.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 20)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ForceMind1)
 
                 .AddPerkLevel()
-                .Description("Grants Stamina Point regeneration based on your Willpower Score, at the cost of your Willpower.")
+                .Description("Grants Stamina Point regeneration based on your Willpower.")
                 .Price(4)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)

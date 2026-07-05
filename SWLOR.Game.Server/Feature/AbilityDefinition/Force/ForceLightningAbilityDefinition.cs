@@ -84,11 +84,11 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             }
             if (Stat.GetCurrentFP(activator) < 1 + (level * 2))
             {
-                var darkBargain = 7 * ((5 + (level * 2) - Stat.GetCurrentFP(activator)));
+                var darkBargain = 7 * ((1 + (level * 2) - Stat.GetCurrentFP(activator)));
                 Stat.ReduceFP(activator, Stat.GetCurrentFP(activator));
                 ApplyEffectToObject(DurationType.Instant, EffectDamage(darkBargain), activator);
             }
-            else { Stat.ReduceFP(activator, 5 + (level * 2)); }
+            else { Stat.ReduceFP(activator, 1 + (level * 2)); }
         }
 
         private static void ForceLightning1(AbilityBuilder builder)

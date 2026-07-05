@@ -441,7 +441,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Leg Sweep")
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 4 DMG and has a 5DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 4 DMG and has a 10DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(2)
                 .RequirementSkill(SkillType.MartialArts, 5)
@@ -449,7 +449,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.LegSweep1)
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 13 DMG and has a 8DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 13 DMG and has a 15DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.MartialArts, 20)
@@ -457,7 +457,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.LegSweep2)
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 20 DMG and has a 10DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 20 DMG and has a 20DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.MartialArts, 35)

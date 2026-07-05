@@ -86,7 +86,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
 
                 .AddPerkLevel()
                 .Description("Increases success rate of next synthesis ability to 100%. Passively grants +21 synthesis progress per successful synthesis while crafting.")
-                .Price(1)
+                .Price(2)
                 .RequirementSkill(SkillType.Fabrication, 20);
 
             _builder.Create(PerkCategoryType.Fabrication, PerkType.MuscleMemoryFabrication)
@@ -94,7 +94,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
 
                 .AddPerkLevel()
                 .Description("Increases success rate of next touch ability to 100%. Passively grants +115 quality per successful touch while crafting.")
-                .Price(1)
+                .Price(2)
                 .RequirementSkill(SkillType.Fabrication, 40);
 
             _builder.Create(PerkCategoryType.Fabrication, PerkType.VenerationFabrication)
@@ -102,7 +102,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
 
                 .AddPerkLevel()
                 .Description("Reduces CP cost of synthesis abilities by 50% for the next four actions. Passively grants +31 maximum CP while crafting.")
-                .Price(1)
+                .Price(2)
                 .RequirementSkill(SkillType.Fabrication, 25);
 
             _builder.Create(PerkCategoryType.Fabrication, PerkType.WasteNotFabrication)

@@ -31,7 +31,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 .HasImpactAction((activator, target, level, location) =>
                 {
                     StatusEffect.Apply(activator, activator, StatusEffectType.ForceMind1, 60f);
-                    ApplyEffectToObject(DurationType.Temporary, EffectAbilityDecrease(AbilityType.Willpower, 2), activator, 60f);
                 });
         }
         private void ForceMind2()
@@ -46,7 +45,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 .HasImpactAction((activator, target, level, location) =>
                 {
                     StatusEffect.Apply(activator, activator, StatusEffectType.ForceMind2, 60f);
-                    ApplyEffectToObject(DurationType.Temporary, EffectAbilityDecrease(AbilityType.Willpower, 4), activator, 60f);
                 });
         }
     }
