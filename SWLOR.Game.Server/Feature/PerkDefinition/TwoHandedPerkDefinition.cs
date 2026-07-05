@@ -42,7 +42,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             CircleSlash();
             DoubleStrike();
             ImprovedTwoWeaponFighting();
-            StrongStyleSaberstaff();
 
             return _builder.Build();
         }
@@ -783,24 +782,5 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ImprovedTwoWeaponFighting);
         }
 
-        private void StrongStyleSaberstaff()
-        {
-            _builder.Create(PerkCategoryType.TwoHandedSaberstaff, PerkType.StrongStyleSaberstaff)
-                .Name("Strong Style (Saberstaff)")
-                .TriggerRefund((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleSaberstaff, false);
-                })
-                .TriggerPurchase((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleSaberstaff, false);
-                })
-
-                .AddPerkLevel()
-                .RequirementCharacterType(CharacterType.ForceSensitive)
-                .Description("Saberstaff attacks use your Perception stat for accuracy and Might stat for damage while active. Additionally, your saberstaff damage is increased by your MGT modifier while active.")
-                .Price(1)
-                .GrantsFeat(FeatType.StrongStyleSaberstaff);
-        }
     }
 }

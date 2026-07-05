@@ -404,17 +404,6 @@ namespace SWLOR.Game.Server.Native
                 else if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1)
                     dmgValues[CombatDamageType.Physical] += mightMod;
             }
-            // Strong Style bonuses
-            else if (Item.SaberstaffBaseItemTypes.Contains(baseItemType) &&
-                Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
-            {
-                dmgValues[CombatDamageType.Physical] += (int)Math.Ceiling(mightMod / 2.0f);
-            }
-            else if (Item.LightsaberBaseItemTypes.Contains(baseItemType) &&
-                Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
-            {
-                dmgValues[CombatDamageType.Physical] += (int)Math.Ceiling(mightMod / 2.0f);
-            }
         }
 
         private static int CalculateTargetSpecificDamage(void* pTarget, CNWSCreature attacker, CNWSItem weapon,
@@ -488,17 +477,7 @@ namespace SWLOR.Game.Server.Native
             var weaponDamageAbilityType = Item.GetWeaponDamageAbilityType(baseItemType);
             var weaponDamageAbilityStat = Stat.GetStatValueNative(attacker, weaponDamageAbilityType);
 
-            if (Item.LightsaberBaseItemTypes.Contains(baseItemType))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
-                    return attacker.m_pStats.GetSTRStat();
-            }
-            else if (Item.SaberstaffBaseItemTypes.Contains(baseItemType))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
-                    return attacker.m_pStats.GetSTRStat();
-            }
-            else if (Item.PistolBaseItemTypes.Contains(baseItemType) ||
+            if (Item.PistolBaseItemTypes.Contains(baseItemType) ||
                      Item.RifleBaseItemTypes.Contains(baseItemType) ||
                      Item.ThrowingWeaponBaseItemTypes.Contains(baseItemType))
             {

@@ -362,14 +362,6 @@ namespace SWLOR.Game.Server.Service
                 return (GetHasFeat(FeatType.ZenMarksmanship, attacker) && (willpower > might)) ? willpower : might;
             }
 
-            // Lightsaber - Strong Style
-            if (Item.LightsaberBaseItemTypes.Contains(weaponType))
-                return Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleLightsaber) ? GetAbilityScore(attacker, AbilityType.Might) : GetAbilityScore(attacker, AbilityType.Perception);
-
-            // Saberstaff - Strong Style
-            if (Item.SaberstaffBaseItemTypes.Contains(weaponType))
-                return Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleSaberstaff) ? GetAbilityScore(attacker, AbilityType.Might) : GetAbilityScore(attacker, AbilityType.Perception);
-
             // Staff: there are 3 style perks for staff so it has to be handled slightly differently.
             if (Item.StaffBaseItemTypes.Contains(weaponType))
             {
@@ -415,10 +407,6 @@ namespace SWLOR.Game.Server.Service
 
             if (Item.StaffBaseItemTypes.Contains(weaponType))
                 return mgtMod * Perk.GetPerkLevel(attacker, PerkService.PerkType.CrushingStyle);
-            else if (Item.LightsaberBaseItemTypes.Contains(weaponType) && Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleLightsaber))
-                return mgtMod / 2;
-            else if (Item.SaberstaffBaseItemTypes.Contains(weaponType) && Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleSaberstaff))
-                return mgtMod / 2;
 
             return 0;
 

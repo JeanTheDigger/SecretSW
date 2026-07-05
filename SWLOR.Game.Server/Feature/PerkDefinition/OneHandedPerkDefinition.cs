@@ -36,7 +36,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             LightsaberMastery();
             SaberStrike();
             ImprovedTwoWeaponFighting();
-            StrongStyleLightsaber();
             Duelist();
             WailingBlows();
             ShieldMaster();
@@ -850,25 +849,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ImprovedTwoWeaponFighting);
         }
 
-        private void StrongStyleLightsaber()
-        {
-            _builder.Create(PerkCategoryType.OneHandedLightsaber, PerkType.StrongStyleLightsaber)
-                .Name("Strong Style (Lightsaber)")
-                .TriggerRefund((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleLightsaber, false);
-                })
-                .TriggerPurchase((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleLightsaber, false);
-                })
-                
-                .AddPerkLevel()
-                .RequirementCharacterType(CharacterType.ForceSensitive)
-                .Description("While active, attacks with a lightsaber use PER to-hit and MGT for damage, and gain bonus damage equal to half your MGT modifier.")
-                .Price(1)
-                .GrantsFeat(FeatType.StrongStyleLightsaber);
-        }
 
         private void PommelStrike()
         {

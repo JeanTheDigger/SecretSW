@@ -75,10 +75,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             CombatPoint.AddCombatPoint(activator, target, SkillType.Force, 3);
 
             var stat = AbilityType.Perception;
-            if (Ability.IsAbilityToggled(activator, AbilityToggleType.StrongStyleLightsaber))
-            {
-                stat = AbilityType.Might;
-            }
 
             var attackerStat = Combat.GetPerkAdjustedAbilityScore(activator);
             var attack = Stat.GetAttack(activator, stat, SkillType.Force);

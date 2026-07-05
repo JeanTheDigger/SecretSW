@@ -631,18 +631,7 @@ namespace SWLOR.Game.Server.Native
             if (weapon == null)
                 return AbilityType.Invalid;
 
-            var playerId = attacker.m_pUUID.GetOrAssignRandom().ToString();
-            if (Item.LightsaberBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
-                    return AbilityType.Perception;
-            }
-            else if (Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
-                    return AbilityType.Perception;
-            }
-            else if (Item.StaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
+            if (Item.StaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
             {
                 if (attacker.m_pStats.HasFeat((ushort)FeatType.FlurryStyle) == 1)
                     return AbilityType.Agility;

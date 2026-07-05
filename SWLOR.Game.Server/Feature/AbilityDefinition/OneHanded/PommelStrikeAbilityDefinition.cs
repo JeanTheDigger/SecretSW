@@ -41,10 +41,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             const float Duration = 6f;
 
             var stat = AbilityType.Perception;
-            if (Ability.IsAbilityToggled(activator, AbilityToggleType.StrongStyleLightsaber))
-            {
-                stat = AbilityType.Might;
-            }
 
             switch (level)
             {

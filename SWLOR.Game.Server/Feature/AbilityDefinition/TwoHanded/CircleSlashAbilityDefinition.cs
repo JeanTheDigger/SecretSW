@@ -58,10 +58,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.TwoHanded);
 
             var stat = AbilityType.Perception;
-            if (Ability.IsAbilityToggled(activator, AbilityToggleType.StrongStyleSaberstaff))
-            {
-                stat = AbilityType.Might;
-            }
 
             var count = 0;
             var creature = GetFirstObjectInShape(Shape.Sphere, RadiusSize.Large, GetLocation(activator), true);
