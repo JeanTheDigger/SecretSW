@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SWLOR.Game.Server.Enumeration;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.PerkService;
+using SWLOR.NWN.API.NWScript.Enum;
 
 namespace SWLOR.Game.Server.Feature.PerkDefinition
 {
@@ -27,8 +28,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                     "Your Neural Processor evasion increases to +6.",
                     "Your Neural Processor evasion increases to +8.",
                     "Your Neural Processor evasion increases to +10.",
-                    "Your Neural Processor evasion increases to +12."
-                });
+                    "Your Neural Processor evasion increases to +12. Grants Overclock: wipe every ability cooldown at the cost of a 2-second overheat daze (5 min cycle)."
+                },
+                FeatType.Overclock);
 
             BuildImplant(PerkType.ImplantOcular, "Ocular Targeting",
                 new[]
@@ -71,7 +73,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                     "Your Cardio Regulator recovery increases to +3 per tick.",
                     "Your Cardio Regulator recovery increases to +4 per tick.",
                     "Your Cardio Regulator recovery increases to +5 per tick.",
-                    "Your Cardio Regulator recovery increases to +6 per tick."
+                    "Your Cardio Regulator recovery increases to +6 per tick. Grants Second Wind: once per 30 minutes, a death to anything OTHER than a player restarts your heart at a quarter strength."
                 });
 
             BuildImplant(PerkType.ImplantServo, "Servo Actuators",
@@ -82,8 +84,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                     "Your Servo Actuators speed increases to +9%.",
                     "Your Servo Actuators speed increases to +12%.",
                     "Your Servo Actuators speed increases to +15%.",
-                    "Your Servo Actuators speed increases to +18%."
-                });
+                    "Your Servo Actuators speed increases to +18%. Grants Jump-Jet: rocket to a distant enemy and strike on landing (30s cycle)."
+                },
+                FeatType.JumpJet);
 
             BuildImplant(PerkType.ImplantCortical, "Cortical Shield",
                 new[]
@@ -99,9 +102,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             return _builder.Build();
         }
 
-        private void BuildImplant(PerkType perkType, string name, string[] descriptions)
+        private void BuildImplant(PerkType perkType, string name, string[] descriptions, FeatType capstoneFeat = FeatType.Invalid)
         {
-            _builder.Create(PerkCategoryType.Cybernetics, perkType)
+            var perk = _builder.Create(PerkCategoryType.Cybernetics, perkType)
                 .Name(name)
                 .TriggerPurchase(Implant.Recalculate)
                 .TriggerRefund(Implant.Recalculate)
@@ -145,6 +148,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Price(6)
                 .RequirementTotalSP(600)
                 .RequirementCharacterType(CharacterType.Standard);
+
+            if (capstoneFeat != FeatType.Invalid)
+                perk.GrantsFeat(capstoneFeat);
         }
     }
 }

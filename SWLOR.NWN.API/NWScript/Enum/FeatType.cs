@@ -1822,6 +1822,10 @@ namespace SWLOR.NWN.API.NWScript.Enum
         DoctrineTerasKasi = 1894,   // row: ReviveBeast1
         DoctrineMarksman = 1895,    // row: ReviveBeast2
 
+        // Implant capstone actives, on rows orphaned by the shield removal.
+        JumpJet = 1863,             // row: ShieldBash1
+        Overclock = 1864,           // row: ShieldBash2
+
         // Stance signature actives (level-6 capstones), on dead beast-ability rows.
         SarlaccSweep = 1913,        // row: Bite1
         DuelistsEnd = 1914,         // row: Bite2

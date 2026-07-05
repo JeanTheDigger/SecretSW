@@ -608,6 +608,10 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var playerId = GetObjectUUID(_target);
                 var dbPlayer = DB.Get<Player>(playerId);
 
+                // Tier title rides the class label: "Force Sensitive - Knight".
+                var baseType = GetClassByPosition(1, _target) == ClassType.Standard ? "Standard" : "Force Sensitive";
+                CharacterType = $"{baseType} - {CharacterTitle.GetTitle(dbPlayer)}";
+
                 var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
                 SP = $"{dbPlayer.TotalSPAcquired} / {spCap} ({dbPlayer.UnallocatedSP})";
                 APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";

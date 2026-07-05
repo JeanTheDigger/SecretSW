@@ -265,6 +265,10 @@ namespace SWLOR.Game.Server.Service.AbilityService
         // mid-fight cannot weave multiple capstones.
         [RecastGroup("Stance Signature", "Signature", true)]
         StanceSignature = 128,
+        [RecastGroup("Jump-Jet", "Jump-Jet", true)]
+        JumpJet = 129,
+        [RecastGroup("Overclock", "Overclock", true)]
+        Overclock = 130,
     }
 
     public class RecastGroupAttribute: Attribute

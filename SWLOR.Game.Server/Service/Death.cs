@@ -1,6 +1,9 @@
+using System;
+using System.Globalization;
 using SWLOR.Game.Server.Core;
 using SWLOR.Game.Server.Entity;
 using SWLOR.Game.Server.Service.LogService;
+using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.PropertyService;
 using SWLOR.NWN.API.NWScript.Enum;
 
@@ -55,6 +58,11 @@ namespace SWLOR.Game.Server.Service
             }
             else
             {
+                // Second Wind (Cardio Regulator prototype tier): a death to anything
+                // other than a player restarts the heart - once per 30 minutes.
+                if (!GetIsPC(hostile) && TrySecondWind(player))
+                    return;
+
                 // Lethal kills inside PvP event zones feed the Phase-2 endgame SP economy.
                 WorldEvent.ProcessPvPKill(hostile, player);
 
@@ -94,6 +102,40 @@ namespace SWLOR.Game.Server.Service
             var xpLost = ApplyPenalties(player);
 
             WriteAudit(player, xpLost);
+        }
+
+        private const string SecondWindCooldownVariable = "SECOND_WIND_READY_AT";
+        private const int SecondWindCooldownMinutes = 30;
+
+        /// <summary>
+        /// The Cardio Regulator's prototype-tier passive: a fatal PvE blow restarts the
+        /// heart at a quarter strength, once per 30 minutes. Never fires on player kills
+        /// (the perma-death wager cannot be implanted away) - the caller enforces that.
+        /// </summary>
+        private static bool TrySecondWind(uint player)
+        {
+            if (Perk.GetPerkLevel(player, PerkType.ImplantCardio) < 6)
+                return false;
+
+            var raw = GetLocalString(player, SecondWindCooldownVariable);
+            if (!string.IsNullOrWhiteSpace(raw) &&
+                DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var readyAt) &&
+                DateTime.UtcNow < readyAt)
+            {
+                return false;
+            }
+
+            SetLocalString(player, SecondWindCooldownVariable,
+                DateTime.UtcNow.AddMinutes(SecondWindCooldownMinutes).ToString("O"));
+
+            ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
+            ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player) / 4), player);
+            DelayCommand(0.1f, () => Ability.ReapplyAuraEffectsForCreature(player));
+
+            FloatingTextStringOnCreature(ColorToken.Green("Your cardio regulator slams your heart back into rhythm. SECOND WIND!"), player, false);
+            Messaging.SendMessageNearbyToPlayers(player, $"{GetName(player)} gets back up!");
+
+            return true;
         }
 
         /// <summary>
