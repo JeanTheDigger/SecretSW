@@ -90,7 +90,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus *= 3 / 2;
+                            perBonus = perBonus * 3 / 2;
                         }
                         Impact(activator, target, perBonus, -1);
                     });
@@ -118,7 +118,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus *= 3 / 2;
+                            perBonus = perBonus * 3 / 2;
                         }
                         var perDMG = 15 + (perBonus * 3 / 2);
                         Impact(activator, target, perDMG, 10);
@@ -147,7 +147,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                         var race = GetRacialType(target);
                         if (race == RacialType.Robot || race == RacialType.Droid || race == RacialType.Cyborg)
                         {
-                            perBonus *= 3 / 2;
+                            perBonus = perBonus * 3 / 2;
                         }
                         var perDMG = 30 + (perBonus * 2);
                         Impact(activator, target, perDMG, 14);
