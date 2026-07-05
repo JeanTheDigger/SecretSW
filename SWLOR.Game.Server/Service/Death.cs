@@ -167,6 +167,9 @@ namespace SWLOR.Game.Server.Service
             dbPlayer.IsPermaDead = true;
             DB.Set(dbPlayer);
 
+            // The signature weapon outlives its wielder: it drops as a lootable heirloom.
+            SignatureWeapon.DropHeirloom(player);
+
             ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
             ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player)), player);
             SendToLimbo(player);

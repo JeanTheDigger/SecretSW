@@ -351,5 +351,8 @@
         CarboniteProjector = 328,
         CombatJetpack = 329,
         OrbitalStrike = 330,
+
+        // Both classes: the attuned weapon that outlives its wielder.
+        SignatureWeapon = 331,
     }
 }

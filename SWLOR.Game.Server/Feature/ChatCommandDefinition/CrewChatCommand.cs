@@ -66,6 +66,14 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                     Space.SetFlightStance(user, stance);
                 });
 
+            _builder.Create("attune")
+                .Description("Attunes you to the weapon in your main hand (requires the Signature Weapon perk). The bond grants bonus damage with that item alone - and it outlives you.")
+                .Permissions(AuthorizationLevel.Player)
+                .Action((user, target, location, args) =>
+                {
+                    SignatureWeapon.Attune(user);
+                });
+
             return _builder.Build();
         }
     }

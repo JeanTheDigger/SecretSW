@@ -415,6 +415,17 @@ namespace SWLOR.Game.Server.Native
                         stance.FlatDMG - stance.DamagePenalty + mightMod * stance.MgtModDMGHalves / 2;
                 }
             }
+
+            // Signature weapon bond: bonus damage only with THE attuned item.
+            if (weapon != null && attacker.m_bPlayerCharacter == 1)
+            {
+                var bondMark = weapon.m_ScriptVars.GetInt(new CExoString(SignatureWeapon.SignatureItemVariable));
+                if (bondMark > 0)
+                {
+                    var attackerId = attacker.m_pUUID.GetOrAssignRandom().ToString();
+                    dmgValues[CombatDamageType.Physical] += SignatureWeapon.GetBonus(attackerId, bondMark);
+                }
+            }
         }
 
         private static int CalculateTargetSpecificDamage(void* pTarget, CNWSCreature attacker, CNWSItem weapon,

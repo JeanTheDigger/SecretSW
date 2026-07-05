@@ -13,8 +13,28 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
         public Dictionary<PerkType, PerkDetail> BuildPerks()
         {
             Dash();
+            SignatureWeapon();
 
             return _builder.Build();
+        }
+
+        // Both classes: attune to one specific weapon item with /attune. The bond grows
+        // with the perk, and when its wielder perma-dies in an event, the weapon survives
+        // as a lootable heirloom - event deaths generate stories and economy.
+        private void SignatureWeapon()
+        {
+            _builder.Create(PerkCategoryType.General, PerkType.SignatureWeapon)
+                .Name("Signature Weapon")
+
+                .AddPerkLevel()
+                .Description("Attune to the weapon in your hands (/attune): +3 damage with THAT item alone. Should you fall forever, it falls beside you - an heirloom for whoever claims it.")
+                .Price(5)
+                .RequirementTotalSP(400)
+
+                .AddPerkLevel()
+                .Description("Your bond deepens: +6 damage with your signature weapon.")
+                .Price(6)
+                .RequirementTotalSP(550);
         }
 
         private void Dash()

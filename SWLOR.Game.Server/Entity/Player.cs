@@ -140,6 +140,7 @@ namespace SWLOR.Game.Server.Entity
         [Indexed]
         public bool IsPermaDead { get; set; }
         public bool HasCompletedTrials { get; set; }
+        public string SignatureItemId { get; set; }
         public bool IsUsingDualPistolMode { get; set; }
         public DateTime? DatePerkRefundAvailable { get; set; }
         [Indexed]
