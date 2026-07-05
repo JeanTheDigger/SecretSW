@@ -141,6 +141,8 @@ namespace SWLOR.Game.Server.Service.NPCService
         NarShaddaa_CommandDroid = 65,
         [NPCGroup("Ancient Worm")]
 		Tatooine_AncientSandworm = 66,
+        [NPCGroup("Trials Guardian")]
+        TrialsGuardian = 67,
     }
 
     public class NPCGroupAttribute : Attribute

@@ -8,6 +8,7 @@ using SWLOR.Game.Server.Feature.GuiDefinition.RefreshEvent;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.ChatCommandService;
+using SWLOR.Game.Server.Service.NPCService;
 using SWLOR.Game.Server.Service.WorldEventService;
 using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.LogService;
@@ -34,6 +35,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             EventList();
             GrantKnighthood();
             RevokeKnighthood();
+            TrialsBegin();
             PermaRestore();
             Night();
             GetPlot();
@@ -98,6 +100,35 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SetTime(8, 0, 0, 0);
+                });
+        }
+
+        private void TrialsBegin()
+        {
+            _builder.Create("trialsbegin")
+                .Description($"Starts the Trials quest for the targeted player (requires Phase 1 complete). Spawn a creature and set its QUEST_NPC_GROUP_ID to {(int)NPCGroupType.TrialsGuardian} (Trials Guardian) to stage the fight.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has already completed the Trials.");
+                        return;
+                    }
+
+                    // Prerequisites (Phase 1 finished, not already on the quest) are
+                    // enforced by the quest system, with feedback sent to the player.
+                    Quest.AcceptQuest(target, Feature.QuestDefinition.TrialsQuestDefinition.QuestId);
+                    SendMessageToPC(user, $"The Trials have been offered to {GetName(target)}.");
                 });
         }
 
@@ -198,12 +229,12 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         private void EventOpen()
         {
             _builder.Create("eventopen")
-                .Description("Opens a world event in your current area. Usage: /eventopen <pve|pvp> <minutes>")
+                .Description("Opens a world event in your current area. Usage: /eventopen <pve|pvp> <minutes> [knight|master|open]")
                 .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
                 .Validate((user, args) =>
                 {
                     if (args.Length < 2)
-                        return "Usage: /eventopen <pve|pvp> <minutes>";
+                        return "Usage: /eventopen <pve|pvp> <minutes> [knight|master|open]";
 
                     var type = args[0].ToLower();
                     if (type != "pve" && type != "pvp")
@@ -211,6 +242,13 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
 
                     if (!int.TryParse(args[1], out var minutes) || minutes < 1 || minutes > 1440)
                         return "Minutes must be a number between 1 and 1440.";
+
+                    if (args.Length >= 3)
+                    {
+                        var bracket = args[2].ToLower();
+                        if (bracket != "knight" && bracket != "master" && bracket != "open")
+                            return "Bracket must be 'knight', 'master', or 'open'.";
+                    }
 
                     return string.Empty;
                 })
@@ -221,9 +259,19 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                         ? WorldEventType.PvP
                         : WorldEventType.PvE;
                     var minutes = int.Parse(args[1]);
+                    var bracket = WorldEventBracket.Open;
+                    if (args.Length >= 3)
+                    {
+                        bracket = args[2].ToLower() switch
+                        {
+                            "knight" => WorldEventBracket.Knight,
+                            "master" => WorldEventBracket.Master,
+                            _ => WorldEventBracket.Open
+                        };
+                    }
 
-                    WorldEvent.OpenEvent(area, type, minutes);
-                    SendMessageToPC(user, $"Event opened in {GetName(area)} for {minutes} minutes.");
+                    WorldEvent.OpenEvent(area, type, minutes, bracket);
+                    SendMessageToPC(user, $"{bracket} event opened in {GetName(area)} for {minutes} minutes.");
                 });
         }
 

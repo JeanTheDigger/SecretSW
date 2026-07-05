@@ -42,6 +42,24 @@ namespace SWLOR.Game.Server.Service.QuestService
         }
     }
 
+    public class RequiredTotalSPPrerequisite : IQuestPrerequisite
+    {
+        private readonly int _requiredTotalSP;
+
+        public RequiredTotalSPPrerequisite(int requiredTotalSP)
+        {
+            _requiredTotalSP = requiredTotalSP;
+        }
+
+        public bool MeetsPrerequisite(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+
+            return dbPlayer.TotalSPAcquired >= _requiredTotalSP;
+        }
+    }
+
     public class RequiredFactionStandingPrerequisite : IQuestPrerequisite
     {
         private readonly FactionType _factionType;
