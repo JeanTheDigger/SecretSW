@@ -1102,6 +1102,17 @@ namespace SWLOR.Game.Server.Service
                 return;
             }
 
+            // A disabled ship (condition step 5) cannot bring its weapons to bear.
+            // Repair modules remain usable - damage control is the way back.
+            if (activatorShipStatus.ConditionStep >= 5 &&
+                shipModuleDetails.PowerType == ShipModulePowerType.High &&
+                shipModuleDetails.Type != ShipModuleType.HullRepairer &&
+                shipModuleDetails.Type != ShipModuleType.ShieldRepairer)
+            {
+                SendMessageToPC(activator, "Your ship is disabled! Repair its systems before firing.");
+                return;
+            }
+
             // Check global recast requirements
             if (GetShipStatus(activator).GlobalRecast > now)
             {
@@ -1188,23 +1199,34 @@ namespace SWLOR.Game.Server.Service
 
         private static void ApplyAutoShipRecovery(uint player, ShipStatus shipStatus)
         {
-            // Shield recovery
-            shipStatus.ShieldCycle++;
-            var rechargeRate = shipStatus.ShieldRechargeRate;
-            if (rechargeRate <= 0)
-                rechargeRate = 1;
-
-            if (shipStatus.ShieldCycle >= rechargeRate)
-            {
-                RestoreShield(player, shipStatus, 1);
-                shipStatus.ShieldCycle = 0;
-            }
-
-            // Capacitor recovery
+            // Shield ratings never regenerate passively - restoration is an ACTION
+            // (shield repair modules). Only the capacitor recovers on its own.
             RestoreCapacitor(player, shipStatus, 1);
 
             if(GetIsPC(player))
                 ExecuteScript("pc_target_upd", player);
+        }
+
+        /// <summary>
+        /// Converts a shield pool value (ship definitions and module bonuses are authored
+        /// on the old pool scale) into a flat per-hit SHIELD RATING.
+        /// Fighters land around 8-16, transports 16-30, capitals 40+.
+        /// </summary>
+        public static int CalculateShieldRating(int shieldPool)
+        {
+            return Math.Clamp(shieldPool / 5, 5, 60);
+        }
+
+        /// <summary>
+        /// Derives a frame's damage threshold from its class until the frame catalog is
+        /// authored per-hull: capitals 50, transport-weight hulls 30, fighters 15.
+        /// </summary>
+        public static int CalculateDamageThreshold(ShipDetail shipDetail)
+        {
+            if (shipDetail.CapitalShip)
+                return 50;
+
+            return shipDetail.MaxHull >= 90 ? 30 : 15;
         }
 
         /// <summary>
@@ -1306,12 +1328,14 @@ namespace SWLOR.Game.Server.Service
             var shipStatus = new ShipStatus
             {
                 ItemTag = registeredEnemyType.ShipItemTag,
-                Shield = shipDetail.MaxShield,
-                MaxShield = shipDetail.MaxShield,
+                Shield = CalculateShieldRating(shipDetail.MaxShield),
+                MaxShield = CalculateShieldRating(shipDetail.MaxShield),
                 Hull = shipDetail.MaxHull,
                 MaxHull = shipDetail.MaxHull,
                 Capacitor = shipDetail.MaxCapacitor,
                 MaxCapacitor = shipDetail.MaxCapacitor,
+                DamageThreshold = CalculateDamageThreshold(shipDetail),
+                ConditionStep = 0,
                 EMDefense = shipDetail.EMDefense,
                 ExplosiveDefense = shipDetail.ExplosiveDefense,
                 ThermalDefense = shipDetail.ThermalDefense,
@@ -1446,6 +1470,10 @@ namespace SWLOR.Game.Server.Service
         {
             var attackerShipStatus = GetShipStatus(attacker);
             var bonus = attackerShipStatus.Accuracy;
+
+            // Condition-track penalty: each step costs 5 accuracy.
+            bonus -= attackerShipStatus.ConditionStep * 5;
+
             var stat = GetAbilityScore(attacker, AbilityType.Agility);
             int level;
 
@@ -1569,14 +1597,19 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
-        /// Applies damage to a ship target. Damage will first be taken to the shields.
-        /// When shields reaches zero, damage will be taken on the hull.
-        /// When hull reaches zero, the ship will explode.
+        /// Applies damage to a ship target under the shield-rating model.
+        /// Energy weapons are reduced by the target's FULL shield rating - a hit below the
+        /// rating does nothing and leaves the rating intact; a hit at or above it degrades
+        /// the rating by 5. Ordnance is reduced by only HALF the rating and always degrades
+        /// it. Whatever penetrates strikes the hull. Hits that meet the target's damage
+        /// threshold (Energy tests post-reduction damage, Ordnance tests RAW damage) slide
+        /// the ship down the condition track. Death occurs when the hull reaches zero.
         /// </summary>
         /// <param name="attacker">The attacking ship</param>
         /// <param name="target">The defending, targeted ship</param>
         /// <param name="amount">The amount of damage to apply to the target.</param>
-        public static void ApplyShipDamage(uint attacker, uint target, int amount)
+        /// <param name="family">The weapon family dealing the damage.</param>
+        public static void ApplyShipDamage(uint attacker, uint target, int amount, ShipDamageFamily family = ShipDamageFamily.Energy)
         {
             if (amount < 0) return;
 
@@ -1585,28 +1618,41 @@ namespace SWLOR.Game.Server.Service
             if (targetShipStatus == null)
                 return;
 
-            var remainingDamage = amount;
-            // First deal damage to target's shields.
-            if (remainingDamage <= targetShipStatus.Shield)
+            int penetrating;
+            if (family == ShipDamageFamily.Energy)
             {
-                // Shields have enough to cover the attack.
-                targetShipStatus.Shield -= remainingDamage;
-                remainingDamage = 0;
+                penetrating = Math.Max(0, amount - targetShipStatus.Shield);
+
+                // Energy only wears the emitters down when it matches them.
+                if (targetShipStatus.Shield > 0 && amount >= targetShipStatus.Shield)
+                    targetShipStatus.Shield = Math.Max(0, targetShipStatus.Shield - 5);
+            }
+            else
+            {
+                penetrating = Math.Max(0, amount - targetShipStatus.Shield / 2);
+
+                // Ordnance always wears the emitters down.
+                targetShipStatus.Shield = Math.Max(0, targetShipStatus.Shield - 5);
+            }
+
+            if (penetrating <= 0)
+            {
                 ApplyEffectToObject(DurationType.Temporary, EffectVisualEffect(VisualEffect.Vfx_Dur_Aura_Pulse_Cyan_Blue), target, 1.0f);
                 ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Deflect), target);
             }
             else
             {
-                remainingDamage -= targetShipStatus.Shield;
-                targetShipStatus.Shield = 0;
+                targetShipStatus.Hull -= penetrating;
+                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
             }
 
-
-            // If damage is remaining, deal it to the hull.
-            if (remainingDamage > 0)
+            // Damage threshold: heavy hits slide the ship down the condition track.
+            // Energy tests what got through the shields; ordnance staggers on RAW damage.
+            var thresholdTest = family == ShipDamageFamily.Energy ? penetrating : amount;
+            if (targetShipStatus.DamageThreshold > 0 && thresholdTest >= targetShipStatus.DamageThreshold)
             {
-                targetShipStatus.Hull -= remainingDamage;
-                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                var steps = thresholdTest >= targetShipStatus.DamageThreshold * 2 ? 2 : 1;
+                AdvanceConditionTrack(target, targetShipStatus, steps);
             }
 
             // Safety clamping
@@ -1615,8 +1661,8 @@ namespace SWLOR.Game.Server.Service
             if (targetShipStatus.Hull < 0)
                 targetShipStatus.Hull = 0;
 
-            // Apply death if shield and hull have reached zero.
-            if (targetShipStatus.Shield <= 0 && targetShipStatus.Hull <= 0)
+            // Apply death when the hull is gone. The shield rating no longer gates death.
+            if (targetShipStatus.Hull <= 0)
             {
                 // Lexicon Note regarding GetFirstObjectInShape/GetNextObjectInShape
                 // Do not apply EffectDamage without a DelayCommand (do DelayCommand(0.0, Apply...) at minimum).
@@ -1644,6 +1690,7 @@ namespace SWLOR.Game.Server.Service
 
                     dbPlayerShip.Status.Shield = targetShipStatus.Shield;
                     dbPlayerShip.Status.Hull = targetShipStatus.Hull;
+                    dbPlayerShip.Status.ConditionStep = targetShipStatus.ConditionStep;
 
                     DB.Set(dbPlayerShip);
                     ExecuteScript("pc_shld_adjusted", target);
@@ -1658,10 +1705,90 @@ namespace SWLOR.Game.Server.Service
 
             // Notify nearby players of damage taken by target.
             Messaging.SendMessageNearbyToPlayers(attacker, $"{GetName(attacker)} deals {amount} damage to {GetName(target)}.");
-            
+
             if(GetIsPC(attacker))
                 ExecuteScript("pc_target_upd", attacker);
 
+        }
+
+        private static readonly string[] _conditionStepNames =
+        {
+            "sound", "rattled", "damaged", "crippled", "breached", "DISABLED"
+        };
+
+        /// <summary>
+        /// Slides a ship down the 5-step condition track. Each step costs 5 accuracy.
+        /// At step 5 the ship is disabled: player ships cannot fire until repaired;
+        /// NPC ships break apart (boarding and salvage channels arrive with the ring economy).
+        /// </summary>
+        private static void AdvanceConditionTrack(uint target, ShipStatus status, int steps)
+        {
+            if (status.ConditionStep >= 5)
+                return;
+
+            status.ConditionStep = Math.Min(5, status.ConditionStep + steps);
+            Messaging.SendMessageNearbyToPlayers(target,
+                ColorToken.Orange($"{GetName(target)} shudders from the impact! ({_conditionStepNames[status.ConditionStep]})"));
+
+            if (status.ConditionStep >= 5 && !GetIsPC(target))
+            {
+                // v1 dial: a disabled NPC ship breaks apart. The nonlethal capture/salvage
+                // window is Stage 6b content.
+                status.Hull = 0;
+            }
+        }
+
+        /// <summary>
+        /// Tests a raw pressure value against a ship's damage threshold without dealing
+        /// damage (ion weaponry against shieldless targets - the disabler's tool).
+        /// </summary>
+        public static void ApplyThresholdPressure(uint attacker, uint target, int rawValue)
+        {
+            var targetShipStatus = GetShipStatus(target);
+            if (targetShipStatus == null || targetShipStatus.DamageThreshold <= 0)
+                return;
+
+            if (rawValue < targetShipStatus.DamageThreshold)
+                return;
+
+            var steps = rawValue >= targetShipStatus.DamageThreshold * 2 ? 2 : 1;
+            AdvanceConditionTrack(target, targetShipStatus, steps);
+
+            if (GetIsPC(target))
+            {
+                var targetPlayerId = GetObjectUUID(target);
+                var dbTargetPlayer = DB.Get<Player>(targetPlayerId);
+                var dbPlayerShip = DB.Get<PlayerShip>(dbTargetPlayer.ActiveShipId);
+                dbPlayerShip.Status.ConditionStep = targetShipStatus.ConditionStep;
+                dbPlayerShip.Status.Hull = targetShipStatus.Hull;
+                DB.Set(dbPlayerShip);
+            }
+            else
+            {
+                _shipNPCs[target] = targetShipStatus;
+
+                if (targetShipStatus.Hull <= 0)
+                {
+                    DelayCommand(0f, () =>
+                    {
+                        AssignCommand(attacker, () => ApplyEffectToObject(DurationType.Instant, EffectDeath(), target));
+                    });
+                    ClearCurrentTarget(attacker);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears condition-track steps on a ship (damage-control repairs).
+        /// </summary>
+        public static void RecoverCondition(uint creature, ShipStatus shipStatus, int steps)
+        {
+            if (shipStatus.ConditionStep <= 0)
+                return;
+
+            shipStatus.ConditionStep = Math.Max(0, shipStatus.ConditionStep - steps);
+            FloatingTextStringOnCreature(
+                $"Ship condition improves. ({_conditionStepNames[shipStatus.ConditionStep]})", creature, false);
         }
 
         /// <summary>

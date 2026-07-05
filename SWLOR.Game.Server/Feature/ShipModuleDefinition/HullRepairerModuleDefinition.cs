@@ -65,6 +65,9 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                     var recovery = baseRecovery + (moduleBonus + activatorShipStatus.Industrial) * 2;
                     Space.RestoreHull(target, targetShipStatus, recovery);
 
+                    // Damage control: hull repairs also work the ship back up the condition track.
+                    Space.RecoverCondition(target, targetShipStatus, 1);
+
                     Messaging.SendMessageNearbyToPlayers(activator, $"{GetName(activator)} restores {recovery} hull HP to {GetName(target)}'s ship.");
                     CombatPoint.AddCombatPointToAllTagged(activator, SkillType.Piloting);
                 });

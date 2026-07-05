@@ -15,12 +15,22 @@ namespace SWLOR.Game.Server.Service.SpaceService
         }
         
         public string ItemTag { get; set; }
+
+        // Shield = the ship's current SHIELD RATING: a flat per-hit damage reduction that
+        // degrades under fire and is restored only by actions - never by passive regen.
         public int Shield { get; set; }
         public int Hull { get; set; }
         public int Capacitor { get; set; }
         public int MaxShield{ get; set; }
         public int MaxHull { get; set; }
         public int MaxCapacitor { get; set; }
+
+        // A hit whose damage meets this threshold slides the ship down the condition track.
+        public int DamageThreshold { get; set; }
+
+        // The 5-step condition track: 0 sound, 1 rattled, 2 damaged, 3 crippled,
+        // 4 breached, 5 disabled.
+        public int ConditionStep { get; set; }
         public int ShieldCycle { get; set; }
         public int ShieldRechargeRate { get; set; }
         public int EMDamage { get; set; }

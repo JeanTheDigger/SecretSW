@@ -52,7 +52,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                     defenderStat,
                     0);
 
-                Space.ApplyShipDamage(activator, target, damage);
+                Space.ApplyShipDamage(activator, target, damage, ShipDamageFamily.Ordnance);
                 Enmity.ModifyEnmity(activator, target, damage);
             }
 

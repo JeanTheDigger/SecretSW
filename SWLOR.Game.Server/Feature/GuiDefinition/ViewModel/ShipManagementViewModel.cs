@@ -1336,12 +1336,14 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     Status = new ShipStatus
                     {
                         ItemTag = itemTag,
-                        Shield = shipDetail.MaxShield + bonuses.Shield,
-                        MaxShield = shipDetail.MaxShield + bonuses.Shield,
+                        Shield = Space.CalculateShieldRating(shipDetail.MaxShield + bonuses.Shield),
+                        MaxShield = Space.CalculateShieldRating(shipDetail.MaxShield + bonuses.Shield),
                         Hull = shipDetail.MaxHull + bonuses.Hull,
                         MaxHull = shipDetail.MaxHull + bonuses.Hull,
                         Capacitor = shipDetail.MaxCapacitor + bonuses.Capacitor,
                         MaxCapacitor = shipDetail.MaxCapacitor + bonuses.Capacitor,
+                        DamageThreshold = Space.CalculateDamageThreshold(shipDetail),
+                        ConditionStep = 0,
                         EMDamage = bonuses.EMDamage,
                         ExplosiveDamage = bonuses.ExplosiveDamage,
                         ThermalDamage = bonuses.ThermalDamage,

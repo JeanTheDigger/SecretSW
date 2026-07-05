@@ -80,18 +80,16 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                         {
                             AssignCommand(activator, () =>
                             {
-                                var shieldDamage = int.Min(damage, targetShipStatus.Shield);
-                                var armorDamage = (damage-shieldDamage)/2;
-                                if (armorDamage < 0)
-                                {
-                                    armorDamage = 0;
-                                }
+                                // The disabler: against a SHIELDLESS target, ion charge
+                                // tests double its damage against the condition threshold.
+                                // Slides fighters and transports; never staggers a capital.
+                                var shieldless = targetShipStatus.Shield <= 0;
                                 var effect = EffectVisualEffect(VisualEffect.Vfx_Imp_Dispel, false, 0.5f);
                                 ApplyEffectToObject(DurationType.Instant, effect, target);
-                                Space.ApplyShipDamage(activator, target, shieldDamage);
-                                Space.ApplyShipDamage(activator, target, armorDamage);
-                                if (armorDamage > 0)
+                                Space.ApplyShipDamage(activator, target, damage);
+                                if (shieldless)
                                 {
+                                    Space.ApplyThresholdPressure(activator, target, damage * 2);
                                     ApplyEffectToObject(DurationType.Temporary, EffectMovementSpeedDecrease(50), target, 6f);
                                     ApplyEffectToObject(DurationType.Temporary, EffectAbilityDecrease(AbilityType.Agility, 2), target, 12f);
                                 }
