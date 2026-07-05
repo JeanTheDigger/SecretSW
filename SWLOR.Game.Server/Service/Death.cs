@@ -250,7 +250,7 @@ namespace SWLOR.Game.Server.Service
         /// Teleports player to his or her last home point.
         /// </summary>
         /// <param name="player">The player to teleport</param>
-        private static void SendToHomePoint(uint player)
+        public static void SendToHomePoint(uint player)
         {
             var playerId = GetObjectUUID(player);
             var entity = DB.Get<Player>(playerId);
