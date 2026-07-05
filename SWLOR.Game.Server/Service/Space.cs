@@ -648,6 +648,9 @@ namespace SWLOR.Game.Server.Service
             SetCreatureAppearanceType(player, shipDetail.Appearance);
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
 
+            // Frame speed class: fighters 100%, transports 85%, capitals 60%.
+            CreaturePlugin.SetMovementRateFactor(player, GetFrameSpeedFactor(GetFrameClass(dbPlayerShip.Status)));
+
             // Set active ship Id and serialize the player's hot bar.
             dbPlayer.SerializedHotBar = CreaturePlugin.SerializeQuickbar(player);
             dbPlayer.ActiveShipId = shipId;
@@ -840,6 +843,7 @@ namespace SWLOR.Game.Server.Service
             ClearCurrentTarget(player);
             SetCreatureAppearanceType(player, dbPlayer.OriginalAppearanceType);
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
+            CreaturePlugin.SetMovementRateFactor(player, 1.0f);
             Enmity.RemoveCreatureEnmity(player);
 
             // Save the ship's hot bar and unassign the active ship Id.
@@ -1445,6 +1449,9 @@ namespace SWLOR.Game.Server.Service
                 featCount++;
             }
 
+            // Frame speed class: fighters 100%, transports 85%, capitals 60%.
+            CreaturePlugin.SetMovementRateFactor(creature, GetFrameSpeedFactor(GetFrameClass(shipStatus)));
+
             _shipNPCs[creature] = shipStatus;
         }
 
@@ -1503,7 +1510,7 @@ namespace SWLOR.Game.Server.Service
         /// </summary>
         /// <param name="attacker">The creature attacking.</param>
         /// <param name="defender">The creature being targeted.</param>
-        public static int CalculateChanceToHit(uint attacker, uint defender)
+        public static int CalculateChanceToHit(uint attacker, uint defender, ShipWeaponScale weaponScale = ShipWeaponScale.Standard)
         {
             var attackerShipStatus = GetShipStatus(attacker);
             var defenderShipStatus = GetShipStatus(defender);
@@ -1513,8 +1520,61 @@ namespace SWLOR.Game.Server.Service
 
             var attackerAccuracy = GetShipAccuracy(attacker);
             var defenderEvasion = GetShipEvasion(defender);
+            var scaleModifier = GetScaleHitModifier(weaponScale, GetFrameClass(defenderShipStatus));
 
-            return Combat.CalculateHitRate(attackerAccuracy, defenderEvasion, 0);
+            return Combat.CalculateHitRate(attackerAccuracy, defenderEvasion, scaleModifier);
+        }
+
+        /// <summary>
+        /// Derives a ship's frame class from its status, matching the threshold bands.
+        /// </summary>
+        public static ShipFrameClass GetFrameClass(ShipStatus shipStatus)
+        {
+            if (shipStatus.CapitalShip)
+                return ShipFrameClass.Capital;
+
+            return shipStatus.MaxHull >= 90 ? ShipFrameClass.Transport : ShipFrameClass.Fighter;
+        }
+
+        /// <summary>
+        /// The scale matrix, as percentage-POINT hit-rate modifiers (the same channel as
+        /// the dual-wield penalty - accuracy points would halve through the hit formula
+        /// and the trench run would collapse). Standard weapons find bigger hulls easier
+        /// to hit; capital batteries crash toward the engine's 20% floor against
+        /// fighters, so a capital's flak screen is its gunners, not its main guns.
+        /// </summary>
+        private static int GetScaleHitModifier(ShipWeaponScale weaponScale, ShipFrameClass targetClass)
+        {
+            if (weaponScale == ShipWeaponScale.CapitalGrade)
+            {
+                return targetClass switch
+                {
+                    ShipFrameClass.Fighter => -25,
+                    ShipFrameClass.Transport => -10,
+                    _ => 0
+                };
+            }
+
+            return targetClass switch
+            {
+                ShipFrameClass.Transport => 5,
+                ShipFrameClass.Capital => 10,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Frame speed classes: fighters fly at full player rate, transports at 85%,
+        /// capitals at 60% - chases and blockade-running are real.
+        /// </summary>
+        public static float GetFrameSpeedFactor(ShipFrameClass frameClass)
+        {
+            return frameClass switch
+            {
+                ShipFrameClass.Transport => 0.85f,
+                ShipFrameClass.Capital => 0.6f,
+                _ => 1.0f
+            };
         }
 
         /// <summary>
@@ -2008,6 +2068,7 @@ namespace SWLOR.Game.Server.Service
                 ClearCurrentTarget(creature);
                 SetCreatureAppearanceType(creature, dbPlayer.OriginalAppearanceType);
                 CreaturePlugin.SetMovementRate(creature, MovementRate.PC);
+                CreaturePlugin.SetMovementRateFactor(creature, 1.0f);
                 Enmity.RemoveCreatureEnmity(creature);
                 
                 // Remove all module feats from the player.

@@ -28,7 +28,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
             if (targetShipStatus == null)
                 return;
 
-            var chanceToHit = Space.CalculateChanceToHit(activator, target);
+            var chanceToHit = Space.CalculateChanceToHit(activator, target, ShipWeaponScale.CapitalGrade);
             var roll = Random.D100(1);
             var isHit = hitOverride ?? roll <= chanceToHit;
 
@@ -115,7 +115,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                     var targetDistance = GetDistanceBetween(activator, target);
                     var delay = (float)(targetDistance / (3.0 * log(targetDistance) + 2.0));
 
-                    var chanceToHit = Space.CalculateChanceToHit(activator, target);
+                    var chanceToHit = Space.CalculateChanceToHit(activator, target, ShipWeaponScale.CapitalGrade);
                     var roll = Random.D100(1);
                     var isHit = roll <= chanceToHit;
 
