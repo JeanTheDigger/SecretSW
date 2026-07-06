@@ -14,6 +14,7 @@ the code reads precisely these strings and numbers.
 | Ring-2 contested-lane space areas | area local int `SPACE_RING` = `2` | New space areas. Open ship PvP + module-loss economy + Phase-2 SP. |
 | Ring-3 deep-space areas | area local int `SPACE_RING` = `3` | New space areas. Frame loss for flagged pilots. Gate transitions with a stakes-confirmation door/dialog if desired — code already announces on entry and protects unflagged pilots mechanically. |
 | Existing 7 orbits | leave `SPACE_RING` unset | Unset = ring 1 (safe). **Sweep their spawn tables: capital rosters OUT of starter orbits.** |
+| Race courses (optional, any area) | waypoints `RACE_WP_1` .. `RACE_WP_N` | Ordered checkpoints. Any area with 2+ becomes a `/race` circuit; per-area best times persist automatically. Swoop/mount appearances are content on top. |
 
 Event-zone areas need nothing: `IS_EVENT_ZONE` / `EVENT_TYPE` / `EVENT_BRACKET` are set
 at runtime. The automatic rotation currently targets these existing area tags —
@@ -49,13 +50,18 @@ spawn system and seeded through ring-1/2 lanes for the patrol contracts.
 - **Ship modules (required to be obtainable):** `pd_cluster_1/2/3` (Point-Defense
   Cluster I–III), `sam_battery_1` (SAM Battery) — create module items with these tags,
   then add them to loot/recipes as desired. Behavior is fully code-registered.
+- **Ship deed (required to be obtainable):** `sdeed_prospect` (Prospector, T2
+  industrial transport) — create the deed item with this tag/resref and add it to a
+  store or Engineering recipe. Stats/requirements are code-registered.
 - **Unlock item art (cosmetic):** holocrons / combat datacrons / prototype schematics /
-  flight recorders are fabricated at runtime on the `recipe_trnsabers` blueprint and
-  renamed. Dedicated .uti art can replace `StanceUnlockBaseResref` in
-  `Service/WorldEvent.cs` once made.
-- **Gear track (future content):** disruptor weapons (event loot; gate behind a Ranged
-  certification perk when itemized), cortosis-weave/beskar/crystal recipe lines — these
-  are map/item-phase by nature and have no code yet by design.
+  flight recorders / command codices are fabricated at runtime on the
+  `recipe_trnsabers` blueprint and renamed. Dedicated .uti art can replace
+  `StanceUnlockBaseResref` in `Service/WorldEvent.cs` once made.
+- **Gear track (future content):** disruptor weapons (event loot; the Disruptor
+  Certification perk — Ranged 60 — already exists to gate them), toxin vial crafting
+  (the Toxin Vials perk/ability is live), refit materials (refits are priced in
+  credits until the recipe pass), cortosis-weave/beskar/crystal recipe lines — these
+  are map/item-phase by nature.
 
 ## 5. HAK / 2da sweep (cosmetic but player-facing)
 
@@ -71,7 +77,17 @@ Reused feat.2da rows need renamed labels/descriptions/icons. Full mapping:
 | 1908, 1909 | Force Lock, Execution Shot |
 | 1863, 1864 | Jump-Jet, Overclock |
 | 1860, 1865, 1869, 1896 | Force Barrier, Force Breach, Affliction, Force Choke |
-| 1415, 1416, 1417 | Carbonite Projector, Combat Jetpack, Orbital Strike |
+| 1415, 1416, 1417, 1418 | Carbonite Projector, Combat Jetpack, Orbital Strike, Toxin Flask |
+| 1910–1912 | Disarming Slash, Determination, Contention |
+| 1918–1922 | Makashi Riposte, Blaster Reflection, The Resilience, Saber Barrier, Whirlwind |
+| 1956–1961 | Counterforce, Dominance, Force Synergy, Draw Closer, Ferocity, Vornskr's Fury |
+| 1962–1965 | Measured Cut, Perfect Parry, Breaching Advance, Unstoppable |
+| 1953–1955 | Twin Feint, Bladestorm, Meridian Strike |
+| 1933–1935 | Iron Body, Called Shot: Legs, Penetrating Round |
+| 1966, 1979 | Slice, Ambush |
+
+Also `iprp_skill.2da`: add rows **36 (Slicing)** and **37 (Stealth)** to match the new
+`SkillType` entries.
 
 Also sweep remaining beast NPCs/quests from the world (Beast Mastery is removed), and
 the server-identity items from the original standup track (module name, `swlor.env`,
@@ -80,14 +96,26 @@ welcome message).
 ## 6. What needs NO map work
 
 Daily caps, the Trials flag mechanics, brackets/rotation/drops, perma-death rules,
-all 12 stance lines + signatures, implants + capstones, Second Wind, the Force kit,
-Capital Command gating (deeds retagged in code), scale/speed/rings/crew/flight stances,
-titles, Signature Weapon (/attune), and both migrations. All live at boot.
+all 12 stance lines + full L4/L5/L6 signature rosters, implants + capstones + the
+humanity cost, Second Wind, the Force kit, Capital Command gating + faction
+commissions (deeds retagged in code), capital orders (/order) + command doctrines,
+flight doctrines, Mk I–III refits (/refit), the salvage channel (/salvage),
+Droid Overseer, sensor-range clamps, frame stat overrides, interior layout blueprints
+(/shiplayout), the racing scaffold (/race), Slicing/Stealth skills + starter perks,
+scale/speed/rings/crew/flight stances, titles, Signature Weapon (/attune), and all
+migrations. All live at boot.
 
-## 7. Deliberately deferred (code side, future arcs)
+## 7. Deliberately deferred (code side, post-launch)
 
-Command doctrines (need the capital-orders system), Mk I–III refits, hostile boarding
-and salvage channels, sensor/stealth rules, the humanity cost (needs a verified NWNX
-heal hook), droid construction Phase-2, Slicing/Stealth as new skills, mounts, swoop
-racing, per-hull frame catalog re-authoring, and additional per-line signature actives
-(design currently: one capstone per line).
+Only two items remain deferred, both by explicit plan decision:
+
+- **Hostile interior boarding** — the external salvage channel (/salvage) is its v1
+  replacement; true boarding of a Disabled ship's interior is post-launch.
+- **Sensor signature/stealth mechanics in space** — sensor range v1 (per-frame lock
+  range) ships; signature/detection games join boarding post-launch.
+
+Everything else from the progression plan is implemented. Per-hull frame catalog
+re-authoring is now pure content: `.ShieldRating()`/`.DamageThreshold()`/`.Evasion()`
+overrides exist on the ship builder, so hull statlines can be tuned entry-by-entry in
+`PlayerShipDefinition.cs` without touching systems code. Mount/swoop appearances ride
+the racing scaffold as content.

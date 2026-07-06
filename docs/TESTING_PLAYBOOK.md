@@ -171,17 +171,74 @@ Set `SPACE_RING` on test space areas via `/setlocalvariable` (1/2/3; unset = 1).
 - ☐ **Flight stances:** `/flightmode attack` refused without the perk; with it (1 SP,
   Piloting 5), accuracy/evasion shift ±10 in combat logs; stance clears on docking.
 
-## 10. Known v1 dials and deferred items (do NOT file as bugs)
+## 10. Stage 7 — signatures, orders, refits, salvage (7a–7d)
 
-- Disabled NPC ships break apart (boarding/salvage window: future ring-economy arc).
-- Holocrons/datacrons/schematics render on the recipe-disk model (HAK art pending);
-  feat rows carry legacy 2da names until the HAK rebuild renames them.
+- ☐ **Signature rosters:** every stance line's L4 and L5 perks grant a named active
+  alongside the L6 capstone; all of a line's signatures share the ONE Stance Signature
+  recast (using any locks the others); each refuses to fire unless its own stance is
+  active ("You must be in X").
+- ☐ **Capital orders** (piloting a capital, matching command doctrine bought):
+  `/order alpha` — 12s damage surge for the ship + crew seats; `/order brace` —
+  instant SR restore (4 + Ldr/10 + level) and, at doctrine L4+, one condition step;
+  `/order wolfpack` — allied FIGHTER pilots within 30m gain accuracy for 18s.
+  All refused on fighters/transports or without the doctrine.
+- ☐ **Refits:** `/refit armor` (etc.) while docked in your own ship charges
+  5k/15k/40k (capitals ×5) for Mk I→III; stats change immediately and persist through
+  relog and migration recompute; a 4th refit overwrites slot 3 (old deltas stripped);
+  expansion adds a low-power node (visible in ship management), never a station on a
+  fighter.
+- ☐ **Salvage:** an NPC ship reaching condition step 5 goes DISABLED (stops acting,
+  90s) instead of exploding; `/salvage` within 10m channels 10s → gold scaled to hull,
+  ~25% unlock-item roll, then the hulk dies through the normal kill pipeline (SP/loot
+  once, no double-dip). Unsalvaged hulks explode at timeout.
+
+## 11. Stage 7 — humanity, overseer, smalls (7e–7h)
+
+- ☐ **Humanity cost:** healing received by a character with 1/2/3+ installed implant
+  lines lands 5/10/15% lower (heal events only; the reduced re-application is exempt).
+- ☐ **Droid Overseer** (Engineering 65/85): a second droid controller activates while
+  the first droid is out; despawning the first promotes the second's slot; at L2 both
+  droids carry +2 accuracy. Without the perk a second activation is refused.
+- ☐ **Sensor clamp:** target lock beyond 40m (fighter) / 50m (transport) / 60m
+  (capital) is refused with a sensors message.
+- ☐ **Prospector/commissions:** `sdeed_prospect` registers a T2 transport with
+  SR 14 / threshold 36 (explicit overrides, not band-derived). Heavy capital deeds
+  refuse pilots below 3000 standing with their commissioning faction (message names
+  the faction).
+- ☐ **Layout blueprints:** `/shiplayout save` inside your ship; place structures; lose
+  the ship (or just relog) → `/shiplayout restore` on a same-layout hull re-places
+  matching structure items from inventory and lists missing ones; a different layout
+  is refused. Ring-3 frame loss auto-saves the victim's snapshot.
+- ☐ **Racing:** `/race` in an area with `RACE_WP_1..N` starts a timed run; checkpoints
+  announce in order; leaving the area forfeits; best time persists per area and is
+  announced when beaten.
+
+## 12. Stage 7 — Slicing and Stealth (7g)
+
+- ☐ Both skills appear in the skills UI at MaxRank 100 and count against the SP cap;
+  existing characters gain the rows on next login.
+- ☐ **Slice** (perk r5/25/45): refused on non-droids; on a droid deals electrical
+  damage + 2s (3s at L3) daze and grants Slicing XP via combat points.
+- ☐ **Salvage Protocols:** droid kills yield more credits and rare-loot chance
+  (stacks with Creditfinder/Treasure Hunter rules).
+- ☐ **Ambush** (perk r5/25/45): refused unless in stealth mode; from stealth deals
+  Agility-scaled damage, breaks stealth, and grants Stealth XP — kills opened this way
+  level the skill.
+- ☐ **Concealment** (r15/35): +3/+6 Hide and Move Silently visible on the character
+  sheet; survives relog; removed on refund.
+
+## 13. Known v1 dials and deferred items (do NOT file as bugs)
+
+- Holocrons/datacrons/schematics/codices render on the recipe-disk model (HAK art
+  pending); recycled feat rows carry legacy 2da names until the HAK rebuild; the
+  Slicing/Stealth iprp_skill.2da rows join that sweep.
 - Trials trainer-NPC dialogs, ring-2/3 space areas, station terminal placeables, the
-  limbo area itself, and event-zone entry doors are module content (the sweep list).
-- Implant humanity cost (−healing per line) deferred pending a verified NWNX heal hook.
-- Capital command (Leadership), flight/command doctrine perk lines, refits, and patrol
-  contracts are future arcs.
+  limbo area, race courses, the Prospector deed item, and event-zone entry doors are
+  module content (see MAP_PHASE_HANDOFF.md).
+- Refits are priced in credits only until the material recipe pass (map phase).
 - Condition-track speed penalties (ship movement) not yet wired; accuracy penalties are.
+- Hostile interior boarding and space sensor-signature/stealth mechanics are
+  post-launch by plan decision (/salvage and lock-range clamps are their v1 stands-in).
 
 **Sign-off:** all sections pass on a clean dev stack, twice (once fresh, once after a
 server restart mid-state to catch persistence bugs: stances, implants, condition steps,
