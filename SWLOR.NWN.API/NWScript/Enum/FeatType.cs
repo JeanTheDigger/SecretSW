@@ -2021,6 +2021,10 @@ namespace SWLOR.NWN.API.NWScript.Enum
         Sniff1 = 1979,
         Sniff2 = 1980,
         Sniff3 = 1981,
+
+        // Stage 7g recycled rows (dead beast feat rows; zero references verified).
+        Slice = 1966,       // EnduranceLink1
+        Ambush = 1979,      // Sniff1
         ForceTouch1 = 1982,
         ForceTouch2 = 1983,
         ForceTouch3 = 1984,

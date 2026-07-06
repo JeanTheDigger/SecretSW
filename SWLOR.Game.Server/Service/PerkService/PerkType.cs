@@ -366,5 +366,13 @@
         DisruptorCertification = 336,
         // Devices toxin warfare
         ToxinVials = 337,
+
+        // Slicing skill perks (Stage 7g).
+        Slice = 338,
+        SalvageProtocols = 339,
+
+        // Stealth skill perks (Stage 7g).
+        Concealment = 340,
+        Ambush = 341,
     }
 }

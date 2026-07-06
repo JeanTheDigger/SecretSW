@@ -283,6 +283,10 @@ namespace SWLOR.Game.Server.Service.AbilityService
         CombatJetpack = 136,
         [RecastGroup("Orbital Strike", "Orb. Strike", true)]
         OrbitalStrike = 137,
+        [RecastGroup("Slice", "Slice", true)]
+        Slice = 138,
+        [RecastGroup("Ambush", "Ambush", true)]
+        Ambush = 139,
     }
 
     public class RecastGroupAttribute: Attribute

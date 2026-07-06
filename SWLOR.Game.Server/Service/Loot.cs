@@ -268,6 +268,14 @@ namespace SWLOR.Game.Server.Service
             if (sniffLevel > rareBonusChance)
                 rareBonusChance = sniffLevel;
 
+            // Salvage Protocols (Slicing): destroyed droids yield more.
+            if (GetRacialType(target) == RacialType.Robot)
+            {
+                var salvageLevel = Perk.GetPerkLevel(attacker, PerkType.SalvageProtocols);
+                creditFinderLevel += salvageLevel;
+                rareBonusChance += salvageLevel * 10;
+            }
+
             if (creditFinderLevel > currentCreditFinder)
             {
                 SetLocalInt(target, "CREDITFINDER_LEVEL", creditFinderLevel);

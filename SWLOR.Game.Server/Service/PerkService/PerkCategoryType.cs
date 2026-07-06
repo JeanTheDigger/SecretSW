@@ -147,6 +147,12 @@ namespace SWLOR.Game.Server.Service.PerkService
 
         [PerkCategory("Cybernetics", true)]
         Cybernetics = 47,
+
+        [PerkCategory("Slicing", true)]
+        Slicing = 48,
+
+        [PerkCategory("Stealth", true)]
+        Stealth = 49,
     }
 
     public class PerkCategoryAttribute : Attribute

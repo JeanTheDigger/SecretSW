@@ -376,6 +376,28 @@ namespace SWLOR.Game.Server.Service.SkillService
            false,
            false)]
            Ewokese = 35,
+
+        [Skill(SkillCategoryType.Combat,
+            "Slicing",
+            100,
+            true,
+            "Ability to slice droids, turrets, and electronic systems in combat.",
+            true,
+            false,
+            false,
+            CombatPointCategoryType.Utility)]
+        Slicing = 36,
+
+        [Skill(SkillCategoryType.Combat,
+            "Stealth",
+            100,
+            true,
+            "Ability to move unseen and strike from hiding.",
+            true,
+            false,
+            false,
+            CombatPointCategoryType.Utility)]
+        Stealth = 37,
     }
 
     public class SkillAttribute : Attribute
