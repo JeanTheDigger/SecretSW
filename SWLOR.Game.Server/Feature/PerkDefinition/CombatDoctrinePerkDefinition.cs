@@ -91,7 +91,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             SkillType gateSkill,
             string[] descriptions)
         {
-            var (signatureFeat, signatureName) = _signatures[perkType];
+            var (sig4Feat, sig4Name, sig5Feat, sig5Name, signatureFeat, signatureName) = _signatures[perkType];
             _builder.Create(PerkCategoryType.CombatDoctrines, perkType)
                 .Name(name)
                 // A purchase or refund invalidates the cached stance level; drop the stance.
@@ -121,17 +121,19 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 // The veteran arc (Phase 2): datacron-unlocked, and the skill gates sit past
                 // rank 50 so they are only reachable beyond the Trials.
                 .AddPerkLevel()
-                .Description(descriptions[3])
+                .Description($"{descriptions[3]} Grants the signature technique: {sig4Name}.")
                 .Price(5)
                 .RequirementUnlocked()
                 .RequirementSkill(gateSkill, 60)
                 .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(sig4Feat)
 
                 .AddPerkLevel()
-                .Description(descriptions[4])
+                .Description($"{descriptions[4]} Grants the signature technique: {sig5Name}.")
                 .Price(5)
                 .RequirementSkill(gateSkill, 75)
                 .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(sig5Feat)
 
                 .AddPerkLevel()
                 .Description($"{descriptions[5]} Grants the signature technique: {signatureName}.")
@@ -141,14 +143,14 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(signatureFeat);
         }
 
-        // The level-6 capstone active of each doctrine.
-        private static readonly Dictionary<PerkType, (FeatType, string)> _signatures = new()
+        // The three signature actives of each doctrine (levels 4, 5, and 6).
+        private static readonly Dictionary<PerkType, (FeatType, string, FeatType, string, FeatType, string)> _signatures = new()
         {
-            [PerkType.DoctrineDuelist] = (FeatType.Riposte, "Riposte"),
-            [PerkType.DoctrineJuggernaut] = (FeatType.StaggeringAdvance, "Staggering Advance"),
-            [PerkType.DoctrineTempest] = (FeatType.TwinCyclone, "Twin Cyclone"),
-            [PerkType.DoctrineTerasKasi] = (FeatType.ForceLock, "Force Lock"),
-            [PerkType.DoctrineMarksman] = (FeatType.ExecutionShot, "Execution Shot"),
+            [PerkType.DoctrineDuelist] = (FeatType.MeasuredCut, "Measured Cut", FeatType.PerfectParry, "Perfect Parry", FeatType.Riposte, "Riposte"),
+            [PerkType.DoctrineJuggernaut] = (FeatType.BreachingAdvance, "Breaching Advance", FeatType.Unstoppable, "Unstoppable", FeatType.StaggeringAdvance, "Staggering Advance"),
+            [PerkType.DoctrineTempest] = (FeatType.TwinFeint, "Twin Feint", FeatType.Bladestorm, "Bladestorm", FeatType.TwinCyclone, "Twin Cyclone"),
+            [PerkType.DoctrineTerasKasi] = (FeatType.MeridianStrike, "Meridian Strike", FeatType.IronBody, "Iron Body", FeatType.ForceLock, "Force Lock"),
+            [PerkType.DoctrineMarksman] = (FeatType.CalledShotLegs, "Called Shot: Legs", FeatType.PenetratingRound, "Penetrating Round", FeatType.ExecutionShot, "Execution Shot"),
         };
     }
 }

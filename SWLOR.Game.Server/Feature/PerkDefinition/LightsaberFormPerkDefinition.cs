@@ -119,7 +119,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             int gate5 = 75,
             int gate6 = 90)
         {
-            var (signatureFeat, signatureName) = _signatures[perkType];
+            var (sig4Feat, sig4Name, sig5Feat, sig5Name, signatureFeat, signatureName) = _signatures[perkType];
             _builder.Create(PerkCategoryType.LightsaberForms, perkType)
                 .Name(name)
                 // A purchase or refund invalidates the cached stance level; drop the stance.
@@ -149,17 +149,19 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 // The Knight arc (Phase 2): holocron-unlocked, and the skill gates sit past
                 // rank 50 so they are only reachable beyond the Trials.
                 .AddPerkLevel()
-                .Description(descriptions[3])
+                .Description($"{descriptions[3]} Grants the signature technique: {sig4Name}.")
                 .Price(5)
                 .RequirementUnlocked()
                 .RequirementAnySkill(gate4, SkillType.OneHanded, SkillType.TwoHanded)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(sig4Feat)
 
                 .AddPerkLevel()
-                .Description(descriptions[4])
+                .Description($"{descriptions[4]} Grants the signature technique: {sig5Name}.")
                 .Price(5)
                 .RequirementAnySkill(gate5, SkillType.OneHanded, SkillType.TwoHanded)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(sig5Feat)
 
                 .AddPerkLevel()
                 .Description($"{descriptions[5]} Grants the signature technique: {signatureName}.")
@@ -169,16 +171,16 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(signatureFeat);
         }
 
-        // The level-6 capstone active of each form.
-        private static readonly Dictionary<PerkType, (FeatType, string)> _signatures = new()
+        // The three signature actives of each form (levels 4, 5, and 6).
+        private static readonly Dictionary<PerkType, (FeatType, string, FeatType, string, FeatType, string)> _signatures = new()
         {
-            [PerkType.FormShiiCho] = (FeatType.SarlaccSweep, "Sarlacc Sweep"),
-            [PerkType.FormMakashi] = (FeatType.DuelistsEnd, "Duelist's End"),
-            [PerkType.FormSoresu] = (FeatType.CircleOfShelter, "Circle of Shelter"),
-            [PerkType.FormAtaru] = (FeatType.HawkBatSwoop, "Hawk-Bat Swoop"),
-            [PerkType.FormDjemSo] = (FeatType.FallingAvalanche, "Falling Avalanche"),
-            [PerkType.FormNiman] = (FeatType.NimanBalance, "Balance"),
-            [PerkType.FormJuyo] = (FeatType.Vaapad, "Vaapad"),
+            [PerkType.FormShiiCho] = (FeatType.DisarmingSlash, "Disarming Slash", FeatType.Determination, "Determination", FeatType.SarlaccSweep, "Sarlacc Sweep"),
+            [PerkType.FormMakashi] = (FeatType.Contention, "Contention", FeatType.MakashiRiposte, "Riposte", FeatType.DuelistsEnd, "Duelist's End"),
+            [PerkType.FormSoresu] = (FeatType.BlasterReflection, "Blaster Reflection", FeatType.TheResilience, "The Resilience", FeatType.CircleOfShelter, "Circle of Shelter"),
+            [PerkType.FormAtaru] = (FeatType.SaberBarrier, "Saber Barrier", FeatType.Whirlwind, "Whirlwind", FeatType.HawkBatSwoop, "Hawk-Bat Swoop"),
+            [PerkType.FormDjemSo] = (FeatType.Counterforce, "Counterforce", FeatType.Dominance, "Dominance", FeatType.FallingAvalanche, "Falling Avalanche"),
+            [PerkType.FormNiman] = (FeatType.ForceSynergy, "Force Synergy", FeatType.DrawCloser, "Draw Closer", FeatType.NimanBalance, "Balance"),
+            [PerkType.FormJuyo] = (FeatType.Ferocity, "Ferocity", FeatType.VornskrsFury, "Vornskr's Fury", FeatType.Vaapad, "Vaapad"),
         };
     }
 }

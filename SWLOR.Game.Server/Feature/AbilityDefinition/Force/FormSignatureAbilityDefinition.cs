@@ -4,6 +4,7 @@ using SWLOR.Game.Server.Service.AbilityService;
 using SWLOR.Game.Server.Service.CombatService;
 using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.SkillService;
+using SWLOR.Game.Server.Service.StatusEffectService;
 using SWLOR.NWN.API.NWScript.Enum;
 
 namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
@@ -27,7 +28,269 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             NimanBalance(builder);
             Vaapad(builder);
 
+            // The L4/L5 signatures - two per form, completing each line's trio.
+            DisarmingSlash(builder);
+            Determination(builder);
+            Contention(builder);
+            MakashiRiposte(builder);
+            BlasterReflection(builder);
+            TheResilience(builder);
+            SaberBarrier(builder);
+            Whirlwind(builder);
+            Counterforce(builder);
+            Dominance(builder);
+            ForceSynergy(builder);
+            DrawCloser(builder);
+            Ferocity(builder);
+            VornskrsFury(builder);
+
             return builder.Build();
+        }
+
+        private static void BuildSignatureShell(
+            AbilityBuilder builder,
+            FeatType feat,
+            PerkType stance,
+            string stanceName,
+            string abilityName,
+            int level,
+            float recast,
+            int fpCost,
+            bool hostile,
+            AbilityImpactAction impact)
+        {
+            var ability = builder.Create(feat, stance)
+                .Name(abilityName)
+                .Level(level)
+                .HasRecastDelay(RecastGroup.StanceSignature, recast)
+                .HasActivationDelay(0.5f)
+                .RequirementFP(fpCost)
+                .IsCastedAbility()
+                .HasCustomValidation(RequireActiveStance(stance, stanceName))
+                .HasImpactAction(impact);
+
+            if (hostile)
+            {
+                ability.IsHostileAbility().BreaksStealth();
+            }
+        }
+
+        // Shii-Cho L4: a cut across the wrists - the grip falters.
+        private static void DisarmingSlash(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.DisarmingSlash, PerkType.FormShiiCho, "Form I: Shii-Cho",
+                "Disarming Slash", 4, 30f, 6, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 25, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Temporary, EffectAccuracyDecrease(10), target, 6f);
+                });
+        }
+
+        // Shii-Cho L5: the training form's stubbornness - shake off what slows you.
+        private static void Determination(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Determination, PerkType.FormShiiCho, "Form I: Shii-Cho",
+                "Determination", 5, 45f, 6, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    for (var effect = GetFirstEffect(activator); GetIsEffectValid(effect); effect = GetNextEffect(activator))
+                    {
+                        var type = GetEffectType(effect);
+                        if (type == EffectTypeScript.Slow || type == EffectTypeScript.MovementSpeedDecrease ||
+                            type == EffectTypeScript.CutsceneImmobilize || type == EffectTypeScript.Entangle)
+                        {
+                            RemoveEffect(activator, effect);
+                        }
+                    }
+
+                    ApplyEffectToObject(DurationType.Temporary, EffectTemporaryHitpoints(20), activator, 12f);
+                    FloatingTextStringOnCreature("Nothing holds you. You press on.", activator, false);
+                });
+        }
+
+        // Makashi L4: a probing exchange that sharpens your line.
+        private static void Contention(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Contention, PerkType.FormMakashi, "Form II: Makashi",
+                "Contention", 4, 30f, 6, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 35, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Temporary, EffectAccuracyIncrease(5), activator, 6f);
+                });
+        }
+
+        // Makashi L5: turn their blade and answer.
+        private static void MakashiRiposte(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.MakashiRiposte, PerkType.FormMakashi, "Form II: Makashi",
+                "Riposte", 5, 30f, 7, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 30, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Temporary, EffectAccuracyDecrease(10), target, 6f);
+                });
+        }
+
+        // Soresu L4: the blade becomes a wall of light against blaster fire.
+        private static void BlasterReflection(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.BlasterReflection, PerkType.FormSoresu, "Form III: Soresu",
+                "Blaster Reflection", 4, 45f, 6, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    ApplyEffectToObject(DurationType.Temporary, EffectConcealment(20, MissChanceType.Ranged), activator, 12f);
+                    FloatingTextStringOnCreature("Your guard becomes a wall of light.", activator, false);
+                });
+        }
+
+        // Soresu L5: outlast everything.
+        private static void TheResilience(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.TheResilience, PerkType.FormSoresu, "Form III: Soresu",
+                "The Resilience", 5, 45f, 7, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    var willpower = GetAbilityModifier(AbilityType.Willpower, activator);
+                    if (willpower < 0)
+                        willpower = 0;
+
+                    ApplyEffectToObject(DurationType.Instant, EffectHeal(20 + willpower * 3), activator);
+
+                    // Shrug off one suppressing effect.
+                    for (var effect = GetFirstEffect(activator); GetIsEffectValid(effect); effect = GetNextEffect(activator))
+                    {
+                        var type = GetEffectType(effect);
+                        if (type == EffectTypeScript.AttackDecrease ||
+                            type == EffectTypeScript.Slow)
+                        {
+                            RemoveEffect(activator, effect);
+                            break;
+                        }
+                    }
+                });
+        }
+
+        // Ataru L4: a spinning screen of plasma.
+        private static void SaberBarrier(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.SaberBarrier, PerkType.FormAtaru, "Form IV: Ataru",
+                "Saber Barrier", 4, 45f, 6, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    ApplyEffectToObject(DurationType.Temporary, EffectConcealment(15), activator, 6f);
+                    FloatingTextStringOnCreature("Your blade blurs into a spinning screen.", activator, false);
+                });
+        }
+
+        // Ataru L5: the whole form in one rotation.
+        private static void Whirlwind(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Whirlwind, PerkType.FormAtaru, "Form IV: Ataru",
+                "Whirlwind", 5, 30f, 7, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 25, AbilityType.Agility);
+
+                    var location = GetLocation(activator);
+                    var creature = GetFirstObjectInShape(Shape.Sphere, 4.0f, location, true, ObjectType.Creature);
+                    while (GetIsObjectValid(creature))
+                    {
+                        if (creature != activator && creature != target &&
+                            GetIsReactionTypeHostile(creature, activator))
+                        {
+                            DealDamage(activator, creature, 25, AbilityType.Agility);
+                        }
+
+                        creature = GetNextObjectInShape(Shape.Sphere, 4.0f, location, true, ObjectType.Creature);
+                    }
+                });
+        }
+
+        // Djem So L4: absorb the blow, return it with interest.
+        private static void Counterforce(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Counterforce, PerkType.FormDjemSo, "Form V: Djem So",
+                "Counterforce", 4, 30f, 6, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 30, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Temporary, EffectTemporaryHitpoints(10), activator, 8f);
+                });
+        }
+
+        // Djem So L5: they yield ground or they yield everything.
+        private static void Dominance(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Dominance, PerkType.FormDjemSo, "Form V: Djem So",
+                "Dominance", 5, 45f, 8, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    DealDamage(activator, target, 40, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Temporary, EffectAccuracyDecrease(10), target, 8f);
+                    ApplyEffectToObject(DurationType.Temporary, EffectACDecrease(2), target, 8f);
+                });
+        }
+
+        // Niman L4: the weave - saber in one hand, the Force free in the other.
+        private static void ForceSynergy(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.ForceSynergy, PerkType.FormNiman, "Form VI: Niman",
+                "Force Synergy", 4, 60f, 4, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    StatusEffect.Apply(activator, activator, StatusEffectType.ForceAttunement, 6f);
+                    FloatingTextStringOnCreature("The Force flows freely: your next powers cost nothing for 6 seconds.", activator, false);
+                });
+        }
+
+        // Niman L5: the Force closes the distance for you.
+        private static void DrawCloser(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.DrawCloser, PerkType.FormNiman, "Form VI: Niman",
+                "Draw Closer", 5, 30f, 7, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    var damage = RollDamage(activator, target, 15, AbilityType.Willpower);
+                    var pullTo = GetLocation(activator);
+
+                    AssignCommand(target, () => ActionJumpToLocation(pullTo));
+                    DelayCommand(0.5f, () =>
+                    {
+                        ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), target);
+                        ApplyEffectToObject(DurationType.Temporary, EffectSlow(), target, 2f);
+                    });
+
+                    Enmity.ModifyEnmity(activator, target, 150 + damage);
+                });
+        }
+
+        // Juyo L4: burn hotter.
+        private static void Ferocity(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.Ferocity, PerkType.FormJuyo, "Form VII: Juyo",
+                "Ferocity", 4, 45f, 6, false,
+                (activator, target, level, targetLocation) =>
+                {
+                    ApplyEffectToObject(DurationType.Temporary, EffectAccuracyIncrease(10), activator, 12f);
+                    ApplyEffectToObject(DurationType.Instant, EffectDamage(5), activator);
+                    FloatingTextStringOnCreature("The fire takes you.", activator, false);
+                });
+        }
+
+        // Juyo L5: the dark habit - what you tear away feeds you.
+        private static void VornskrsFury(AbilityBuilder builder)
+        {
+            BuildSignatureShell(builder, FeatType.VornskrsFury, PerkType.FormJuyo, "Form VII: Juyo",
+                "Vornskr's Fury", 5, 30f, 7, true,
+                (activator, target, level, targetLocation) =>
+                {
+                    var damage = RollDamage(activator, target, 35, AbilityType.Might);
+                    ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), target);
+                    ApplyEffectToObject(DurationType.Instant, EffectHeal(damage / 2), activator);
+                    Enmity.ModifyEnmity(activator, target, 150 + damage);
+                });
         }
 
         private static AbilityCustomValidationAction RequireActiveStance(PerkType stance, string formName)
