@@ -30,8 +30,28 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             CarboniteProjector();
             CombatJetpack();
             OrbitalStrike();
+            ToxinVials();
 
             return _builder.Build();
+        }
+
+        private void ToxinVials()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.ToxinVials)
+                .Name("Toxin Vials")
+
+                .AddPerkLevel()
+                .Description("Hurl a toxin flask: the target suffers Perception-scaled poison for 18 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Devices, 25)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.ToxinFlask)
+
+                .AddPerkLevel()
+                .Description("Your toxins are refined: the poison runs for 30 seconds.")
+                .Price(3)
+                .RequirementSkill(SkillType.Devices, 45)
+                .RequirementCharacterType(CharacterType.Standard);
         }
 
         // ==========================================================================

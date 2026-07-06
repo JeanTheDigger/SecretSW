@@ -1836,6 +1836,7 @@ namespace SWLOR.NWN.API.NWScript.Enum
         CarboniteProjector = 1415,  // row: ShieldProficiency1
         CombatJetpack = 1416,       // row: ShieldProficiency2
         OrbitalStrike = 1417,       // row: ShieldProficiency3
+        ToxinFlask = 1418,          // row: ShieldProficiency4
 
         // The L4/L5 stance signatures, on more dead beast-ability rows.
         DisarmingSlash = 1910,      // row: SpinningClaw3

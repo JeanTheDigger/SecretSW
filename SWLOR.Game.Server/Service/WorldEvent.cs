@@ -337,7 +337,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.FormAtaru, PerkType.FormDjemSo, PerkType.FormNiman, PerkType.FormJuyo,
             // Flight doctrines are class-neutral - they roll in both pools.
             PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort,
-            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack
+            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack,
+            PerkType.DroidOverseer
         };
 
         private static readonly PerkType[] _standardUnlocks =
@@ -349,7 +350,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.ImplantCortical,
             PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort,
             PerkType.CarboniteProjector, PerkType.CombatJetpack, PerkType.OrbitalStrike,
-            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack
+            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack,
+            PerkType.DroidOverseer
         };
 
         /// <summary>

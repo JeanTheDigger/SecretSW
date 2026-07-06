@@ -28,6 +28,7 @@ namespace SWLOR.Game.Server.Service
         public const string DroidResref = "pc_droid";
         public const string DroidControlItemResref = "droid_control";
         private const string DroidObjectVariable = "ACTIVE_DROID";
+        private const string SecondDroidObjectVariable = "ACTIVE_DROID_2";
         private const string DroidControlItemVariable = "ACTIVE_DROID_ITEM";
         private const string ConstructedDroidVariable = "CONSTRUCTED_DROID";
         private const string DroidIsSpawning = "DROID_IS_SPAWNING";
@@ -567,6 +568,15 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Retrieves the SECOND droid assigned to a player (Droid Overseer).
+        /// Returns OBJECT_INVALID if none is assigned.
+        /// </summary>
+        public static uint GetSecondDroid(uint player)
+        {
+            return GetLocalObject(player, SecondDroidObjectVariable);
+        }
+
+        /// <summary>
         /// Spawns a droid NPC based on details found on the controller item.
         /// </summary>
         /// <param name="player">The player spawning the droid.</param>
@@ -651,7 +661,18 @@ namespace SWLOR.Game.Server.Service
             AssignCommand(droid, () => SpeakString(personality.GreetingPhrase()));
 
             AddHenchman(player, droid);
-            SetLocalObject(player, DroidObjectVariable, droid);
+
+            // Droid Overseer: when the first slot is occupied, this droid is the second unit.
+            if (GetIsObjectValid(GetLocalObject(player, DroidObjectVariable)))
+                SetLocalObject(player, SecondDroidObjectVariable, droid);
+            else
+                SetLocalObject(player, DroidObjectVariable, droid);
+
+            // Overseer level 2: the overseer's units fight harder.
+            if (Perk.GetPerkLevel(player, PerkType.DroidOverseer) >= 2)
+            {
+                ApplyEffectToObject(DurationType.Permanent, SupernaturalEffect(EffectAccuracyIncrease(2)), droid);
+            }
             SetLocalObject(player, DroidControlItemVariable, controller);
             SetLocalObject(droid, DroidControlItemVariable, controller);
 
@@ -803,8 +824,24 @@ namespace SWLOR.Game.Server.Service
             var item = GetControllerItem(droid);
             SetItemCursedFlag(item, false);
 
-            DeleteLocalObject(player, DroidObjectVariable);
-            DeleteLocalObject(player, DroidControlItemVariable);
+            if (GetLocalObject(player, SecondDroidObjectVariable) == droid)
+            {
+                DeleteLocalObject(player, SecondDroidObjectVariable);
+            }
+            else
+            {
+                DeleteLocalObject(player, DroidObjectVariable);
+                DeleteLocalObject(player, DroidControlItemVariable);
+
+                // Promote the second unit into the primary slot.
+                var second = GetLocalObject(player, SecondDroidObjectVariable);
+                if (GetIsObjectValid(second))
+                {
+                    SetLocalObject(player, DroidObjectVariable, second);
+                    DeleteLocalObject(player, SecondDroidObjectVariable);
+                }
+            }
+
             DeleteLocalObject(droid, DroidControlItemVariable);
         }
 

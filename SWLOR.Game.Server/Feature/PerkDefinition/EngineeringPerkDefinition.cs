@@ -20,7 +20,27 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             DroidEquipmentBlueprints();
             DroidAssembly();
             
+            DroidOverseer();
+
             return _builder.Build();
+        }
+
+        // Engineering's Phase-2 marquee: command a second droid at once.
+        private void DroidOverseer()
+        {
+            _builder.Create(PerkCategoryType.Engineering, PerkType.DroidOverseer)
+                .Name("Droid Overseer")
+
+                .AddPerkLevel()
+                .Description("Command a SECOND active droid simultaneously.")
+                .Price(5)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Engineering, 65)
+
+                .AddPerkLevel()
+                .Description("Your droids fight harder under your direction: +2 attack while active.")
+                .Price(6)
+                .RequirementSkill(SkillType.Engineering, 85);
         }
 
         private void Synthesis()

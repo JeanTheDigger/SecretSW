@@ -336,6 +336,27 @@ namespace SWLOR.Game.Server.Service
         /// <param name="target">The target to set.</param>
         private static void SetCurrentTarget(uint creature, uint target)
         {
+            // Sensor rule v1: sensor range IS max lock range, by frame class.
+            if (GetIsPC(creature) && GetIsObjectValid(target))
+            {
+                var sensorStatus = GetShipStatus(creature);
+                if (sensorStatus != null)
+                {
+                    var sensorRange = GetFrameClass(sensorStatus) switch
+                    {
+                        ShipFrameClass.Transport => 50f,
+                        ShipFrameClass.Capital => 60f,
+                        _ => 40f
+                    };
+
+                    if (GetDistanceBetween(creature, target) > sensorRange)
+                    {
+                        SendMessageToPC(creature, $"Target is beyond sensor range. ({sensorRange}m)");
+                        return;
+                    }
+                }
+            }
+
             // Set the VFX to the new target if creature is a player.
             if (GetIsObjectValid(target) &&
                 GetIsPC(creature))

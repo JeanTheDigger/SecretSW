@@ -80,7 +80,15 @@ namespace SWLOR.Game.Server.Feature.ItemDefinition
 
                         if (GetIsObjectValid(droid))
                         {
-                            return "Only one droid may be activated at a time.";
+                            if (Perk.GetPerkLevel(user, PerkType.DroidOverseer) <= 0)
+                            {
+                                return "Only one droid may be activated at a time.";
+                            }
+
+                            if (GetIsObjectValid(Droid.GetSecondDroid(user)))
+                            {
+                                return "Both of your droid command channels are already in use.";
+                            }
                         }
 
                         var averageLevel = GetAverageSkillLevel(user);

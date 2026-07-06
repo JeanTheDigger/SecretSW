@@ -359,5 +359,12 @@
         DoctrineLineCommander = 332,
         DoctrineFleetDefense = 333,
         DoctrineWolfpack = 334,
+
+        // Engineering Phase-2: the droid master's second unit
+        DroidOverseer = 335,
+        // Ranged Phase-2 certification for event-loot disruptors
+        DisruptorCertification = 336,
+        // Devices toxin warfare
+        ToxinVials = 337,
     }
 }
