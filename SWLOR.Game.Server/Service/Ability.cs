@@ -948,7 +948,7 @@ namespace SWLOR.Game.Server.Service
                     creature = GetNextObjectInShape(Shape.Sphere, 5.0f, center, true);
                 }
 
-                if (creatures.Any(creature => GetIsObjectValid(creature) && GetIsReactionTypeHostile(creature, activator)))
+                if (IsFriendlyFireArea(activator) || creatures.Any(creature => GetIsObjectValid(creature) && GetIsReactionTypeHostile(creature, activator)))
                 {
                     if (areaVisualEffect != VisualEffect.None)
                     {
@@ -1236,7 +1236,7 @@ namespace SWLOR.Game.Server.Service
                 }
             }
 
-            var hasHostileCreatures = creatures.Any(creature => GetIsObjectValid(creature) && GetIsReactionTypeHostile(creature, activator));
+            var hasHostileCreatures = IsFriendlyFireArea(activator) || creatures.Any(creature => GetIsObjectValid(creature) && GetIsReactionTypeHostile(creature, activator));
             if (alwaysApplyAreaVisualEffect || hasHostileCreatures)
             {
                 if (areaVisualEffect != VisualEffect.None)
@@ -1309,8 +1309,9 @@ namespace SWLOR.Game.Server.Service
                 if (!GetIsObjectValid(creator) || GetCurrentHitPoints(creator) <= 0)
                     return;
 
+                var friendlyFire = IsFriendlyFireArea(creator);
                 var hostileCreatures = creatures
-                    .Where(creature => GetIsObjectValid(creature) && GetIsReactionTypeHostile(creature, creator))
+                    .Where(creature => GetIsObjectValid(creature) && (friendlyFire || GetIsReactionTypeHostile(creature, creator)))
                     .ToList();
 
                 if (maxTargets > 0)
@@ -1379,6 +1380,22 @@ namespace SWLOR.Game.Server.Service
             };
         }
 
+        /// <summary>
+        /// Area local (set by the Mission system on instanced mission areas) that enables AoE
+        /// friendly fire: area-of-effect splash affects every creature in the region, not just
+        /// reputation-hostile ones. Defaults false so the rest of the world is unaffected.
+        /// </summary>
+        public const string FriendlyFireAreaVariable = "MISSION_FRIENDLY_FIRE";
+
+        /// <summary>
+        /// Returns true when the given creature is standing in an area flagged for AoE friendly fire.
+        /// </summary>
+        private static bool IsFriendlyFireArea(uint creature)
+        {
+            var area = GetArea(creature);
+            return GetIsObjectValid(area) && GetLocalBool(area, FriendlyFireAreaVariable);
+        }
+
         private static int ApplyCombatImpactToCreatures(
             uint activator,
             IEnumerable<uint> creatures,
@@ -1408,10 +1425,11 @@ namespace SWLOR.Game.Server.Service
             var totalDamage = 0;
             var affectedCount = 0;
             var trackedAbility = GetTrackedAbilityImpact(activator)?.Ability;
+            var friendlyFire = IsFriendlyFireArea(activator);
 
             foreach (var creature in creatures.Distinct())
             {
-                if (!GetIsObjectValid(creature) || !GetIsReactionTypeHostile(creature, activator))
+                if (!GetIsObjectValid(creature) || (!friendlyFire && !GetIsReactionTypeHostile(creature, activator)))
                     continue;
 
                 if (maxTargets > 0 && affectedCount >= maxTargets)
@@ -1615,6 +1633,11 @@ namespace SWLOR.Game.Server.Service
             DamageType? effectDamageType = null,
             AbilityType combatImpactDamageAbility = AbilityType.Invalid)
         {
+            // In friendly-fire areas an ally/neutral can be caught in an AoE. Damage still lands,
+            // but we must not seed enmity (or award combat points) for a victim that isn't actually
+            // hostile to the activator, or it would retaliate. Outside FF areas every victim that
+            // reaches this method is already hostile, so this is a no-op there.
+            var victimIsHostile = GetIsReactionTypeHostile(target, activator);
             var trackedImpact = GetTrackedAbilityImpact(activator);
             var perkType = trackedImpact?.Ability?.EffectiveLevelPerkType ?? PerkType.Invalid;
             var usesNPCStatScaling = ShouldUseNPCStatScaling(activator, useNPCStatScaling);
@@ -1627,9 +1650,10 @@ namespace SWLOR.Game.Server.Service
             if (!Combat.TryResolveAbilityHit(activator, target, skillType, perkType, out var hitRate, hitChancePercentAdjustment, skillLevelOverride, damageAbility))
             {
                 SendCombatImpactResultMessage(activator, target, trackedImpact?.Ability, 4, hitRate);
-                if (awardsCombatPoints)
+                if (awardsCombatPoints && victimIsHostile)
                     CombatPoint.AddCombatPoint(activator, target, skillType, 1);
-                ApplyMissedHostileAbilityEnmity(activator, target);
+                if (victimIsHostile)
+                    ApplyMissedHostileAbilityEnmity(activator, target);
                 return 0;
             }
             SendCombatImpactResultMessage(activator, target, trackedImpact?.Ability, 1, hitRate);
@@ -1659,7 +1683,8 @@ namespace SWLOR.Game.Server.Service
                 StatusEffect.NotifyDamageStatusEffects(activator, target, damage, damageType);
             }
 
-            ApplyHostileAbilityEnmity(activator, target, damage + Math.Max(0, enmityBonus));
+            if (victimIsHostile)
+                ApplyHostileAbilityEnmity(activator, target, damage + Math.Max(0, enmityBonus));
 
             var statusApplied = ApplyCombatImpactStatusEffect(
                 activator,
@@ -1693,7 +1718,7 @@ namespace SWLOR.Game.Server.Service
             }
 
             afterSuccessfulHit?.Invoke(target);
-            if (awardsCombatPoints)
+            if (awardsCombatPoints && victimIsHostile)
                 CombatPoint.AddCombatPoint(activator, target, skillType, 3);
             RecordAbilityImpactTarget(activator, target, skillType, false);
             return damage;
