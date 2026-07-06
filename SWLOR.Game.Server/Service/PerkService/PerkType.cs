@@ -354,5 +354,10 @@
 
         // Both classes: the attuned weapon that outlives its wielder.
         SignatureWeapon = 331,
+
+        // Command doctrines (capital commanders' Leadership arcs)
+        DoctrineLineCommander = 332,
+        DoctrineFleetDefense = 333,
+        DoctrineWolfpack = 334,
     }
 }

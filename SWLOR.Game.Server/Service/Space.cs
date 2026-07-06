@@ -845,6 +845,7 @@ namespace SWLOR.Game.Server.Service
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
             CreaturePlugin.SetMovementRateFactor(player, 1.0f);
             ClearFlightStance(player);
+            ClearShipOrders(player);
             Enmity.RemoveCreatureEnmity(player);
 
             // Save the ship's hot bar and unassign the active ship Id.
@@ -1669,6 +1670,159 @@ namespace SWLOR.Game.Server.Service
             return Perk.GetPerkLevel(pilot, PerkType.DoctrineStrike) * 2;
         }
 
+        // ==============================================================================
+        // Capital orders. A commander at a capital's helm issues fleet orders (/order):
+        // Line Commander surges the ship's guns, Fleet Defense braces the shields and
+        // works the condition track, Wolfpack sharpens every allied fighter nearby.
+        // Order state is runtime-only, expiry-checked on read, cleared on space exit.
+        // ==============================================================================
+
+        private static readonly Dictionary<uint, (int DamageBonus, DateTime Expiry)> _shipOrders = new();
+        private static readonly Dictionary<uint, (int AccuracyBonus, DateTime Expiry)> _wolfpackBuffs = new();
+
+        private static int GetShipOrderDamageBonus(uint pilot)
+        {
+            if (!_shipOrders.TryGetValue(pilot, out var order))
+                return 0;
+            if (DateTime.UtcNow > order.Expiry)
+            {
+                _shipOrders.Remove(pilot);
+                return 0;
+            }
+
+            return order.DamageBonus;
+        }
+
+        private static int GetWolfpackBonus(uint pilot)
+        {
+            if (!_wolfpackBuffs.TryGetValue(pilot, out var buff))
+                return 0;
+            if (DateTime.UtcNow > buff.Expiry)
+            {
+                _wolfpackBuffs.Remove(pilot);
+                return 0;
+            }
+
+            return buff.AccuracyBonus;
+        }
+
+        /// <summary>
+        /// Clears a pilot's standing orders and wolfpack buff (space-mode exit paths).
+        /// </summary>
+        public static void ClearShipOrders(uint pilot)
+        {
+            _shipOrders.Remove(pilot);
+            _wolfpackBuffs.Remove(pilot);
+        }
+
+        /// <summary>
+        /// Issues a fleet order. Requires piloting a CAPITAL frame and the matching
+        /// command doctrine perk; each order runs its own recast on the commander.
+        /// </summary>
+        public static void IssueOrder(uint commander, string order)
+        {
+            if (!IsPlayerInSpaceMode(commander))
+            {
+                SendMessageToPC(commander, "Orders are issued from a capital ship's bridge. Board one first.");
+                return;
+            }
+
+            var status = GetShipStatus(commander);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Capital)
+            {
+                SendMessageToPC(commander, "Only a capital ship's bridge carries the command authority for fleet orders.");
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            var recastVar = $"SHIP_ORDER_RECAST_{order.ToUpper()}";
+            var raw = GetLocalString(commander, recastVar);
+            if (!string.IsNullOrWhiteSpace(raw) &&
+                DateTime.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var readyAt) &&
+                now < readyAt)
+            {
+                SendMessageToPC(commander, $"That order is still being executed. ({(readyAt - now).TotalSeconds:F0}s)");
+                return;
+            }
+
+            switch (order)
+            {
+                case "alpha":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineLineCommander);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Line Commander doctrine.");
+                        return;
+                    }
+
+                    _shipOrders[commander] = (level * 2, now.AddSeconds(12));
+                    SetLocalString(commander, recastVar, now.AddSeconds(60).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: ALPHA STRIKE! All batteries surge. (+{level * 2} weapon power, 12s)"));
+                    break;
+                }
+                case "brace":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineFleetDefense);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Fleet Defense doctrine.");
+                        return;
+                    }
+
+                    var commanderId = GetObjectUUID(commander);
+                    var dbCommander = DB.Get<Player>(commanderId);
+                    var dbShip = DB.Get<PlayerShip>(dbCommander.ActiveShipId);
+                    var leadership = dbCommander.Skills[SkillType.Leadership].Rank;
+                    var amount = 4 + leadership / 10 + level;
+
+                    RestoreShield(commander, dbShip.Status, amount);
+                    if (level >= 4)
+                        RecoverCondition(commander, dbShip.Status, 1);
+                    DB.Set(dbShip);
+
+                    SetLocalString(commander, recastVar, now.AddSeconds(30).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: BRACE! Emitters cycle hot. (+{amount} shield rating)"));
+                    break;
+                }
+                case "wolfpack":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineWolfpack);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Wolfpack doctrine.");
+                        return;
+                    }
+
+                    var buffed = 0;
+                    for (var ally = GetFirstPC(); GetIsObjectValid(ally); ally = GetNextPC())
+                    {
+                        if (ally == commander || !IsPlayerInSpaceMode(ally))
+                            continue;
+                        if (GetArea(ally) != GetArea(commander) || GetDistanceBetween(ally, commander) > 30f)
+                            continue;
+                        if (GetIsReactionTypeHostile(ally, commander))
+                            continue;
+
+                        var allyStatus = GetShipStatus(ally);
+                        if (allyStatus == null || GetFrameClass(allyStatus) != ShipFrameClass.Fighter)
+                            continue;
+
+                        _wolfpackBuffs[ally] = (level, now.AddSeconds(18));
+                        SendMessageToPC(ally, ColorToken.Cyan($"{GetName(commander)}'s wolfpack order sharpens your attack run. (+{level} accuracy, 18s)"));
+                        buffed++;
+                    }
+
+                    SetLocalString(commander, recastVar, now.AddSeconds(45).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: WOLFPACK! {buffed} fighters answer."));
+                    break;
+                }
+                default:
+                    SendMessageToPC(commander, "Usage: /order <alpha|brace|wolfpack>");
+                    break;
+            }
+        }
+
         private static int GetFlightStanceAccuracyMod(uint pilot)
         {
             return GetFlightStance(pilot) switch
@@ -1708,6 +1862,9 @@ namespace SWLOR.Game.Server.Service
 
             // Interceptor doctrine: the dogfighter's edge.
             bonus += GetInterceptorBonus(attacker);
+
+            // A standing wolfpack order from a nearby commander.
+            bonus += GetWolfpackBonus(attacker);
 
             var stat = GetAbilityScore(attacker, AbilityType.Agility);
             int level;
@@ -1770,6 +1927,9 @@ namespace SWLOR.Game.Server.Service
         /// <returns>The attack of the ship</returns>
         public static int GetShipAttack(uint attacker, int attackBonus)
         {
+            // A standing weapons-surge order (Line Commander) boosts every gun aboard.
+            attackBonus += GetShipOrderDamageBonus(attacker);
+
             var stat = GetAttackStat(attacker);
             int level;
 
@@ -2194,6 +2354,7 @@ namespace SWLOR.Game.Server.Service
                 CreaturePlugin.SetMovementRate(creature, MovementRate.PC);
                 CreaturePlugin.SetMovementRateFactor(creature, 1.0f);
                 ClearFlightStance(creature);
+                ClearShipOrders(creature);
                 Enmity.RemoveCreatureEnmity(creature);
                 
                 // Remove all module feats from the player.

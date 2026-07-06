@@ -66,6 +66,25 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                     Space.SetFlightStance(user, stance);
                 });
 
+            _builder.Create("order")
+                .Description("Issues a fleet order from a capital ship's bridge: /order <alpha|brace|wolfpack>. Requires the matching command doctrine.")
+                .Permissions(AuthorizationLevel.Player)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 1)
+                        return "Usage: /order <alpha|brace|wolfpack>";
+
+                    var order = args[0].ToLower();
+                    if (order != "alpha" && order != "brace" && order != "wolfpack")
+                        return "Order must be 'alpha', 'brace', or 'wolfpack'.";
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    Space.IssueOrder(user, args[0].ToLower());
+                });
+
             _builder.Create("attune")
                 .Description("Attunes you to the weapon in your main hand (requires the Signature Weapon perk). The bond grants bonus damage with that item alone - and it outlives you.")
                 .Permissions(AuthorizationLevel.Player)

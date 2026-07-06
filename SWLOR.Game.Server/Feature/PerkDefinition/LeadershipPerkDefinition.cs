@@ -31,8 +31,44 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             Rejuvenation();
             FrenziedShout();
             CapitalCommand();
+            CommandDoctrines();
 
             return _builder.Build();
+        }
+
+        // The three command doctrine arcs. Levels 1-3 are the Phase-1 arc; levels 4-6
+        // unlock via command codices looted from fleet events, on Phase-2 Leadership gates.
+        // Orders are issued from a capital's bridge with /order.
+        private void CommandDoctrines()
+        {
+            BuildCommandDoctrine(PerkType.DoctrineLineCommander, "Line Commander Doctrine",
+                "/order alpha - a 12-second weapons surge for your capital ship: +{0} weapon power to every gun and crew seat aboard (60s cycle).", 2);
+
+            BuildCommandDoctrine(PerkType.DoctrineFleetDefense, "Fleet Defense Doctrine",
+                "/order brace - instantly restores your capital's shield rating (4 + Leadership/10 + {0}); from level 4, also repairs one condition step (30s cycle).", 1);
+
+            BuildCommandDoctrine(PerkType.DoctrineWolfpack, "Wolfpack Doctrine",
+                "/order wolfpack - every allied FIGHTER within 30m gains +{0} accuracy for 18 seconds (45s cycle). The glue between the two scales.", 1);
+        }
+
+        private void BuildCommandDoctrine(PerkType perkType, string name, string template, int perLevel)
+        {
+            var gates = new[] { 15, 30, 45, 60, 75, 90 };
+            var prices = new[] { 2, 3, 3, 5, 5, 6 };
+
+            var perk = _builder.Create(PerkCategoryType.Leadership, perkType)
+                .Name(name);
+
+            for (var level = 1; level <= 6; level++)
+            {
+                perk.AddPerkLevel()
+                    .Description(string.Format(template, perLevel * level))
+                    .Price(prices[level - 1])
+                    .RequirementSkill(SkillType.Leadership, gates[level - 1]);
+
+                if (level == 4)
+                    perk.RequirementUnlocked();
+            }
         }
 
         private void CapitalCommand()

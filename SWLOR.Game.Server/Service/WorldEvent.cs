@@ -336,7 +336,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.FormShiiCho, PerkType.FormMakashi, PerkType.FormSoresu,
             PerkType.FormAtaru, PerkType.FormDjemSo, PerkType.FormNiman, PerkType.FormJuyo,
             // Flight doctrines are class-neutral - they roll in both pools.
-            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort
+            PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort,
+            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack
         };
 
         private static readonly PerkType[] _standardUnlocks =
@@ -347,7 +348,8 @@ namespace SWLOR.Game.Server.Service
             PerkType.ImplantSkeletal, PerkType.ImplantCardio, PerkType.ImplantServo,
             PerkType.ImplantCortical,
             PerkType.DoctrineInterceptor, PerkType.DoctrineStrike, PerkType.DoctrineEscort,
-            PerkType.CarboniteProjector, PerkType.CombatJetpack, PerkType.OrbitalStrike
+            PerkType.CarboniteProjector, PerkType.CombatJetpack, PerkType.OrbitalStrike,
+            PerkType.DoctrineLineCommander, PerkType.DoctrineFleetDefense, PerkType.DoctrineWolfpack
         };
 
         /// <summary>
@@ -372,7 +374,12 @@ namespace SWLOR.Game.Server.Service
             var perkName = perkDetail.Name;
 
             string itemName, itemDescription;
-            if (perkDetail.Category == PerkCategoryType.Piloting)
+            if (perkDetail.Category == PerkCategoryType.Leadership)
+            {
+                itemName = $"Command Codex: {perkName}";
+                itemDescription = $"A fleet commander's codex on {perkName}. Using it opens the path to the doctrine's higher levels.";
+            }
+            else if (perkDetail.Category == PerkCategoryType.Piloting)
             {
                 itemName = $"Flight Recorder: {perkName}";
                 itemDescription = $"A named ace's flight recorder, its telemetry a masterclass in {perkName}. Using it opens the path to the doctrine's higher levels.";
