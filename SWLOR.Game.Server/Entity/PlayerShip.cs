@@ -8,7 +8,14 @@ namespace SWLOR.Game.Server.Entity
         public PlayerShip()
         {
             PlayerHotBars = new Dictionary<string, string>();
+            Refits = new List<string>();
         }
+
+        /// <summary>
+        /// Permanent frame refits in Mk order (index 0 = Mk I). Each entry is a branch:
+        /// engine, armor, emitter, or expansion. Max three; re-buying a slot overwrites it.
+        /// </summary>
+        public List<string> Refits { get; set; }
 
         [Indexed]
         public string OwnerPlayerId { get; set; }

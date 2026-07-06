@@ -96,6 +96,7 @@ namespace SWLOR.Game.Server.Feature.MigrationDefinition
                 dbShip.Status.MaxHull = shipDetail.MaxHull + shipBonuses.Hull;
                 dbShip.Status.DamageThreshold = Space.CalculateDamageThreshold(shipDetail);
                 dbShip.Status.ConditionStep = 0;
+                ShipRefit.ApplyRefitDeltas(dbShip, dbShip.Status);
                 dbShip.Status.Capacitor = shipDetail.MaxCapacitor + shipBonuses.Capacitor;
                 dbShip.Status.MaxCapacitor = shipDetail.MaxCapacitor + shipBonuses.Capacitor;
                 dbShip.Status.EMDamage = shipBonuses.EMDamage;

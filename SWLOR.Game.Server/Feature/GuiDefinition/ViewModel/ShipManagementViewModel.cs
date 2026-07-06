@@ -960,14 +960,15 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     HighPower8Tooltip = string.Empty;
                 }
 
-                LowPower1Visible = shipDetail.LowPowerNodes >= 1;
-                LowPower2Visible = shipDetail.LowPowerNodes >= 2;
-                LowPower3Visible = shipDetail.LowPowerNodes >= 3;
-                LowPower4Visible = shipDetail.LowPowerNodes >= 4;
-                LowPower5Visible = shipDetail.LowPowerNodes >= 5;
-                LowPower6Visible = shipDetail.LowPowerNodes >= 6;
-                LowPower7Visible = shipDetail.LowPowerNodes >= 7;
-                LowPower8Visible = shipDetail.LowPowerNodes >= 8;
+                var lowNodes = shipDetail.LowPowerNodes + ShipRefit.GetBonusLowPowerNodes(ship);
+                LowPower1Visible = lowNodes >= 1;
+                LowPower2Visible = lowNodes >= 2;
+                LowPower3Visible = lowNodes >= 3;
+                LowPower4Visible = lowNodes >= 4;
+                LowPower5Visible = lowNodes >= 5;
+                LowPower6Visible = lowNodes >= 6;
+                LowPower7Visible = lowNodes >= 7;
+                LowPower8Visible = lowNodes >= 8;
 
                 module = ship.Status.LowPowerModules.ContainsKey(1)
                     ? ship.Status.LowPowerModules[1]

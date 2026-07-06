@@ -85,6 +85,29 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                     Space.IssueOrder(user, args[0].ToLower());
                 });
 
+            _builder.Create("refit")
+                .Description("Commissions a permanent Mk refit on your own DOCKED ship while aboard it: /refit <engine|armor|emitter|expansion>. Mk I/II/III cost 5k/15k/40k credits (capitals x5).")
+                .Permissions(AuthorizationLevel.Player)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 1)
+                        return "Usage: /refit <engine|armor|emitter|expansion>";
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    ShipRefit.PerformRefit(user, args[0].ToLower());
+                });
+
+            _builder.Create("salvage")
+                .Description("Salvages a DISABLED ship: target it, pull within 10 meters, and hold for the 10-second channel. Pays credits and rolls the unlock-drop table.")
+                .Permissions(AuthorizationLevel.Player)
+                .Action((user, target, location, args) =>
+                {
+                    Space.SalvageTarget(user);
+                });
+
             _builder.Create("attune")
                 .Description("Attunes you to the weapon in your main hand (requires the Signature Weapon perk). The bond grants bonus damage with that item alone - and it outlives you.")
                 .Permissions(AuthorizationLevel.Player)

@@ -649,7 +649,8 @@ namespace SWLOR.Game.Server.Service
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
 
             // Frame speed class: fighters 100%, transports 85%, capitals 60%.
-            CreaturePlugin.SetMovementRateFactor(player, GetFrameSpeedFactor(GetFrameClass(dbPlayerShip.Status)));
+            CreaturePlugin.SetMovementRateFactor(player,
+                GetFrameSpeedFactor(GetFrameClass(dbPlayerShip.Status)) + ShipRefit.GetSpeedFactorBonus(dbPlayerShip));
 
             // Set active ship Id and serialize the player's hot bar.
             dbPlayer.SerializedHotBar = CreaturePlugin.SerializeQuickbar(player);
@@ -2133,9 +2134,24 @@ namespace SWLOR.Game.Server.Service
 
             if (status.ConditionStep >= 5 && !GetIsPC(target))
             {
-                // v1 dial: a disabled NPC ship breaks apart. The nonlethal capture/salvage
-                // window is Stage 6b content.
-                status.Hull = 0;
+                // A disabled NPC hulk drifts for 90 seconds - the salvage window
+                // (/salvage alongside it). Unclaimed hulks break apart.
+                Enmity.RemoveCreatureEnmity(target);
+                Messaging.SendMessageNearbyToPlayers(target,
+                    ColorToken.Orange($"{GetName(target)} is DISABLED - dead in space. Salvagers have 90 seconds."));
+
+                DelayCommand(90f, () =>
+                {
+                    if (!GetIsObjectValid(target))
+                        return;
+
+                    var lateStatus = GetShipStatus(target);
+                    if (lateStatus == null || lateStatus.ConditionStep < 5)
+                        return;
+
+                    ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                    ApplyEffectToObject(DurationType.Instant, EffectDeath(), target);
+                });
             }
         }
 
@@ -2190,6 +2206,70 @@ namespace SWLOR.Game.Server.Service
             shipStatus.ConditionStep = Math.Max(0, shipStatus.ConditionStep - steps);
             FloatingTextStringOnCreature(
                 $"Ship condition improves. ({_conditionStepNames[shipStatus.ConditionStep]})", creature, false);
+        }
+
+        /// <summary>
+        /// Salvages the player's current target: a DISABLED NPC hulk within 10 meters.
+        /// A 10-second channel, then payment - credits scaled to the hull and a roll on
+        /// the unlock-drop table - and the hulk breaks apart, paying the ring's crew-wide
+        /// endgame SP through the ordinary kill pipeline. Nonlethal piracy earns like a kill.
+        /// </summary>
+        public static void SalvageTarget(uint player)
+        {
+            if (!IsPlayerInSpaceMode(player))
+            {
+                SendMessageToPC(player, "Salvage runs from a ship's controls. Board one first.");
+                return;
+            }
+
+            var (target, targetShipStatus) = GetCurrentTarget(player);
+            if (!GetIsObjectValid(target) || targetShipStatus == null || GetIsPC(target))
+            {
+                SendMessageToPC(player, "Target a disabled ship to salvage it.");
+                return;
+            }
+
+            if (targetShipStatus.ConditionStep < 5)
+            {
+                SendMessageToPC(player, "That ship is still fighting. Disable it first.");
+                return;
+            }
+
+            if (GetDistanceBetween(player, target) > 10f)
+            {
+                SendMessageToPC(player, "Pull alongside (within 10 meters) to salvage.");
+                return;
+            }
+
+            SendMessageToPC(player, "Salvage arms extend... hold position for 10 seconds.");
+            Messaging.SendMessageNearbyToPlayers(player, $"{GetName(player)} moves in to salvage {GetName(target)}.");
+
+            DelayCommand(10f, () =>
+            {
+                if (!GetIsObjectValid(player) || !GetIsObjectValid(target) || !IsPlayerInSpaceMode(player))
+                    return;
+
+                if (GetDistanceBetween(player, target) > 10f)
+                {
+                    SendMessageToPC(player, "Salvage aborted - you drifted out of range.");
+                    return;
+                }
+
+                var lateStatus = GetShipStatus(target);
+                if (lateStatus == null || lateStatus.ConditionStep < 5)
+                    return;
+
+                var payout = 50 + lateStatus.MaxHull;
+                GiveGoldToCreature(player, payout);
+                SendMessageToPC(player, ColorToken.Cyan($"Salvage complete: {payout} credits stripped from the hulk."));
+
+                if (Random.D100(1) <= 25)
+                    WorldEvent.GiveStanceUnlockItem(player);
+
+                // Breaking apart runs the ordinary NPC ship death - crew-wide ring SP included.
+                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                AssignCommand(player, () => ApplyEffectToObject(DurationType.Instant, EffectDeath(), target));
+            });
         }
 
         /// <summary>
@@ -2451,6 +2531,10 @@ namespace SWLOR.Game.Server.Service
 
             foreach (var (creature, shipStatus) in _shipNPCs)
             {
+                // Disabled hulks drift - no recovery, no targeting, no fire.
+                if (shipStatus.ConditionStep >= 5)
+                    continue;
+
                 ApplyAutoShipRecovery(creature, shipStatus);
 
                 // Determine target
