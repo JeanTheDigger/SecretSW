@@ -66,7 +66,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                         var delay = i * 0.33f;
                         DelayCommand(delay, () =>
                         {
-                            var chanceToHit = Space.CalculateChanceToHit(activator, target);
+                            var chanceToHit = Space.CalculateChanceToHit(activator, target, ShipWeaponScale.CapitalGrade);
                             var roll = Random.D100(1);
                             var isHit = roll <= chanceToHit;
 

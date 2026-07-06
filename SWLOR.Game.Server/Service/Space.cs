@@ -7,6 +7,7 @@ using SWLOR.Game.Server.Core.NWNX.Enum;
 using SWLOR.Game.Server.Entity;
 using SWLOR.Game.Server.Enumeration;
 using SWLOR.Game.Server.Service.DBService;
+using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.LogService;
 using SWLOR.Game.Server.Service.PerkService;
@@ -336,6 +337,27 @@ namespace SWLOR.Game.Server.Service
         /// <param name="target">The target to set.</param>
         private static void SetCurrentTarget(uint creature, uint target)
         {
+            // Sensor rule v1: sensor range IS max lock range, by frame class.
+            if (GetIsPC(creature) && GetIsObjectValid(target))
+            {
+                var sensorStatus = GetShipStatus(creature);
+                if (sensorStatus != null)
+                {
+                    var sensorRange = GetFrameClass(sensorStatus) switch
+                    {
+                        ShipFrameClass.Transport => 50f,
+                        ShipFrameClass.Capital => 60f,
+                        _ => 40f
+                    };
+
+                    if (GetDistanceBetween(creature, target) > sensorRange)
+                    {
+                        SendMessageToPC(creature, $"Target is beyond sensor range. ({sensorRange}m)");
+                        return;
+                    }
+                }
+            }
+
             // Set the VFX to the new target if creature is a player.
             if (GetIsObjectValid(target) &&
                 GetIsPC(creature))
@@ -648,6 +670,10 @@ namespace SWLOR.Game.Server.Service
             SetCreatureAppearanceType(player, shipDetail.Appearance);
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
 
+            // Frame speed class: fighters 100%, transports 85%, capitals 60%.
+            CreaturePlugin.SetMovementRateFactor(player,
+                GetFrameSpeedFactor(GetFrameClass(dbPlayerShip.Status)) + ShipRefit.GetSpeedFactorBonus(dbPlayerShip));
+
             // Set active ship Id and serialize the player's hot bar.
             dbPlayer.SerializedHotBar = CreaturePlugin.SerializeQuickbar(player);
             dbPlayer.ActiveShipId = shipId;
@@ -840,6 +866,9 @@ namespace SWLOR.Game.Server.Service
             ClearCurrentTarget(player);
             SetCreatureAppearanceType(player, dbPlayer.OriginalAppearanceType);
             CreaturePlugin.SetMovementRate(player, MovementRate.PC);
+            CreaturePlugin.SetMovementRateFactor(player, 1.0f);
+            ClearFlightStance(player);
+            ClearShipOrders(player);
             Enmity.RemoveCreatureEnmity(player);
 
             // Save the ship's hot bar and unassign the active ship Id.
@@ -950,6 +979,18 @@ namespace SWLOR.Game.Server.Service
                 if (!dbPlayer.Perks.ContainsKey(perkType)) return false;
 
                 if (dbPlayer.Perks[perkType] < requiredLevel) return false;
+            }
+
+            // Faction commissions: heavy warships are faction assets.
+            if (shipDetails.RequiredFaction != FactionType.Invalid)
+            {
+                if (!dbPlayer.Factions.ContainsKey(shipDetails.RequiredFaction) ||
+                    dbPlayer.Factions[shipDetails.RequiredFaction].Standing < shipDetails.RequiredFactionStanding)
+                {
+                    var factionName = Faction.GetFactionDetail(shipDetails.RequiredFaction).Name;
+                    SendMessageToPC(player, $"This vessel is commissioned by the {factionName}. You lack the required standing ({shipDetails.RequiredFactionStanding}).");
+                    return false;
+                }
             }
 
             foreach (var (_, shipModule) in playerShip.HighPowerModules)
@@ -1102,6 +1143,17 @@ namespace SWLOR.Game.Server.Service
                 return;
             }
 
+            // A disabled ship (condition step 5) cannot bring its weapons to bear.
+            // Repair modules remain usable - damage control is the way back.
+            if (activatorShipStatus.ConditionStep >= 5 &&
+                shipModuleDetails.PowerType == ShipModulePowerType.High &&
+                shipModuleDetails.Type != ShipModuleType.HullRepairer &&
+                shipModuleDetails.Type != ShipModuleType.ShieldRepairer)
+            {
+                SendMessageToPC(activator, "Your ship is disabled! Repair its systems before firing.");
+                return;
+            }
+
             // Check global recast requirements
             if (GetShipStatus(activator).GlobalRecast > now)
             {
@@ -1122,6 +1174,18 @@ namespace SWLOR.Game.Server.Service
             if (GetObjectType(target) != ObjectType.Placeable && targetShipStatus == null && !shipModuleDetails.CanTargetSelf)
             {
                 SendMessageToPC(activator, "Invalid target.");
+                return;
+            }
+
+            // Ring-1 safe orbits: no ship-to-ship violence between players. Space PvP
+            // is deliberate (rings 2-3), never accidental. Repair modules stay usable.
+            if (GetIsPC(activator) && GetIsObjectValid(target) && GetIsPC(target) && activator != target &&
+                shipModuleDetails.PowerType == ShipModulePowerType.High &&
+                shipModuleDetails.Type != ShipModuleType.HullRepairer &&
+                shipModuleDetails.Type != ShipModuleType.ShieldRepairer &&
+                GetSpaceRing(GetArea(activator)) == SpaceRingType.SafeOrbit)
+            {
+                SendMessageToPC(activator, "The orbital defense grid disables your weapons. Ship combat between pilots is only possible in contested space.");
                 return;
             }
             
@@ -1188,23 +1252,95 @@ namespace SWLOR.Game.Server.Service
 
         private static void ApplyAutoShipRecovery(uint player, ShipStatus shipStatus)
         {
-            // Shield recovery
-            shipStatus.ShieldCycle++;
-            var rechargeRate = shipStatus.ShieldRechargeRate;
-            if (rechargeRate <= 0)
-                rechargeRate = 1;
-
-            if (shipStatus.ShieldCycle >= rechargeRate)
-            {
-                RestoreShield(player, shipStatus, 1);
-                shipStatus.ShieldCycle = 0;
-            }
-
-            // Capacitor recovery
+            // Shield ratings never regenerate passively - restoration is an ACTION
+            // (shield repair modules). Only the capacitor recovers on its own.
             RestoreCapacitor(player, shipStatus, 1);
 
             if(GetIsPC(player))
                 ExecuteScript("pc_target_upd", player);
+        }
+
+        /// <summary>
+        /// Converts a shield pool value (ship definitions and module bonuses are authored
+        /// on the old pool scale) into a flat per-hit SHIELD RATING.
+        /// Fighters land around 8-16, transports 16-30, capitals 40+.
+        /// </summary>
+        public static int CalculateShieldRating(int shieldPool)
+        {
+            return Math.Clamp(shieldPool / 5, 5, 60);
+        }
+
+        /// <summary>
+        /// Frame-aware shield rating: an explicit .ShieldRating() override wins over the
+        /// pool band derivation. Module shield bonuses (authored on the pool scale)
+        /// convert on top in both cases.
+        /// </summary>
+        public static int CalculateShieldRating(ShipDetail shipDetail, int bonusShieldPool)
+        {
+            if (shipDetail.ShieldRatingOverride.HasValue)
+                return Math.Clamp(shipDetail.ShieldRatingOverride.Value + bonusShieldPool / 5, 5, 80);
+
+            return CalculateShieldRating(shipDetail.MaxShield + bonusShieldPool);
+        }
+
+        /// <summary>
+        /// Derives a frame's damage threshold from its class until the frame catalog is
+        /// authored per-hull: capitals 50, transport-weight hulls 30, fighters 15.
+        /// </summary>
+        public static int CalculateDamageThreshold(ShipDetail shipDetail)
+        {
+            if (shipDetail.DamageThresholdOverride.HasValue)
+                return shipDetail.DamageThresholdOverride.Value;
+
+            if (shipDetail.CapitalShip)
+                return 50;
+
+            return shipDetail.MaxHull >= 90 ? 30 : 15;
+        }
+
+        /// <summary>
+        /// The area-scoped local variable declaring which space ring an area belongs to.
+        /// </summary>
+        public const string SpaceRingVariable = "SPACE_RING";
+
+        /// <summary>
+        /// Retrieves the space ring of an area. Unset or invalid values are safe orbits -
+        /// every legacy orbit is ring 1 until deliberately re-tiered.
+        /// </summary>
+        public static SpaceRingType GetSpaceRing(uint area)
+        {
+            var ring = GetLocalInt(area, SpaceRingVariable);
+
+            return ring is >= (int)SpaceRingType.SafeOrbit and <= (int)SpaceRingType.DeepSpace
+                ? (SpaceRingType)ring
+                : SpaceRingType.SafeOrbit;
+        }
+
+        // A ship killer earns endgame SP for the same victim at most once per this window.
+        private static readonly TimeSpan SamePilotVictimWindow = TimeSpan.FromHours(1);
+        private static readonly Dictionary<(string, string), DateTime> _recentShipKillCredits = new();
+
+        /// <summary>
+        /// Awards endgame SP for destroying another player's ship in ring 2 or 3, routed
+        /// to Piloting. The same victim pays out at most once per hour per killer.
+        /// </summary>
+        private static void ProcessShipPvPKill(uint killer, uint victim, SpaceRingType ring)
+        {
+            if (ring == SpaceRingType.SafeOrbit)
+                return;
+            if (!GetIsPC(killer) || GetIsDM(killer) || !GetIsPC(victim) || GetIsDM(victim) || killer == victim)
+                return;
+
+            var killerId = GetObjectUUID(killer);
+            var victimId = GetObjectUUID(victim);
+            var now = DateTime.UtcNow;
+
+            if (_recentShipKillCredits.TryGetValue((killerId, victimId), out var lastCredit) &&
+                now - lastCredit < SamePilotVictimWindow)
+                return;
+
+            _recentShipKillCredits[(killerId, victimId)] = now;
+            Skill.GiveEndgameSP(killer, SkillType.Piloting, ring == SpaceRingType.DeepSpace ? 2 : 1);
         }
 
         /// <summary>
@@ -1306,12 +1442,14 @@ namespace SWLOR.Game.Server.Service
             var shipStatus = new ShipStatus
             {
                 ItemTag = registeredEnemyType.ShipItemTag,
-                Shield = shipDetail.MaxShield,
-                MaxShield = shipDetail.MaxShield,
+                Shield = CalculateShieldRating(shipDetail, 0),
+                MaxShield = CalculateShieldRating(shipDetail, 0),
                 Hull = shipDetail.MaxHull,
                 MaxHull = shipDetail.MaxHull,
                 Capacitor = shipDetail.MaxCapacitor,
                 MaxCapacitor = shipDetail.MaxCapacitor,
+                DamageThreshold = CalculateDamageThreshold(shipDetail),
+                ConditionStep = 0,
                 EMDefense = shipDetail.EMDefense,
                 ExplosiveDefense = shipDetail.ExplosiveDefense,
                 ThermalDefense = shipDetail.ThermalDefense,
@@ -1363,6 +1501,9 @@ namespace SWLOR.Game.Server.Service
 
                 featCount++;
             }
+
+            // Frame speed class: fighters 100%, transports 85%, capitals 60%.
+            CreaturePlugin.SetMovementRateFactor(creature, GetFrameSpeedFactor(GetFrameClass(shipStatus)));
 
             _shipNPCs[creature] = shipStatus;
         }
@@ -1422,7 +1563,7 @@ namespace SWLOR.Game.Server.Service
         /// </summary>
         /// <param name="attacker">The creature attacking.</param>
         /// <param name="defender">The creature being targeted.</param>
-        public static int CalculateChanceToHit(uint attacker, uint defender)
+        public static int CalculateChanceToHit(uint attacker, uint defender, ShipWeaponScale weaponScale = ShipWeaponScale.Standard)
         {
             var attackerShipStatus = GetShipStatus(attacker);
             var defenderShipStatus = GetShipStatus(defender);
@@ -1432,8 +1573,325 @@ namespace SWLOR.Game.Server.Service
 
             var attackerAccuracy = GetShipAccuracy(attacker);
             var defenderEvasion = GetShipEvasion(defender);
+            var scaleModifier = GetScaleHitModifier(weaponScale, GetFrameClass(defenderShipStatus));
 
-            return Combat.CalculateHitRate(attackerAccuracy, defenderEvasion, 0);
+            return Combat.CalculateHitRate(attackerAccuracy, defenderEvasion, scaleModifier);
+        }
+
+        /// <summary>
+        /// Derives a ship's frame class from its status, matching the threshold bands.
+        /// </summary>
+        public static ShipFrameClass GetFrameClass(ShipStatus shipStatus)
+        {
+            if (shipStatus.CapitalShip)
+                return ShipFrameClass.Capital;
+
+            return shipStatus.MaxHull >= 90 ? ShipFrameClass.Transport : ShipFrameClass.Fighter;
+        }
+
+        /// <summary>
+        /// The scale matrix, as percentage-POINT hit-rate modifiers (the same channel as
+        /// the dual-wield penalty - accuracy points would halve through the hit formula
+        /// and the trench run would collapse). Standard weapons find bigger hulls easier
+        /// to hit; capital batteries crash toward the engine's 20% floor against
+        /// fighters, so a capital's flak screen is its gunners, not its main guns.
+        /// </summary>
+        private static int GetScaleHitModifier(ShipWeaponScale weaponScale, ShipFrameClass targetClass)
+        {
+            if (weaponScale == ShipWeaponScale.CapitalGrade)
+            {
+                return targetClass switch
+                {
+                    ShipFrameClass.Fighter => -25,
+                    ShipFrameClass.Transport => -10,
+                    _ => 0
+                };
+            }
+
+            return targetClass switch
+            {
+                ShipFrameClass.Transport => 5,
+                ShipFrameClass.Capital => 10,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Frame speed classes: fighters fly at full player rate, transports at 85%,
+        /// capitals at 60% - chases and blockade-running are real.
+        /// </summary>
+        public static float GetFrameSpeedFactor(ShipFrameClass frameClass)
+        {
+            return frameClass switch
+            {
+                ShipFrameClass.Transport => 0.85f,
+                ShipFrameClass.Capital => 0.6f,
+                _ => 1.0f
+            };
+        }
+
+        // Flight stances are runtime pilot state - cleared whenever space mode ends.
+        private static readonly Dictionary<uint, FlightStanceType> _flightStances = new();
+
+        /// <summary>
+        /// Retrieves a pilot's current flight stance (Balanced when unset).
+        /// </summary>
+        public static FlightStanceType GetFlightStance(uint pilot)
+        {
+            return _flightStances.TryGetValue(pilot, out var stance) ? stance : FlightStanceType.Balanced;
+        }
+
+        /// <summary>
+        /// Sets a pilot's flight stance. Requires the Flight Stances perk and space mode.
+        /// </summary>
+        public static void SetFlightStance(uint pilot, FlightStanceType stance)
+        {
+            if (!IsPlayerInSpaceMode(pilot))
+            {
+                SendMessageToPC(pilot, "Flight stances only matter at the stick. Board a ship first.");
+                return;
+            }
+
+            if (Perk.GetPerkLevel(pilot, PerkType.FlightStances) <= 0)
+            {
+                SendMessageToPC(pilot, "You have not trained in flight stances. (Piloting perk: Flight Stances)");
+                return;
+            }
+
+            _flightStances[pilot] = stance;
+            var description = stance switch
+            {
+                FlightStanceType.Attack => "ATTACK: +10 accuracy, -10 evasion.",
+                FlightStanceType.Evasive => "EVASIVE: +10 evasion, -10 accuracy.",
+                _ => "BALANCED: no modifiers."
+            };
+            SendMessageToPC(pilot, ColorToken.Cyan($"Flight stance set - {description}"));
+        }
+
+        /// <summary>
+        /// Clears a pilot's flight stance (space-mode exit and death paths).
+        /// </summary>
+        public static void ClearFlightStance(uint pilot)
+        {
+            _flightStances.Remove(pilot);
+        }
+
+        /// <summary>
+        /// Interceptor doctrine: +1 accuracy per level, but only at a FIGHTER's stick -
+        /// dogfighting is a fighter pilot's art.
+        /// </summary>
+        private static int GetInterceptorBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            var status = GetShipStatus(pilot);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Fighter)
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineInterceptor);
+        }
+
+        /// <summary>
+        /// Escort doctrine: +1 evasion per level, but only at a FIGHTER's stick -
+        /// flying loose formation is a fighter pilot's art.
+        /// </summary>
+        private static int GetEscortBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            var status = GetShipStatus(pilot);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Fighter)
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineEscort);
+        }
+
+        /// <summary>
+        /// Strike doctrine: +2 ordnance module damage per level, on ANY frame -
+        /// bombers are transports, and the capital-killer's art travels with the pilot.
+        /// Consulted by every ordnance weapon module.
+        /// </summary>
+        public static int GetStrikeOrdnanceBonus(uint pilot)
+        {
+            if (!GetIsPC(pilot))
+                return 0;
+
+            return Perk.GetPerkLevel(pilot, PerkType.DoctrineStrike) * 2;
+        }
+
+        // ==============================================================================
+        // Capital orders. A commander at a capital's helm issues fleet orders (/order):
+        // Line Commander surges the ship's guns, Fleet Defense braces the shields and
+        // works the condition track, Wolfpack sharpens every allied fighter nearby.
+        // Order state is runtime-only, expiry-checked on read, cleared on space exit.
+        // ==============================================================================
+
+        private static readonly Dictionary<uint, (int DamageBonus, DateTime Expiry)> _shipOrders = new();
+        private static readonly Dictionary<uint, (int AccuracyBonus, DateTime Expiry)> _wolfpackBuffs = new();
+
+        private static int GetShipOrderDamageBonus(uint pilot)
+        {
+            if (!_shipOrders.TryGetValue(pilot, out var order))
+                return 0;
+            if (DateTime.UtcNow > order.Expiry)
+            {
+                _shipOrders.Remove(pilot);
+                return 0;
+            }
+
+            return order.DamageBonus;
+        }
+
+        private static int GetWolfpackBonus(uint pilot)
+        {
+            if (!_wolfpackBuffs.TryGetValue(pilot, out var buff))
+                return 0;
+            if (DateTime.UtcNow > buff.Expiry)
+            {
+                _wolfpackBuffs.Remove(pilot);
+                return 0;
+            }
+
+            return buff.AccuracyBonus;
+        }
+
+        /// <summary>
+        /// Clears a pilot's standing orders and wolfpack buff (space-mode exit paths).
+        /// </summary>
+        public static void ClearShipOrders(uint pilot)
+        {
+            _shipOrders.Remove(pilot);
+            _wolfpackBuffs.Remove(pilot);
+        }
+
+        /// <summary>
+        /// Issues a fleet order. Requires piloting a CAPITAL frame and the matching
+        /// command doctrine perk; each order runs its own recast on the commander.
+        /// </summary>
+        public static void IssueOrder(uint commander, string order)
+        {
+            if (!IsPlayerInSpaceMode(commander))
+            {
+                SendMessageToPC(commander, "Orders are issued from a capital ship's bridge. Board one first.");
+                return;
+            }
+
+            var status = GetShipStatus(commander);
+            if (status == null || GetFrameClass(status) != ShipFrameClass.Capital)
+            {
+                SendMessageToPC(commander, "Only a capital ship's bridge carries the command authority for fleet orders.");
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            var recastVar = $"SHIP_ORDER_RECAST_{order.ToUpper()}";
+            var raw = GetLocalString(commander, recastVar);
+            if (!string.IsNullOrWhiteSpace(raw) &&
+                DateTime.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var readyAt) &&
+                now < readyAt)
+            {
+                SendMessageToPC(commander, $"That order is still being executed. ({(readyAt - now).TotalSeconds:F0}s)");
+                return;
+            }
+
+            switch (order)
+            {
+                case "alpha":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineLineCommander);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Line Commander doctrine.");
+                        return;
+                    }
+
+                    _shipOrders[commander] = (level * 2, now.AddSeconds(12));
+                    SetLocalString(commander, recastVar, now.AddSeconds(60).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: ALPHA STRIKE! All batteries surge. (+{level * 2} weapon power, 12s)"));
+                    break;
+                }
+                case "brace":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineFleetDefense);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Fleet Defense doctrine.");
+                        return;
+                    }
+
+                    var commanderId = GetObjectUUID(commander);
+                    var dbCommander = DB.Get<Player>(commanderId);
+                    var dbShip = DB.Get<PlayerShip>(dbCommander.ActiveShipId);
+                    var leadership = dbCommander.Skills[SkillType.Leadership].Rank;
+                    var amount = 4 + leadership / 10 + level;
+
+                    RestoreShield(commander, dbShip.Status, amount);
+                    if (level >= 4)
+                        RecoverCondition(commander, dbShip.Status, 1);
+                    DB.Set(dbShip);
+
+                    SetLocalString(commander, recastVar, now.AddSeconds(30).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: BRACE! Emitters cycle hot. (+{amount} shield rating)"));
+                    break;
+                }
+                case "wolfpack":
+                {
+                    var level = Perk.GetPerkLevel(commander, PerkType.DoctrineWolfpack);
+                    if (level <= 0)
+                    {
+                        SendMessageToPC(commander, "You have not trained the Wolfpack doctrine.");
+                        return;
+                    }
+
+                    var buffed = 0;
+                    for (var ally = GetFirstPC(); GetIsObjectValid(ally); ally = GetNextPC())
+                    {
+                        if (ally == commander || !IsPlayerInSpaceMode(ally))
+                            continue;
+                        if (GetArea(ally) != GetArea(commander) || GetDistanceBetween(ally, commander) > 30f)
+                            continue;
+                        if (GetIsReactionTypeHostile(ally, commander))
+                            continue;
+
+                        var allyStatus = GetShipStatus(ally);
+                        if (allyStatus == null || GetFrameClass(allyStatus) != ShipFrameClass.Fighter)
+                            continue;
+
+                        _wolfpackBuffs[ally] = (level, now.AddSeconds(18));
+                        SendMessageToPC(ally, ColorToken.Cyan($"{GetName(commander)}'s wolfpack order sharpens your attack run. (+{level} accuracy, 18s)"));
+                        buffed++;
+                    }
+
+                    SetLocalString(commander, recastVar, now.AddSeconds(45).ToString("O"));
+                    Messaging.SendMessageNearbyToPlayers(commander, ColorToken.Cyan($"{GetName(commander)} orders: WOLFPACK! {buffed} fighters answer."));
+                    break;
+                }
+                default:
+                    SendMessageToPC(commander, "Usage: /order <alpha|brace|wolfpack>");
+                    break;
+            }
+        }
+
+        private static int GetFlightStanceAccuracyMod(uint pilot)
+        {
+            return GetFlightStance(pilot) switch
+            {
+                FlightStanceType.Attack => 10,
+                FlightStanceType.Evasive => -10,
+                _ => 0
+            };
+        }
+
+        private static int GetFlightStanceEvasionMod(uint pilot)
+        {
+            return GetFlightStance(pilot) switch
+            {
+                FlightStanceType.Attack => -10,
+                FlightStanceType.Evasive => 10,
+                _ => 0
+            };
         }
 
         /// <summary>
@@ -1446,6 +1904,19 @@ namespace SWLOR.Game.Server.Service
         {
             var attackerShipStatus = GetShipStatus(attacker);
             var bonus = attackerShipStatus.Accuracy;
+
+            // Condition-track penalty: each step costs 5 accuracy.
+            bonus -= attackerShipStatus.ConditionStep * 5;
+
+            // Flight stance: attack runs hot, evasive flies loose.
+            bonus += GetFlightStanceAccuracyMod(attacker);
+
+            // Interceptor doctrine: the dogfighter's edge.
+            bonus += GetInterceptorBonus(attacker);
+
+            // A standing wolfpack order from a nearby commander.
+            bonus += GetWolfpackBonus(attacker);
+
             var stat = GetAbilityScore(attacker, AbilityType.Agility);
             int level;
 
@@ -1470,10 +1941,16 @@ namespace SWLOR.Game.Server.Service
         /// </summary>
         /// <param name="defender">The defender to check</param>
         /// <returns>The evasion of the ship</returns>
-        private static int GetShipEvasion(uint defender)
+        public static int GetShipEvasion(uint defender)
         {
             var defenderShipStatus = GetShipStatus(defender);
             var bonus = defenderShipStatus.Evasion;
+
+            // Flight stance: attack runs hot, evasive flies loose.
+            bonus += GetFlightStanceEvasionMod(defender);
+
+            // Escort doctrine: loose-formation flying.
+            bonus += GetEscortBonus(defender);
             var stat = GetAbilityScore(defender, AbilityType.Agility);
             int level;
 
@@ -1501,6 +1978,9 @@ namespace SWLOR.Game.Server.Service
         /// <returns>The attack of the ship</returns>
         public static int GetShipAttack(uint attacker, int attackBonus)
         {
+            // A standing weapons-surge order (Line Commander) boosts every gun aboard.
+            attackBonus += GetShipOrderDamageBonus(attacker);
+
             var stat = GetAttackStat(attacker);
             int level;
 
@@ -1569,14 +2049,19 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
-        /// Applies damage to a ship target. Damage will first be taken to the shields.
-        /// When shields reaches zero, damage will be taken on the hull.
-        /// When hull reaches zero, the ship will explode.
+        /// Applies damage to a ship target under the shield-rating model.
+        /// Energy weapons are reduced by the target's FULL shield rating - a hit below the
+        /// rating does nothing and leaves the rating intact; a hit at or above it degrades
+        /// the rating by 5. Ordnance is reduced by only HALF the rating and always degrades
+        /// it. Whatever penetrates strikes the hull. Hits that meet the target's damage
+        /// threshold (Energy tests post-reduction damage, Ordnance tests RAW damage) slide
+        /// the ship down the condition track. Death occurs when the hull reaches zero.
         /// </summary>
         /// <param name="attacker">The attacking ship</param>
         /// <param name="target">The defending, targeted ship</param>
         /// <param name="amount">The amount of damage to apply to the target.</param>
-        public static void ApplyShipDamage(uint attacker, uint target, int amount)
+        /// <param name="family">The weapon family dealing the damage.</param>
+        public static void ApplyShipDamage(uint attacker, uint target, int amount, ShipDamageFamily family = ShipDamageFamily.Energy)
         {
             if (amount < 0) return;
 
@@ -1585,28 +2070,41 @@ namespace SWLOR.Game.Server.Service
             if (targetShipStatus == null)
                 return;
 
-            var remainingDamage = amount;
-            // First deal damage to target's shields.
-            if (remainingDamage <= targetShipStatus.Shield)
+            int penetrating;
+            if (family == ShipDamageFamily.Energy)
             {
-                // Shields have enough to cover the attack.
-                targetShipStatus.Shield -= remainingDamage;
-                remainingDamage = 0;
+                penetrating = Math.Max(0, amount - targetShipStatus.Shield);
+
+                // Energy only wears the emitters down when it matches them.
+                if (targetShipStatus.Shield > 0 && amount >= targetShipStatus.Shield)
+                    targetShipStatus.Shield = Math.Max(0, targetShipStatus.Shield - 5);
+            }
+            else
+            {
+                penetrating = Math.Max(0, amount - targetShipStatus.Shield / 2);
+
+                // Ordnance always wears the emitters down.
+                targetShipStatus.Shield = Math.Max(0, targetShipStatus.Shield - 5);
+            }
+
+            if (penetrating <= 0)
+            {
                 ApplyEffectToObject(DurationType.Temporary, EffectVisualEffect(VisualEffect.Vfx_Dur_Aura_Pulse_Cyan_Blue), target, 1.0f);
                 ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Deflect), target);
             }
             else
             {
-                remainingDamage -= targetShipStatus.Shield;
-                targetShipStatus.Shield = 0;
+                targetShipStatus.Hull -= penetrating;
+                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
             }
 
-
-            // If damage is remaining, deal it to the hull.
-            if (remainingDamage > 0)
+            // Damage threshold: heavy hits slide the ship down the condition track.
+            // Energy tests what got through the shields; ordnance staggers on RAW damage.
+            var thresholdTest = family == ShipDamageFamily.Energy ? penetrating : amount;
+            if (targetShipStatus.DamageThreshold > 0 && thresholdTest >= targetShipStatus.DamageThreshold)
             {
-                targetShipStatus.Hull -= remainingDamage;
-                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                var steps = thresholdTest >= targetShipStatus.DamageThreshold * 2 ? 2 : 1;
+                AdvanceConditionTrack(target, targetShipStatus, steps);
             }
 
             // Safety clamping
@@ -1615,8 +2113,8 @@ namespace SWLOR.Game.Server.Service
             if (targetShipStatus.Hull < 0)
                 targetShipStatus.Hull = 0;
 
-            // Apply death if shield and hull have reached zero.
-            if (targetShipStatus.Shield <= 0 && targetShipStatus.Hull <= 0)
+            // Apply death when the hull is gone. The shield rating no longer gates death.
+            if (targetShipStatus.Hull <= 0)
             {
                 // Lexicon Note regarding GetFirstObjectInShape/GetNextObjectInShape
                 // Do not apply EffectDamage without a DelayCommand (do DelayCommand(0.0, Apply...) at minimum).
@@ -1644,6 +2142,7 @@ namespace SWLOR.Game.Server.Service
 
                     dbPlayerShip.Status.Shield = targetShipStatus.Shield;
                     dbPlayerShip.Status.Hull = targetShipStatus.Hull;
+                    dbPlayerShip.Status.ConditionStep = targetShipStatus.ConditionStep;
 
                     DB.Set(dbPlayerShip);
                     ExecuteScript("pc_shld_adjusted", target);
@@ -1658,10 +2157,169 @@ namespace SWLOR.Game.Server.Service
 
             // Notify nearby players of damage taken by target.
             Messaging.SendMessageNearbyToPlayers(attacker, $"{GetName(attacker)} deals {amount} damage to {GetName(target)}.");
-            
+
             if(GetIsPC(attacker))
                 ExecuteScript("pc_target_upd", attacker);
 
+        }
+
+        private static readonly string[] _conditionStepNames =
+        {
+            "sound", "rattled", "damaged", "crippled", "breached", "DISABLED"
+        };
+
+        /// <summary>
+        /// Slides a ship down the 5-step condition track. Each step costs 5 accuracy.
+        /// At step 5 the ship is disabled: player ships cannot fire until repaired;
+        /// NPC ships break apart (boarding and salvage channels arrive with the ring economy).
+        /// </summary>
+        private static void AdvanceConditionTrack(uint target, ShipStatus status, int steps)
+        {
+            if (status.ConditionStep >= 5)
+                return;
+
+            status.ConditionStep = Math.Min(5, status.ConditionStep + steps);
+            Messaging.SendMessageNearbyToPlayers(target,
+                ColorToken.Orange($"{GetName(target)} shudders from the impact! ({_conditionStepNames[status.ConditionStep]})"));
+
+            if (status.ConditionStep >= 5 && !GetIsPC(target))
+            {
+                // A disabled NPC hulk drifts for 90 seconds - the salvage window
+                // (/salvage alongside it). Unclaimed hulks break apart.
+                Enmity.RemoveCreatureEnmity(target);
+                Messaging.SendMessageNearbyToPlayers(target,
+                    ColorToken.Orange($"{GetName(target)} is DISABLED - dead in space. Salvagers have 90 seconds."));
+
+                DelayCommand(90f, () =>
+                {
+                    if (!GetIsObjectValid(target))
+                        return;
+
+                    var lateStatus = GetShipStatus(target);
+                    if (lateStatus == null || lateStatus.ConditionStep < 5)
+                        return;
+
+                    ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                    ApplyEffectToObject(DurationType.Instant, EffectDeath(), target);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Tests a raw pressure value against a ship's damage threshold without dealing
+        /// damage (ion weaponry against shieldless targets - the disabler's tool).
+        /// </summary>
+        public static void ApplyThresholdPressure(uint attacker, uint target, int rawValue)
+        {
+            var targetShipStatus = GetShipStatus(target);
+            if (targetShipStatus == null || targetShipStatus.DamageThreshold <= 0)
+                return;
+
+            if (rawValue < targetShipStatus.DamageThreshold)
+                return;
+
+            var steps = rawValue >= targetShipStatus.DamageThreshold * 2 ? 2 : 1;
+            AdvanceConditionTrack(target, targetShipStatus, steps);
+
+            if (GetIsPC(target))
+            {
+                var targetPlayerId = GetObjectUUID(target);
+                var dbTargetPlayer = DB.Get<Player>(targetPlayerId);
+                var dbPlayerShip = DB.Get<PlayerShip>(dbTargetPlayer.ActiveShipId);
+                dbPlayerShip.Status.ConditionStep = targetShipStatus.ConditionStep;
+                dbPlayerShip.Status.Hull = targetShipStatus.Hull;
+                DB.Set(dbPlayerShip);
+            }
+            else
+            {
+                _shipNPCs[target] = targetShipStatus;
+
+                if (targetShipStatus.Hull <= 0)
+                {
+                    DelayCommand(0f, () =>
+                    {
+                        AssignCommand(attacker, () => ApplyEffectToObject(DurationType.Instant, EffectDeath(), target));
+                    });
+                    ClearCurrentTarget(attacker);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears condition-track steps on a ship (damage-control repairs).
+        /// </summary>
+        public static void RecoverCondition(uint creature, ShipStatus shipStatus, int steps)
+        {
+            if (shipStatus.ConditionStep <= 0)
+                return;
+
+            shipStatus.ConditionStep = Math.Max(0, shipStatus.ConditionStep - steps);
+            FloatingTextStringOnCreature(
+                $"Ship condition improves. ({_conditionStepNames[shipStatus.ConditionStep]})", creature, false);
+        }
+
+        /// <summary>
+        /// Salvages the player's current target: a DISABLED NPC hulk within 10 meters.
+        /// A 10-second channel, then payment - credits scaled to the hull and a roll on
+        /// the unlock-drop table - and the hulk breaks apart, paying the ring's crew-wide
+        /// endgame SP through the ordinary kill pipeline. Nonlethal piracy earns like a kill.
+        /// </summary>
+        public static void SalvageTarget(uint player)
+        {
+            if (!IsPlayerInSpaceMode(player))
+            {
+                SendMessageToPC(player, "Salvage runs from a ship's controls. Board one first.");
+                return;
+            }
+
+            var (target, targetShipStatus) = GetCurrentTarget(player);
+            if (!GetIsObjectValid(target) || targetShipStatus == null || GetIsPC(target))
+            {
+                SendMessageToPC(player, "Target a disabled ship to salvage it.");
+                return;
+            }
+
+            if (targetShipStatus.ConditionStep < 5)
+            {
+                SendMessageToPC(player, "That ship is still fighting. Disable it first.");
+                return;
+            }
+
+            if (GetDistanceBetween(player, target) > 10f)
+            {
+                SendMessageToPC(player, "Pull alongside (within 10 meters) to salvage.");
+                return;
+            }
+
+            SendMessageToPC(player, "Salvage arms extend... hold position for 10 seconds.");
+            Messaging.SendMessageNearbyToPlayers(player, $"{GetName(player)} moves in to salvage {GetName(target)}.");
+
+            DelayCommand(10f, () =>
+            {
+                if (!GetIsObjectValid(player) || !GetIsObjectValid(target) || !IsPlayerInSpaceMode(player))
+                    return;
+
+                if (GetDistanceBetween(player, target) > 10f)
+                {
+                    SendMessageToPC(player, "Salvage aborted - you drifted out of range.");
+                    return;
+                }
+
+                var lateStatus = GetShipStatus(target);
+                if (lateStatus == null || lateStatus.ConditionStep < 5)
+                    return;
+
+                var payout = 50 + lateStatus.MaxHull;
+                GiveGoldToCreature(player, payout);
+                SendMessageToPC(player, ColorToken.Cyan($"Salvage complete: {payout} credits stripped from the hulk."));
+
+                if (Random.D100(1) <= 25)
+                    WorldEvent.GiveStanceUnlockItem(player);
+
+                // Breaking apart runs the ordinary NPC ship death - crew-wide ring SP included.
+                ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Ship_Explosion), target);
+                AssignCommand(player, () => ApplyEffectToObject(DurationType.Instant, EffectDeath(), target));
+            });
         }
 
         /// <summary>
@@ -1733,14 +2391,16 @@ namespace SWLOR.Game.Server.Service
 
 
         /// <summary>
-        /// Applies death to a creature.
-        /// If this is a PC:
-        ///     - The ship modules will either drop or be destroyed.
-        ///     - The ship will require repairs
-        ///     - The pilot will be killed (inflicting default death system penalties)
-        ///     - Everyone inside the ship instance will be killed (inflicting default death system penalties)
-        ///     - The ship will relocate back to the last dock it was at
-        /// If this is an NPC, they will be killed and explode in spectacular fashion.
+        /// Applies death to a creature's ship, with consequences scaled by the space ring:
+        /// - Ring 1 (safe orbit): a repair bill. Modules and passengers survive; the
+        ///   defense grid tows the frame back to its last dock.
+        /// - Ring 2 (contested lane): the module-loss economy. Every module has a chance
+        ///   to drop at the kill site and all are lost regardless; passengers die.
+        /// - Ring 3 (deep space): FRAME LOSS. All modules drop as wreckage, passengers
+        ///   escape by pod to their home points, and the ship - record and property -
+        ///   is permanently destroyed. Pilots who have not passed the Trials take ring-2
+        ///   consequences instead: no Padawan ship can ever be permanently destroyed.
+        /// The pilot always takes the ordinary ground death penalty.
         /// </summary>
         [NWNEventHandler(ScriptName.OnModuleDeath)]
         public static void ApplyDeath()
@@ -1752,10 +2412,8 @@ namespace SWLOR.Game.Server.Service
 
             ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), creature);
 
-            // When a player dies, they have a chance to drop every module installed on their ship.
             if (GetIsPC(creature))
             {
-                const int ChanceToDropModule = 65;
                 var deathLocation = GetLocation(creature);
                 var playerId = GetObjectUUID(creature);
                 var dbPlayer = DB.Get<Player>(playerId);
@@ -1763,45 +2421,70 @@ namespace SWLOR.Game.Server.Service
                 var dbProperty = DB.Get<WorldProperty>(dbPlayerShip.PropertyId);
                 var instance = Property.GetRegisteredInstance(dbPlayerShip.PropertyId);
 
-                // Give a chance to drop each installed module.
-                foreach (var (_, shipModule) in dbPlayerShip.Status.HighPowerModules)
+                var ring = GetSpaceRing(GetArea(creature));
+
+                // The tier gate: an unflagged pilot in deep space degrades to ring-2 stakes.
+                if (ring == SpaceRingType.DeepSpace && !dbPlayer.HasCompletedTrials)
+                    ring = SpaceRingType.ContestedLane;
+
+                var killer = GetLastHostileActor(creature);
+                ProcessShipPvPKill(killer, creature, ring);
+
+                // Contested lanes: 65% drop chance per module. Deep space: the whole
+                // loadout hits space as wreckage. Safe orbits: nothing drops.
+                var chanceToDropModule = ring switch
                 {
-                    if (Random.D100(1) <= ChanceToDropModule)
+                    SpaceRingType.ContestedLane => 65,
+                    SpaceRingType.DeepSpace => 100,
+                    _ => 0
+                };
+
+                if (ring != SpaceRingType.SafeOrbit)
+                {
+                    foreach (var (_, shipModule) in dbPlayerShip.Status.HighPowerModules)
                     {
-                        var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
-                        CopyObject(deserialized, deathLocation);
-                        DestroyObject(deserialized);
+                        if (Random.D100(1) <= chanceToDropModule)
+                        {
+                            var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
+                            CopyObject(deserialized, deathLocation);
+                            DestroyObject(deserialized);
+                        }
+
+                        var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
+                        moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
+
                     }
 
-                    var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
-                    moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
-
-                }
-
-                foreach (var (_, shipModule) in dbPlayerShip.Status.LowPowerModules)
-                {
-                    if (Random.D100(1) <= ChanceToDropModule)
+                    foreach (var (_, shipModule) in dbPlayerShip.Status.LowPowerModules)
                     {
-                        var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
-                        CopyObject(deserialized, deathLocation);
-                        DestroyObject(deserialized);
+                        if (Random.D100(1) <= chanceToDropModule)
+                        {
+                            var deserialized = ObjectPlugin.Deserialize(shipModule.SerializedItem);
+                            CopyObject(deserialized, deathLocation);
+                            DestroyObject(deserialized);
+                        }
+
+                        var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
+                        moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
                     }
 
-                    var moduleDetails = GetShipModuleDetailByItemTag(shipModule.ItemTag);
-                    moduleDetails.ModuleUnequippedAction?.Invoke(dbPlayerShip.Status, shipModule.ModuleBonus);
+                    // The player loses all modules regardless of whether they dropped.
+                    dbPlayerShip.Status.HighPowerModules.Clear();
+                    dbPlayerShip.Status.LowPowerModules.Clear();
+                    dbPlayerShip.PlayerHotBars.Clear();
                 }
 
-                // Player always loses all modules regardless if they actually dropped.
-                dbPlayerShip.Status.HighPowerModules.Clear();
-                dbPlayerShip.Status.LowPowerModules.Clear();
-                dbPlayerShip.PlayerHotBars.Clear();
                 dbPlayerShip.Status.Hull = 1;
                 dbPlayerShip.Status.Shield = 0;
+                dbPlayerShip.Status.ConditionStep = 0;
 
                 // Exit space mode
                 ClearCurrentTarget(creature);
                 SetCreatureAppearanceType(creature, dbPlayer.OriginalAppearanceType);
                 CreaturePlugin.SetMovementRate(creature, MovementRate.PC);
+                CreaturePlugin.SetMovementRateFactor(creature, 1.0f);
+                ClearFlightStance(creature);
+                ClearShipOrders(creature);
                 Enmity.RemoveCreatureEnmity(creature);
                 
                 // Remove all module feats from the player.
@@ -1823,27 +2506,69 @@ namespace SWLOR.Game.Server.Service
                     dbPlayer.SerializedHotBar = CreaturePlugin.SerializeQuickbar(creature);
                 }
 
+                var shipId = dbPlayer.ActiveShipId;
                 _shipClones.Remove(dbPlayer.ActiveShipId);
                 dbPlayer.ActiveShipId = Guid.Empty.ToString();
 
-                // Removing the current position of the ship will automatically send it back to the last dock it was at.
-                if (dbProperty.Positions.ContainsKey(PropertyLocationType.CurrentPosition))
+                if (ring == SpaceRingType.DeepSpace)
                 {
-                    dbProperty.Positions.Remove(PropertyLocationType.CurrentPosition);
+                    // FRAME LOSS. Passengers escape by pod; the ship - record and
+                    // property - is destroyed permanently. Characters never perma-die
+                    // in space: pods always reach a dock.
+                    DB.Set(dbPlayer);
+
+                    // The interior arrangement survives as a blueprint (/shiplayout).
+                    ShipLayout.SnapshotInterior(dbPlayerShip.OwnerPlayerId, dbProperty);
+
+                    foreach (var player in instance.Players)
+                    {
+                        ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
+                        FloatingTextStringOnCreature(ColorToken.Red("The ship is breaking apart! Your escape pod hurls you clear."), player, false);
+                        Death.SendToHomePoint(player);
+                    }
+
+                    // Give the pods a moment to clear the instance before it ceases to exist.
+                    DelayCommand(6f, () =>
+                    {
+                        Property.DeleteProperty(dbProperty);
+                        DB.Delete<PlayerShip>(shipId);
+                    });
+
+                    Messaging.SendMessageNearbyToPlayers(creature,
+                        ColorToken.Red($"{GetName(creature)}'s ship has been destroyed. The frame is lost."));
                 }
-
-                // Update the changes
-                DB.Set(dbProperty);
-                DB.Set(dbPlayerShip);
-                DB.Set(dbPlayer);
-
-                // Murder everyone inside the ship's instance.
-                foreach (var player in instance.Players)
+                else
                 {
-                    ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
-                    ApplyEffectToObject(DurationType.Instant, EffectDeath(), player);
+                    // Removing the current position of the ship will automatically send it back to the last dock it was at.
+                    if (dbProperty.Positions.ContainsKey(PropertyLocationType.CurrentPosition))
+                    {
+                        dbProperty.Positions.Remove(PropertyLocationType.CurrentPosition);
+                    }
 
-                    FloatingTextStringOnCreature(ColorToken.Red("The ship has exploded!"), player, false);
+                    // Update the changes
+                    DB.Set(dbProperty);
+                    DB.Set(dbPlayerShip);
+                    DB.Set(dbPlayer);
+
+                    if (ring == SpaceRingType.SafeOrbit)
+                    {
+                        // The defense grid tows everyone in. A repair bill, not a funeral.
+                        foreach (var player in instance.Players)
+                        {
+                            FloatingTextStringOnCreature(ColorToken.Orange("The ship shudders violently - the orbital defense grid tows it back to dock."), player, false);
+                        }
+                    }
+                    else
+                    {
+                        // Contested lanes: everyone inside the ship goes down with it.
+                        foreach (var player in instance.Players)
+                        {
+                            ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Fnf_Fireball), player);
+                            ApplyEffectToObject(DurationType.Instant, EffectDeath(), player);
+
+                            FloatingTextStringOnCreature(ColorToken.Red("The ship has exploded!"), player, false);
+                        }
+                    }
                 }
 
                 DestroyPilotClone(creature);
@@ -1859,6 +2584,10 @@ namespace SWLOR.Game.Server.Service
 
             foreach (var (creature, shipStatus) in _shipNPCs)
             {
+                // Disabled hulks drift - no recovery, no targeting, no fire.
+                if (shipStatus.ConditionStep >= 5)
+                    continue;
+
                 ApplyAutoShipRecovery(creature, shipStatus);
 
                 // Determine target

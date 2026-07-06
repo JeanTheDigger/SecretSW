@@ -35,8 +35,106 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             ThrowRock();
             ForceLeap();
             ForceInspiration();
+            ForceBarrier();
+            ForceBreach();
+            ForceAffliction();
+            ForceChoke();
 
             return _builder.Build();
+        }
+
+        private void ForceBarrier()
+        {
+            _builder.Create(PerkCategoryType.ForceUniversal, PerkType.ForceBarrier)
+                .Name("Force Barrier")
+
+                .AddPerkLevel()
+                .Description("Surrounds you with an absorbing barrier of 15 + 2x WIL modifier temporary HP for 60 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 10)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceBarrier)
+
+                .AddPerkLevel()
+                .Description("Your barrier improves to 30 + 3x WIL modifier temporary HP.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 25)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your barrier improves to 45 + 4x WIL modifier temporary HP.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 40)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceBreach()
+        {
+            _builder.Create(PerkCategoryType.ForceUniversal, PerkType.ForceBreach)
+                .Name("Force Breach")
+
+                .AddPerkLevel()
+                .Description("Strips up to 2 beneficial effects (barriers, buffs, concealment) from a target.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 20)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceBreach)
+
+                .AddPerkLevel()
+                .Description("Your breach strips up to 4 beneficial effects.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 35)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceAffliction()
+        {
+            _builder.Create(PerkCategoryType.ForceDark, PerkType.ForceAffliction)
+                .Name("Affliction")
+
+                .AddPerkLevel()
+                .Description("Inflicts a creeping sickness dealing WIL-modifier damage every tick for 18 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 15)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceAffliction)
+
+                .AddPerkLevel()
+                .Description("Your affliction deals 2x WIL-modifier damage per tick for 24 seconds.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 30)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your affliction deals 3x WIL-modifier damage per tick for 30 seconds and briefly slows the target.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 45)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
+        }
+
+        private void ForceChoke()
+        {
+            _builder.Create(PerkCategoryType.ForceDark, PerkType.ForceChoke)
+                .Name("Force Choke")
+
+                .AddPerkLevel()
+                .Description("Grips a target's throat: 10 + 2x WIL modifier Force damage, slowing and shaking their aim for 5 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Force, 25)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+                .GrantsFeat(FeatType.ForceChoke)
+
+                .AddPerkLevel()
+                .Description("Your grip deals 20 + 3x WIL modifier damage over 6 seconds of strangled stagger.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 40)
+                .RequirementCharacterType(CharacterType.ForceSensitive)
+
+                .AddPerkLevel()
+                .Description("Your grip deals 30 + 4x WIL modifier damage over 7 seconds, with -15 accuracy.")
+                .Price(3)
+                .RequirementSkill(SkillType.Force, 50)
+                .RequirementCharacterType(CharacterType.ForceSensitive);
         }
 
         private void ForcePush()
@@ -78,35 +176,35 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Throw Rock")
 
                 .AddPerkLevel()
-                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals physical DMG equal to your Willpower Score to a single target.")
+                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 20 physical DMG, scaling with your Willpower modifier, to a single target.")
                 .Price(1)
                 .RequirementSkill(SkillType.Force, 10)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowRock1)
 
                 .AddPerkLevel()
-                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 10 physical DMG, scaling with your Willpower Score, to a single target.")
+                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 40 physical DMG, scaling with your Willpower modifier, to a single target.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 20)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowRock2)
 
                 .AddPerkLevel()
-                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 15 physical DMG, scaling with your Willpower Score, to a single target.")
+                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 55 physical DMG, scaling with your Willpower modifier, to a single target.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 30)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowRock3)
 
                 .AddPerkLevel()
-                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 20 physical DMG, scaling with your Willpower Score, to a single target.")
+                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 70 physical DMG, scaling with your Willpower modifier, to a single target.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowRock4)
 
                 .AddPerkLevel()
-                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 25 physical DMG, scaling with your Willpower Score, to a single target.")
+                .Description("Telekinetically launches a chunk of the environment at the enemy. Deals 85 physical DMG, scaling with your Willpower modifier, to a single target.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 50)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -166,20 +264,20 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Throw Lightsaber")
 
                 .AddPerkLevel()
-                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for DMG equal to the average of your Willpower and Perception scores. Can hit up to 1 targets along the path thrown.")
+                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for 20 DMG, scaling with your Willpower and Perception modifiers. Can hit up to 1 target along the path thrown.")
                 .Price(2)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowLightsaber1)
 
                 .AddPerkLevel()
-                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for 20 DMG, scaling with your Willpower and Perception scores. Can hit up to 2 targets along the path thrown.")
+                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for 50 DMG, scaling with your Willpower and Perception modifiers. Can hit up to 2 targets along the path thrown.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 15)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ThrowLightsaber2)
 
                 .AddPerkLevel()
-                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for 40 DMG, scaling with your Willpower and Perception scores. Can hit up to 3 targets along the path thrown.")
+                .Description("Throw your equipped one-handed lightsaber or one-handed vibroblade up to 15m for 80 DMG, scaling with your Willpower and Perception modifiers. Can hit up to 3 targets along the path thrown.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -192,21 +290,21 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Force Stun")
 
                 .AddPerkLevel()
-                .Description("Attempt to tranquilize a single target for six seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
+                .Description("Attempt to tranquilize a single target for three seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 10)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ForceStun1)
 
                 .AddPerkLevel()
-                .Description("Target and nearest other enemy within 10m is Tranquilized for six seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
+                .Description("Target and nearest other enemy within 10m is Tranquilized for three seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 25)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ForceStun2)
 
                 .AddPerkLevel()
-                .Description("Target and all other enemies within 10m are Tranquilized for six seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
+                .Description("Target and all other enemies within 10m are Tranquilized for three seconds with a 12DC will check. If resisted, target gets -10 to Accuracy and Evasion.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -339,7 +437,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Force Burst")
 
                 .AddPerkLevel()
-                .Description("Deals DMG equal to your Willpower Score to target and nearby enemies.")
+                .Description("Deals 20 DMG, scaling with your Willpower modifier, to target and nearby enemies.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 20)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -347,7 +445,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceBurst1)
 
                 .AddPerkLevel()
-                .Description("Deals 10 DMG, scaling with your Willpower Score, to target and nearby enemies.")
+                .Description("Deals 40 DMG, scaling with your Willpower modifier, to target and nearby enemies.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 30)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -355,7 +453,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceBurst2)
 
                 .AddPerkLevel()
-                .Description("Deals 20 DMG, scaling with your Willpower Score, to target and nearby enemies.")
+                .Description("Deals 60 DMG, scaling with your Willpower modifier, to target and nearby enemies.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -363,7 +461,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceBurst3)
 
                 .AddPerkLevel()
-                .Description("Deals 30 DMG, scaling with your Willpower Score, to target and nearby enemies.")
+                .Description("Deals 90 DMG, scaling with your Willpower modifier, to target and nearby enemies.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 50)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -376,14 +474,14 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Force Mind")
 
                 .AddPerkLevel()
-                .Description("Grants Stamina Point regeneration based on your Willpower Score, at the cost of your Willpower.")
+                .Description("Grants Stamina Point regeneration based on your Willpower.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 20)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
                 .GrantsFeat(FeatType.ForceMind1)
 
                 .AddPerkLevel()
-                .Description("Grants Stamina Point regeneration based on your Willpower Score, at the cost of your Willpower.")
+                .Description("Grants Stamina Point regeneration based on your Willpower.")
                 .Price(4)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -442,7 +540,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Force Lightning")
 
                 .AddPerkLevel()
-                .Description("Deals DMG equal to your Willpower Score to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
+                .Description("Deals 20 DMG, scaling with your Willpower modifier, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 20)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -450,7 +548,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceLightning1)
 
                 .AddPerkLevel()
-                .Description("Deals 10 DMG, scaling with your Willpower Score, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
+                .Description("Deals 40 DMG, scaling with your Willpower modifier, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
                 .Price(2)
                 .RequirementSkill(SkillType.Force, 30)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -458,7 +556,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceLightning2)
 
                 .AddPerkLevel()
-                .Description("Deals 20 DMG, scaling with your Willpower Score, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
+                .Description("Deals 60 DMG, scaling with your Willpower modifier, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 40)
                 .RequirementCharacterType(CharacterType.ForceSensitive)
@@ -466,7 +564,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ForceLightning3)
 
                 .AddPerkLevel()
-                .Description("Deals 3 DMG, scaling with your Willpower Score, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
+                .Description("Deals 90 DMG, scaling with your Willpower modifier, to up to 5 targets in a radius. Consumes FP, but if none remain, will consume HP instead.")
                 .Price(3)
                 .RequirementSkill(SkillType.Force, 50)
                 .RequirementCharacterType(CharacterType.ForceSensitive)

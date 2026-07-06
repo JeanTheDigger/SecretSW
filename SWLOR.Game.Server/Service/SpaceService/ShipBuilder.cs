@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.LogService;
 using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.PropertyService;
@@ -181,6 +182,59 @@ namespace SWLOR.Game.Server.Service.SpaceService
             }
 
             _activeShip.RequiredPerks[perkType] = requiredLevel;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Authors this frame's shield rating explicitly, overriding the band derivation
+        /// from the MaxShield pool. Module shield bonuses still apply on top.
+        /// </summary>
+        /// <param name="shieldRating">The flat per-hit shield rating.</param>
+        /// <returns>A ship builder with the configured options.</returns>
+        public ShipBuilder ShieldRating(int shieldRating)
+        {
+            _activeShip.ShieldRatingOverride = shieldRating;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Authors this frame's damage threshold explicitly, overriding the
+        /// frame-class derivation.
+        /// </summary>
+        /// <param name="damageThreshold">The damage threshold.</param>
+        /// <returns>A ship builder with the configured options.</returns>
+        public ShipBuilder DamageThreshold(int damageThreshold)
+        {
+            _activeShip.DamageThresholdOverride = damageThreshold;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the base evasion of the frame.
+        /// </summary>
+        /// <param name="evasion">The evasion value to set.</param>
+        /// <returns>A ship builder with the configured options.</returns>
+        public ShipBuilder Evasion(int evasion)
+        {
+            _activeShip.Evasion = evasion;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Marks this frame as a faction commission: the pilot must hold at least the
+        /// given standing with the faction to use the ship.
+        /// </summary>
+        /// <param name="faction">The commissioning faction.</param>
+        /// <param name="standing">The minimum faction standing required.</param>
+        /// <returns>A ship builder with the configured options.</returns>
+        public ShipBuilder RequiresFactionStanding(FactionType faction, int standing)
+        {
+            _activeShip.RequiredFaction = faction;
+            _activeShip.RequiredFactionStanding = standing;
 
             return this;
         }

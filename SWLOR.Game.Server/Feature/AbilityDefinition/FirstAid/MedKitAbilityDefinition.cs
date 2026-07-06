@@ -41,11 +41,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.FirstAid
                 return "You have no medical supplies.";
             }
 
-            if (BeastMastery.IsPlayerBeast(target))
-            {
-                return "That ability cannot be used on beasts.";
-            }
-
             return string.Empty;
         }
 

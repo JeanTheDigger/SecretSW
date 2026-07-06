@@ -56,6 +56,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.OneHanded);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             if (abs((int)(GetFacing(activator) - GetFacing(target))) > 200f ||
                 abs((int)(GetFacing(activator) - GetFacing(target))) < 160f ||

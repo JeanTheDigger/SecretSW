@@ -14,7 +14,6 @@ namespace SWLOR.CLI
         private static readonly AdHocTool _adHocTool = new();
         private static readonly DroidItemBuilder _droidItemBuilder = new();
         private static readonly DeployBuild _deployBuild = new();
-        private static readonly BeastCodeBuilder _beastBuilder = new();
 
         static void Main(string[] args)
         {
@@ -26,11 +25,6 @@ namespace SWLOR.CLI
                 "Ad-hoc code testing.",
                 CommandOptionType.NoValue);
             
-            var beastBuilderOption = app.Option(
-                "-$|-b |--beast",
-                "Beast code generator.",
-                CommandOptionType.NoValue);
-
             var placeableOption = app.Option(
                 "-$|-c |--placeable",
                 "Generates utp files in json format for all of the entries found in placeables.2da.",
@@ -146,11 +140,6 @@ namespace SWLOR.CLI
                 if (deployOption.HasValue())
                 {
                     _deployBuild.Process();
-                }
-
-                if (beastBuilderOption.HasValue())
-                {
-                    _beastBuilder.Process();
                 }
 
                 return 0;

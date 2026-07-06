@@ -27,7 +27,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Armor
                 return "This ability cannot be used on players.";
             }
 
-            if (BeastMastery.IsPlayerBeast(target) || Droid.IsDroid(target))
+            if (Droid.IsDroid(target))
             {
                 return "This ability cannot be used on associates.";
             }
@@ -84,7 +84,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Armor
                             break;
 
                         if (!GetIsPC(nearest) && 
-                            !BeastMastery.IsPlayerBeast(nearest) && 
                             !Droid.IsDroid(nearest))
                         {
                             var enmityBonus = GetAbilityScore(activator, AbilityType.Vitality) * 50;

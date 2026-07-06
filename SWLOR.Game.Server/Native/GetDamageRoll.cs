@@ -404,16 +404,27 @@ namespace SWLOR.Game.Server.Native
                 else if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1)
                     dmgValues[CombatDamageType.Physical] += mightMod;
             }
-            // Strong Style bonuses
-            else if (Item.SaberstaffBaseItemTypes.Contains(baseItemType) &&
-                Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
+
+            // Stance bonuses (lightsaber forms / combat doctrines). GetActiveStance returns
+            // null unless the wielded weapon matches the active stance's weapon family.
             {
-                dmgValues[CombatDamageType.Physical] += (int)Math.Ceiling(mightMod / 2.0f);
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null)
+                {
+                    dmgValues[CombatDamageType.Physical] +=
+                        stance.FlatDMG - stance.DamagePenalty + mightMod * stance.MgtModDMGHalves / 2;
+                }
             }
-            else if (Item.LightsaberBaseItemTypes.Contains(baseItemType) &&
-                Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
+
+            // Signature weapon bond: bonus damage only with THE attuned item.
+            if (weapon != null && attacker.m_bPlayerCharacter == 1)
             {
-                dmgValues[CombatDamageType.Physical] += (int)Math.Ceiling(mightMod / 2.0f);
+                var bondMark = weapon.m_ScriptVars.GetInt(new CExoString(SignatureWeapon.SignatureItemVariable));
+                if (bondMark > 0)
+                {
+                    var attackerId = attacker.m_pUUID.GetOrAssignRandom().ToString();
+                    dmgValues[CombatDamageType.Physical] += SignatureWeapon.GetBonus(attackerId, bondMark);
+                }
             }
         }
 
@@ -488,17 +499,7 @@ namespace SWLOR.Game.Server.Native
             var weaponDamageAbilityType = Item.GetWeaponDamageAbilityType(baseItemType);
             var weaponDamageAbilityStat = Stat.GetStatValueNative(attacker, weaponDamageAbilityType);
 
-            if (Item.LightsaberBaseItemTypes.Contains(baseItemType))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
-                    return attacker.m_pStats.GetSTRStat();
-            }
-            else if (Item.SaberstaffBaseItemTypes.Contains(baseItemType))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
-                    return attacker.m_pStats.GetSTRStat();
-            }
-            else if (Item.PistolBaseItemTypes.Contains(baseItemType) ||
+            if (Item.PistolBaseItemTypes.Contains(baseItemType) ||
                      Item.RifleBaseItemTypes.Contains(baseItemType) ||
                      Item.ThrowingWeaponBaseItemTypes.Contains(baseItemType))
             {
@@ -507,8 +508,18 @@ namespace SWLOR.Game.Server.Native
             }
             else if (Item.StaffBaseItemTypes.Contains(baseItemType))
             {
-                if (attacker.m_pStats.HasFeat((ushort)FeatType.FlurryStyle) == 1)
-                    return attacker.m_pStats.GetDEXStat();
+                // Crushing Style is the Might staff stance; it re-maps damage to Might.
+                if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1 ||
+                    attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
+                    return attacker.m_pStats.GetSTRStat();
+            }
+            else if (Item.LightsaberBaseItemTypes.Contains(baseItemType) ||
+                     Item.SaberstaffBaseItemTypes.Contains(baseItemType))
+            {
+                // Form V (Djem So) is the only form that re-maps a saber's damage stat.
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null && stance.DamageStatOverride == AbilityType.Might)
+                    return attacker.m_pStats.GetSTRStat();
             }
 
             return -1;

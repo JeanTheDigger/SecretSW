@@ -26,21 +26,21 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
         private static void ImpactAction(uint activator, uint target, int level, Location targetLocation)
         {
             var dmg = 0;
-            var willBonus = GetAbilityScore(activator, AbilityType.Willpower);
+            var willMod = GetAbilityModifier(AbilityType.Willpower, activator);
 
             switch (level)
             {
                 case 1:
-                    dmg = willBonus;
+                    dmg = 20 + willMod * 4 / 3;
                     break;
                 case 2:
-                    dmg = 10 + (willBonus * 3 / 2);
+                    dmg = 40 + willMod * 2;
                     break;
                 case 3:
-                    dmg = 20 + (willBonus * 2);
+                    dmg = 60 + willMod * 8 / 3;
                     break;
                 case 4:
-                    dmg = 30 + (willBonus * 3);
+                    dmg = 90 + willMod * 4;
                     break;
             }
 
@@ -84,11 +84,11 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             }
             if (Stat.GetCurrentFP(activator) < 1 + (level * 2))
             {
-                var darkBargain = 7 * ((5 + (level * 2) - Stat.GetCurrentFP(activator)));
+                var darkBargain = 7 * ((1 + (level * 2) - Stat.GetCurrentFP(activator)));
                 Stat.ReduceFP(activator, Stat.GetCurrentFP(activator));
                 ApplyEffectToObject(DurationType.Instant, EffectDamage(darkBargain), activator);
             }
-            else { Stat.ReduceFP(activator, 5 + (level * 2)); }
+            else { Stat.ReduceFP(activator, 1 + (level * 2)); }
         }
 
         private static void ForceLightning1(AbilityBuilder builder)

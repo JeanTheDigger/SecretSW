@@ -177,7 +177,7 @@ namespace SWLOR.Game.Server.Feature.StatusEffectDefinition
                     ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Negative_Energy), target);
                     ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Reduce_Ability_Score), target);
                     ApplyEffectToObject(DurationType.Instant, EffectDamage(damage), target);
-                    ApplyEffectToObject(DurationType.Instant, EffectHeal(heal), source);
+                    ApplyEffectToObject(DurationType.Instant, EffectHeal(heal / 2), source);
                     ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Pulse_Negative), source);
                 });
             }

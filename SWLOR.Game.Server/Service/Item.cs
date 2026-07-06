@@ -125,7 +125,7 @@ namespace SWLOR.Game.Server.Service
             _itemToDamageAbilityMapping[BaseItem.Club] = AbilityType.Might;
             _itemToDamageAbilityMapping[BaseItem.Bracer] = AbilityType.Might;
             _itemToDamageAbilityMapping[BaseItem.Gloves] = AbilityType.Might;
-            _itemToDamageAbilityMapping[BaseItem.QuarterStaff] = AbilityType.Might;
+            _itemToDamageAbilityMapping[BaseItem.QuarterStaff] = AbilityType.Perception;
             _itemToDamageAbilityMapping[BaseItem.Katar] = AbilityType.Perception;
 
             // Ranged Skills
@@ -194,7 +194,7 @@ namespace SWLOR.Game.Server.Service
             _itemToAccuracyAbilityMapping[BaseItem.Club] = AbilityType.Perception;
             _itemToAccuracyAbilityMapping[BaseItem.Bracer] = AbilityType.Perception;
             _itemToAccuracyAbilityMapping[BaseItem.Gloves] = AbilityType.Perception;
-            _itemToAccuracyAbilityMapping[BaseItem.QuarterStaff] = AbilityType.Perception;
+            _itemToAccuracyAbilityMapping[BaseItem.QuarterStaff] = AbilityType.Agility;
             _itemToAccuracyAbilityMapping[BaseItem.Katar] = AbilityType.Agility;
 
             // Ranged Skills

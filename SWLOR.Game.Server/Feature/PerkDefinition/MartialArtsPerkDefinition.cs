@@ -441,7 +441,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Leg Sweep")
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 4 DMG and has a 5DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 4 DMG and has a 10DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(2)
                 .RequirementSkill(SkillType.MartialArts, 5)
@@ -449,7 +449,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.LegSweep1)
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 13 DMG and has a 8DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 13 DMG and has a 15DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.MartialArts, 20)
@@ -457,7 +457,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.LegSweep2)
 
                 .AddPerkLevel()
-                .Description("Your next attack deals an additional 20 DMG and has a 10DC reflex check to inflict knockdown on your target for 6 seconds.")
+                .Description("Your next attack deals an additional 20 DMG and has a 20DC reflex check to inflict knockdown on your target for 3 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.MartialArts, 35)
@@ -500,13 +500,13 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Crushing Style")
 
                 .AddPerkLevel()
-                .Description("Your attacks with a staff now gain a DMG bonus equal to your MGT modifier. In addition, your critical chance is raised by 15%.")
+                .Description("A Might-focused staff stance: your staff attacks deal Might-based damage and gain a DMG bonus equal to your MGT modifier.")
                 .Price(1)
                 .RequirementCannotHavePerk(PerkType.FlurryStyle)
                 .GrantsFeat(FeatType.CrushingStyle)
 
                 .AddPerkLevel()
-                .Description("Your MGT DMG bonus is increased to twice your MGT modifier, and critical chance is increased by a further 15%.")
+                .Description("Your MGT DMG bonus is increased to twice your MGT modifier, and your critical chance with staves is raised by 25%.")
                 .Price(4)
                 .RequirementSkill(SkillType.MartialArts, 35)
                 .GrantsFeat(FeatType.CrushingMastery);

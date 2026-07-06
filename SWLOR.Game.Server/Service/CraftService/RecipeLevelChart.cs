@@ -97,6 +97,29 @@ namespace SWLOR.Game.Server.Service.CraftService
             _recipeLevels[78] = new RecipeLevelDetail(3645, 16162, 80, 0.018f);
             _recipeLevels[79] = new RecipeLevelDetail(3705, 16582, 80, 0.018f);
             _recipeLevels[80] = new RecipeLevelDetail(3943, 18262, 80, 0.018f);
+
+            // Phase-2 exotic-material recipes (levels 81-100). Extrapolated from the
+            // published curve; durability and difficulty follow the tier pattern.
+            _recipeLevels[81] = new RecipeLevelDetail(4203, 19262, 90, 0.015f);
+            _recipeLevels[82] = new RecipeLevelDetail(4265, 19692, 90, 0.015f);
+            _recipeLevels[83] = new RecipeLevelDetail(4327, 20122, 90, 0.015f);
+            _recipeLevels[84] = new RecipeLevelDetail(4389, 20552, 90, 0.015f);
+            _recipeLevels[85] = new RecipeLevelDetail(4451, 20982, 90, 0.015f);
+            _recipeLevels[86] = new RecipeLevelDetail(4513, 21412, 90, 0.015f);
+            _recipeLevels[87] = new RecipeLevelDetail(4575, 21842, 90, 0.015f);
+            _recipeLevels[88] = new RecipeLevelDetail(4637, 22272, 90, 0.015f);
+            _recipeLevels[89] = new RecipeLevelDetail(4699, 22702, 90, 0.015f);
+            _recipeLevels[90] = new RecipeLevelDetail(4761, 23132, 90, 0.015f);
+            _recipeLevels[91] = new RecipeLevelDetail(5021, 24132, 90, 0.015f);
+            _recipeLevels[92] = new RecipeLevelDetail(5083, 24562, 90, 0.015f);
+            _recipeLevels[93] = new RecipeLevelDetail(5145, 24992, 90, 0.015f);
+            _recipeLevels[94] = new RecipeLevelDetail(5207, 25422, 90, 0.015f);
+            _recipeLevels[95] = new RecipeLevelDetail(5269, 25852, 90, 0.015f);
+            _recipeLevels[96] = new RecipeLevelDetail(5331, 26282, 90, 0.015f);
+            _recipeLevels[97] = new RecipeLevelDetail(5393, 26712, 90, 0.015f);
+            _recipeLevels[98] = new RecipeLevelDetail(5455, 27142, 90, 0.015f);
+            _recipeLevels[99] = new RecipeLevelDetail(5517, 27572, 90, 0.015f);
+            _recipeLevels[100] = new RecipeLevelDetail(5579, 28002, 90, 0.015f);
         }
 
         public RecipeLevelDetail GetByLevel(int level)

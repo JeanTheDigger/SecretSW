@@ -55,6 +55,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.TwoHanded);
+            dmg += GetAbilityModifier(AbilityType.Might, activator);
             
             var attackerStat = GetAbilityScore(activator, AbilityType.Might);
             var attack = Stat.GetAttack(activator, AbilityType.Might, SkillType.TwoHanded);
@@ -68,6 +69,17 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
                 defenderStat, 
                 0);
             ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), target);
+
+            // Breach rider: reduces the target's evasion on a failed Fortitude check (mirrors Saber Strike).
+            const string EffectTag = "HARD_SLASH_BREACH";
+            var dc = Combat.CalculateSavingThrowDC(activator, SavingThrow.Fortitude, 8 + level * 4);
+            var checkResult = FortitudeSave(target, dc, SavingThrowType.None, activator);
+            if (checkResult == SavingThrowResultType.Failed)
+            {
+                RemoveEffectByTag(target, EffectTag);
+                var eBreach = TagEffect(EffectACDecrease(2), EffectTag);
+                ApplyEffectToObject(DurationType.Temporary, eBreach, target, 30f);
+            }
 
             AssignCommand(activator, () => ActionPlayAnimation(Animation.DoubleStrike));
 

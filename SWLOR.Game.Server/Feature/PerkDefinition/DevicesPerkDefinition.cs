@@ -27,8 +27,91 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             Flamethrower();
             WristRocket();
             DeflectorShield();
+            CarboniteProjector();
+            CombatJetpack();
+            OrbitalStrike();
+            ToxinVials();
 
             return _builder.Build();
+        }
+
+        private void ToxinVials()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.ToxinVials)
+                .Name("Toxin Vials")
+
+                .AddPerkLevel()
+                .Description("Hurl a toxin flask: the target suffers Perception-scaled poison for 18 seconds.")
+                .Price(2)
+                .RequirementSkill(SkillType.Devices, 25)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.ToxinFlask)
+
+                .AddPerkLevel()
+                .Description("Your toxins are refined: the poison runs for 30 seconds.")
+                .Price(3)
+                .RequirementSkill(SkillType.Devices, 45)
+                .RequirementCharacterType(CharacterType.Standard);
+        }
+
+        // ==========================================================================
+        // Devices Phase-2 tech. All three are marquee event tech: level 1 requires
+        // an unlock item from the event economy, and the Devices gates sit past
+        // rank 50, inheriting the Trials gate.
+        // ==========================================================================
+
+        private void CarboniteProjector()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.CarboniteProjector)
+                .Name("Carbonite Projector")
+
+                .AddPerkLevel()
+                .Description("Flash-freezes a target in carbonite for 2 seconds (they cannot act; a long immunity follows - the marquee tech hold, priced under the CC rules).")
+                .Price(5)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 60)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.CarboniteProjector)
+
+                .AddPerkLevel()
+                .Description("Your carbonite freeze lasts 3 seconds.")
+                .Price(6)
+                .RequirementSkill(SkillType.Devices, 80)
+                .RequirementCharacterType(CharacterType.Standard);
+        }
+
+        private void CombatJetpack()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.CombatJetpack)
+                .Name("Combat Jetpack")
+
+                .AddPerkLevel()
+                .Description("Rocket to a position up to 20 meters away - mobility as equipment.")
+                .Price(5)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 65)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.CombatJetpack)
+
+                .AddPerkLevel()
+                .Description("The burn carries you onward: +25% movement speed for 6 seconds after landing.")
+                .Price(6)
+                .RequirementSkill(SkillType.Devices, 85)
+                .RequirementCharacterType(CharacterType.Standard);
+        }
+
+        private void OrbitalStrike()
+        {
+            _builder.Create(PerkCategoryType.Devices, PerkType.OrbitalStrike)
+                .Name("Orbital Strike")
+
+                .AddPerkLevel()
+                .Description("Paint a position for orbital bombardment: 6 seconds later, heavy fire damage strikes everything hostile in the area. 5-minute cycle. The counterplay is leaving.")
+                .Price(6)
+                .RequirementUnlocked()
+                .RequirementSkill(SkillType.Devices, 90)
+                .RequirementCharacterType(CharacterType.Standard)
+                .GrantsFeat(FeatType.OrbitalStrike);
         }
 
         private void DemolitionExpert()
@@ -64,14 +147,14 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Frag Grenade")
 
                 .AddPerkLevel()
-                .Description("Deals fire DMG equal to your Perception Score to all creatures within range of explosion. Consumes explosives on use.")
+                .Description("Deals 20 fire DMG, scaling with your Perception modifier, to all creatures within range of explosion. Consumes explosives on use.")
                 .Price(2)
                 .DroidAISlots(2)
                 .RequirementCharacterType(CharacterType.Standard)
                 .GrantsFeat(FeatType.FragGrenade1)
 
                 .AddPerkLevel()
-                .Description("Deals 20 fire DMG, scaling with your Perception Score, to all creatures within range of explosion. Also has an 8DC reflex check to inflict Bleeding. Consumes explosives on use.")
+                .Description("Deals 50 fire DMG, scaling with your Perception modifier, to all creatures within range of explosion. Also has an 8DC reflex check to inflict Bleeding. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 15)
@@ -79,7 +162,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.FragGrenade2)
 
                 .AddPerkLevel()
-                .Description("Deals 40 fire DMG, scaling with your Perception Score, to all creatures within range of explosion. Also has a 12DC reflex check to inflict Bleeding. Consumes explosives on use.")
+                .Description("Deals 80 fire DMG, scaling with your Perception modifier, to all creatures within range of explosion. Also has a 12DC reflex check to inflict Bleeding. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 35)
@@ -93,7 +176,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Concussion Grenade")
 
                 .AddPerkLevel()
-                .Description("Deals electrical DMG equal to your Perception Score to all creatures within range of explosion. Consumes explosives on use.")
+                .Description("Deals 20 electrical DMG, scaling with your Perception modifier, to all creatures within range of explosion. Consumes explosives on use.")
                 .RequirementSkill(SkillType.Devices, 5)
                 .RequirementCharacterType(CharacterType.Standard)
                 .Price(2)
@@ -101,7 +184,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ConcussionGrenade1)
 
                 .AddPerkLevel()
-                .Description("Deals 15 electrical DMG, scaling with your Perception Score, to all creatures within range of explosion. Also has an 8DC reflex check to inflict Knockdown for 3 seconds. Consumes explosives on use.")
+                .Description("Deals 35 electrical DMG, scaling with your Perception modifier, to all creatures within range of explosion. Also has an 8DC reflex check to inflict Knockdown for 3 seconds. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 30)
@@ -109,7 +192,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.ConcussionGrenade2)
 
                 .AddPerkLevel()
-                .Description("Deals 30 electrical DMG, scaling with your Perception Score, to all creatures within range of explosion. Also has a 12DC reflex check to inflict Knockdown for 3 seconds. Consumes explosives on use.")
+                .Description("Deals 50 electrical DMG, scaling with your Perception modifier, to all creatures within range of explosion. Also has a 12DC reflex check to inflict Knockdown for 3 seconds. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 45)
@@ -153,7 +236,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Ion Grenade")
 
                 .AddPerkLevel()
-                .Description("Deals electrical DMG equal to your Perception Score to all enemies within range of explosion. Deals bonus damage to droids. Consumes explosives on use.")
+                .Description("Deals 20 electrical DMG, scaling with your Perception modifier, to all enemies within range of explosion. Deals bonus damage to droids. Consumes explosives on use.")
                 .RequirementSkill(SkillType.Devices, 5)
                 .RequirementCharacterType(CharacterType.Standard)
                 .Price(2)
@@ -161,7 +244,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.IonGrenade1)
 
                 .AddPerkLevel()
-                .Description("Deals 8 electrical DMG, scaling with your Perception Score, to all enemies within range of explosion. Deals bonus damage to droids. Also has a 10DC fortitude check to inflict stun to droids for 6 seconds. Consumes explosives on use.")
+                .Description("Deals 45 electrical DMG, scaling with your Perception modifier, to all enemies within range of explosion. Deals bonus damage to droids. Also has a 10DC fortitude check to inflict stun to droids for 6 seconds. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 20)
@@ -169,7 +252,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.IonGrenade2)
 
                 .AddPerkLevel()
-                .Description("Deals 14 electrical DMG, scaling with your Perception Score, to all enemies within range of explosion. Deals bonus damage to droids. Also has a 14DC fortitude check to inflict stun to droids for 6 seconds. Consumes explosives on use.")
+                .Description("Deals 70 electrical DMG, scaling with your Perception modifier, to all enemies within range of explosion. Deals bonus damage to droids. Also has a 14DC fortitude check to inflict stun to droids for 6 seconds. Consumes explosives on use.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 35)
@@ -378,7 +461,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Flamethrower")
 
                 .AddPerkLevel()
-                .Description("Deals fire DMG equal to your Perception Score to all targets within a cone in front of the user.")
+                .Description("Deals 20 fire DMG, scaling with your Perception modifier, to all targets within a cone in front of the user.")
                 .RequirementSkill(SkillType.Devices, 5)
                 .RequirementCharacterType(CharacterType.Standard)
                 .Price(2)
@@ -386,7 +469,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.Flamethrower1)
 
                 .AddPerkLevel()
-                .Description("Deals 20 fire DMG, scaling with your Perception Score, to all targets within a cone in front of the user. Also has an 8DC reflex check to inflict Burning.")
+                .Description("Deals 50 fire DMG, scaling with your Perception modifier, to all targets within a cone in front of the user. Also has an 8DC reflex check to inflict Burning.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 20)
@@ -394,7 +477,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.Flamethrower2)
 
                 .AddPerkLevel()
-                .Description("Deals 40 fire DMG, scaling with your Perception Score, to all targets within a cone in front of the user. Also has a 12DC reflex check to inflict Burning.")
+                .Description("Deals 80 fire DMG, scaling with your Perception modifier, to all targets within a cone in front of the user. Also has a 12DC reflex check to inflict Burning.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 40)
@@ -408,7 +491,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Wrist Rocket")
 
                 .AddPerkLevel()
-                .Description("Inflicts fire DMG equal to your Perception Score to a single target.")
+                .Description("Inflicts 20 fire DMG, scaling with your Perception modifier, to a single target.")
                 .RequirementSkill(SkillType.Devices, 10)
                 .RequirementCharacterType(CharacterType.Standard)
                 .Price(2)
@@ -416,7 +499,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.WristRocket1)
 
                 .AddPerkLevel()
-                .Description("Inflicts 25 fire DMG, scaling with your Perception Score, to a single target. Also has an 8DC fortitude check to inflict Knockdown for 3 seconds.")
+                .Description("Inflicts 45 fire DMG, scaling with your Perception modifier, to a single target. Also has an 8DC fortitude check to inflict Knockdown for 2 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.Devices, 25)
@@ -424,7 +507,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.WristRocket2)
 
                 .AddPerkLevel()
-                .Description("Inflicts 50 fire DMG, scaling with your Perception Score, to a single target. Also has a 12DC fortitude check to inflict Knockdown for 3 seconds.")
+                .Description("Inflicts 90 fire DMG, scaling with your Perception modifier, to a single target. Also has a 12DC fortitude check to inflict Knockdown for 2 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.Devices, 40)

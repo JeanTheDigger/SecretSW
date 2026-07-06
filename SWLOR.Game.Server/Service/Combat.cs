@@ -362,21 +362,22 @@ namespace SWLOR.Game.Server.Service
                 return (GetHasFeat(FeatType.ZenMarksmanship, attacker) && (willpower > might)) ? willpower : might;
             }
 
-            // Lightsaber - Strong Style
-            if (Item.LightsaberBaseItemTypes.Contains(weaponType))
-                return Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleLightsaber) ? GetAbilityScore(attacker, AbilityType.Might) : GetAbilityScore(attacker, AbilityType.Perception);
-
-            // Saberstaff - Strong Style
-            if (Item.SaberstaffBaseItemTypes.Contains(weaponType))
-                return Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleSaberstaff) ? GetAbilityScore(attacker, AbilityType.Might) : GetAbilityScore(attacker, AbilityType.Perception);
-
-            // Staff: there are 3 style perks for staff so it has to be handled slightly differently.
+            // Staff: Crushing Style is the Might stance and re-maps damage to Might.
+            // Otherwise the weapon table applies (staves deal Perception-based damage).
             if (Item.StaffBaseItemTypes.Contains(weaponType))
             {
-                if (GetHasFeat(FeatType.FlurryStyle, attacker)) return GetAbilityScore(attacker, AbilityType.Perception);
-                if (GetHasFeat(FeatType.CrushingMastery, attacker)) return 3 * GetAbilityScore(attacker, AbilityType.Might);
-                if (GetHasFeat(FeatType.CrushingStyle, attacker)) return 2 * GetAbilityScore(attacker, AbilityType.Might);
-                return GetAbilityScore(attacker, AbilityType.Might);
+                if (GetHasFeat(FeatType.CrushingStyle, attacker) || GetHasFeat(FeatType.CrushingMastery, attacker))
+                    return GetAbilityScore(attacker, AbilityType.Might);
+
+                return GetAbilityScore(attacker, AbilityType.Perception);
+            }
+
+            // Lightsabers/saberstaffs: an active form may re-map the damage stat (Form V: Djem So).
+            if (Item.LightsaberBaseItemTypes.Contains(weaponType) || Item.SaberstaffBaseItemTypes.Contains(weaponType))
+            {
+                var stance = Stance.GetActiveStance(attacker);
+                if (stance != null && stance.DamageStatOverride != AbilityType.Invalid)
+                    return GetAbilityScore(attacker, stance.DamageStatOverride);
             }
 
             //Handle weapon types without ability adjustment perks as well for consistency.
@@ -415,10 +416,6 @@ namespace SWLOR.Game.Server.Service
 
             if (Item.StaffBaseItemTypes.Contains(weaponType))
                 return mgtMod * Perk.GetPerkLevel(attacker, PerkService.PerkType.CrushingStyle);
-            else if (Item.LightsaberBaseItemTypes.Contains(weaponType) && Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleLightsaber))
-                return mgtMod / 2;
-            else if (Item.SaberstaffBaseItemTypes.Contains(weaponType) && Ability.IsAbilityToggled(attacker, AbilityService.AbilityToggleType.StrongStyleSaberstaff))
-                return mgtMod / 2;
 
             return 0;
 

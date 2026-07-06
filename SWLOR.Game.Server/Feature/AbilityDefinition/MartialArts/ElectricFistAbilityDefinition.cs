@@ -65,6 +65,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.MartialArts);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             CombatPoint.AddCombatPoint(activator, target, SkillType.MartialArts, 3);
 

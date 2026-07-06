@@ -38,7 +38,21 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             CripplingShot();
             ZenMarksmanship();
 
+            DisruptorCertification();
+
             return _builder.Build();
+        }
+
+        // Phase-2 certification for event-loot disruptor weapons (itemized at map time).
+        private void DisruptorCertification()
+        {
+            _builder.Create(PerkCategoryType.RangedGeneral, PerkType.DisruptorCertification)
+                .Name("Disruptor Certification")
+
+                .AddPerkLevel()
+                .Description("Certifies you to handle disruptor weaponry - banned, event-looted, and worth it.")
+                .Price(4)
+                .RequirementSkill(SkillType.Ranged, 60);
         }
 
         private void RapidShot()

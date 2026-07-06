@@ -259,6 +259,34 @@ namespace SWLOR.Game.Server.Service.AbilityService
         AdrenalStim = 125,
         [RecastGroup("Pommel Strike", "Pom. Strike", true)]
         PommelStrike = 126,
+        [RecastGroup("Form Switch", "Form Switch", true)]
+        FormSwitch = 127,
+        // All twelve stance signature actives share one group so swapping stances
+        // mid-fight cannot weave multiple capstones.
+        [RecastGroup("Stance Signature", "Signature", true)]
+        StanceSignature = 128,
+        [RecastGroup("Jump-Jet", "Jump-Jet", true)]
+        JumpJet = 129,
+        [RecastGroup("Overclock", "Overclock", true)]
+        Overclock = 130,
+        [RecastGroup("Force Barrier", "F. Barrier", true)]
+        ForceBarrier = 131,
+        [RecastGroup("Force Breach", "F. Breach", true)]
+        ForceBreach = 132,
+        [RecastGroup("Affliction", "Affliction", true)]
+        ForceAffliction = 133,
+        [RecastGroup("Force Choke", "F. Choke", true)]
+        ForceChoke = 134,
+        [RecastGroup("Carbonite Projector", "Carbonite", true)]
+        CarboniteProjector = 135,
+        [RecastGroup("Combat Jetpack", "Jetpack", true)]
+        CombatJetpack = 136,
+        [RecastGroup("Orbital Strike", "Orb. Strike", true)]
+        OrbitalStrike = 137,
+        [RecastGroup("Slice", "Slice", true)]
+        Slice = 138,
+        [RecastGroup("Ambush", "Ambush", true)]
+        Ambush = 139,
     }
 
     public class RecastGroupAttribute: Attribute

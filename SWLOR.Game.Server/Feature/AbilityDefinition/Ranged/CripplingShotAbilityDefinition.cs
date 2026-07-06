@@ -61,6 +61,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Ranged
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.Ranged);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             CombatPoint.AddCombatPoint(activator, target, SkillType.Ranged, 3);
 

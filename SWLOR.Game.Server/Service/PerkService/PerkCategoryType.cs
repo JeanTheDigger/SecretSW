@@ -112,32 +112,47 @@ namespace SWLOR.Game.Server.Service.PerkService
         [PerkCategory("One Handed - Shield", true)]
         OneHandedShield = 35,
 
-        [PerkCategory("Beast Mastery - Training", true)]
+        [PerkCategory("Beast Mastery - Training", false)] // Beast Mastery removed
         BeastMasteryTraining = 36,
 
-        [PerkCategory("Beast Mastery - Incubation", true)]
+        [PerkCategory("Beast Mastery - Incubation", false)] // Beast Mastery removed
         BeastMasteryIncubation = 37,
 
-        [PerkCategory("Beast - General", true)]
+        [PerkCategory("Beast - General", false)] // Beast Mastery removed
         BeastGeneral = 38,
 
-        [PerkCategory("Beast - Damage", true)]
+        [PerkCategory("Beast - Damage", false)] // Beast Mastery removed
         BeastDamage = 39,
 
-        [PerkCategory("Beast - Tank", true)]
+        [PerkCategory("Beast - Tank", false)] // Beast Mastery removed
         BeastTank = 40,
 
-        [PerkCategory("Beast - Balanced", true)]
+        [PerkCategory("Beast - Balanced", false)] // Beast Mastery removed
         BeastBalanced = 41,
 
-        [PerkCategory("Beast - Bruiser", true)]
+        [PerkCategory("Beast - Bruiser", false)] // Beast Mastery removed
         BeastBruiser = 42,
 
-        [PerkCategory("Beast - Evasion", true)]
+        [PerkCategory("Beast - Evasion", false)] // Beast Mastery removed
         BeastEvasion = 43,
 
-        [PerkCategory("Beast - Force", true)]
+        [PerkCategory("Beast - Force", false)] // Beast Mastery removed
         BeastForce = 44,
+
+        [PerkCategory("Lightsaber Forms", true)]
+        LightsaberForms = 45,
+
+        [PerkCategory("Combat Doctrines", true)]
+        CombatDoctrines = 46,
+
+        [PerkCategory("Cybernetics", true)]
+        Cybernetics = 47,
+
+        [PerkCategory("Slicing", true)]
+        Slicing = 48,
+
+        [PerkCategory("Stealth", true)]
+        Stealth = 49,
     }
 
     public class PerkCategoryAttribute : Attribute

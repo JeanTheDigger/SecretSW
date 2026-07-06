@@ -61,12 +61,14 @@ namespace SWLOR.Game.Server.Native
         private const int ImprovedCriticalBonus = 5;
         private const int PrecisionAim1Bonus = 2;
         private const int PrecisionAim2Bonus = 4;
-        private const int CrushingStyleBonus = 15;
-        private const int CrushingMasteryBonus = 15;
+        private const int CrushingMasteryBonus = 25;
 
         // Deflection constants
         private const int SaberDeflectChance = 5;
-        private const int ShieldDeflectChance = 10;
+
+        // CNWSCombatAttackData.m_nWeaponAttackType value for off-hand attacks.
+        // Double-sided weapons (saberstaff/twin blade) also report their second-blade swings as this type.
+        private const int OffHandWeaponAttackType = 2;
 
         // NPC object ID constant
         private const uint NpcActionTargetId = 2130706432;
@@ -270,7 +272,7 @@ namespace SWLOR.Game.Server.Native
                 accuracyModifiers += CalculateBackstabBonus(attacker, defender);
 
                 // Dual wield and weapon style modifiers
-                var percentageModifier = CalculateDualWieldAndStyleModifiers(attacker, weapon);
+                var percentageModifier = CalculateDualWieldAndStyleModifiers(attacker, weapon, pAttackData);
 
                 // Combat Mode - Power Attack (-5 ACC)
                 if (attacker.m_nCombatMode == PowerAttackMode)
@@ -511,28 +513,27 @@ namespace SWLOR.Game.Server.Native
             return 0;
         }
 
-        private static int CalculateDualWieldAndStyleModifiers(CNWSCreature attacker, CNWSItem weapon)
+        private static int CalculateDualWieldAndStyleModifiers(CNWSCreature attacker, CNWSItem weapon, CNWSCombatAttackData attackData)
         {
             var percentageModifier = 0;
             var offhand = attacker.m_pInventory.GetItemInSlot((uint)EquipmentSlot.LeftHand);
 
             if (weapon == null) return percentageModifier;
 
-            var bDoubleWeapon = Item.TwinBladeBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
-                               Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem);
-            var hasImprovedTwoWeaponFighting = attacker.m_pStats.HasFeat((ushort)FeatType.ImprovedTwoWeaponFighting) == 1;
-            var isShieldEquipped = offhand != null && Item.ShieldBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
-            var isDualKatarsEquipped = Item.KatarBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) &&
-                                      offhand != null && Item.KatarBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
-
-            // Apply dual wield penalty
-            if (bDoubleWeapon || !isShieldEquipped || !isDualKatarsEquipped)
+            // Multi-blade configurations pay the two-weapon penalty on their EXTRA swings only:
+            // main-hand attacks are always clean, dual-wield pays it on off-hand attacks, and
+            // double-sided weapons (saberstaffs, twin blades) pay it on second-blade attacks.
+            // Dual katars are exempt - paired blades are the martial art's baseline.
+            if (attackData.m_nWeaponAttackType == OffHandWeaponAttackType)
             {
-                if (!hasImprovedTwoWeaponFighting || weapon == offhand)
-                    percentageModifier += TwoWeaponPenalty;
+                var isDualKatarsEquipped = Item.KatarBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem) &&
+                                          offhand != null && Item.KatarBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
 
-                var logMessage = $"Applying dual wield penalty. Offhand weapon: {(offhand?.GetFirstName().GetSimple() ?? weapon?.GetFirstName().GetSimple())}: {percentageModifier}";
-                Log.Write(LogGroup.Attack, logMessage);
+                if (!isDualKatarsEquipped)
+                {
+                    percentageModifier += TwoWeaponPenalty;
+                    Log.Write(LogGroup.Attack, $"Applying two-weapon penalty to extra swing: {TwoWeaponPenalty}%");
+                }
             }
 
             // Staff Flurry penalty
@@ -549,7 +550,7 @@ namespace SWLOR.Game.Server.Native
                 (Item.OneHandedMeleeItemTypes.Contains((BaseItem)weapon.m_nBaseItem) ||
                  Item.ThrowingWeaponBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem)))
             {
-                var isDuelistValid = offhand == null || Item.ShieldBaseItemTypes.Contains((BaseItem)offhand.m_nBaseItem);
+                var isDuelistValid = offhand == null;
                 if (isDuelistValid)
                 {
                     percentageModifier += DuelistBonus;
@@ -568,22 +569,20 @@ namespace SWLOR.Game.Server.Native
                 return false;
 
             var defenderWeapon = defender.m_pInventory.GetItemInSlot((uint)EquipmentSlot.RightHand);
-            var defenderOffhand = defender.m_pInventory.GetItemInSlot((uint)EquipmentSlot.LeftHand);
             var saberBlock = defenderWeapon != null && Item.LightsaberBaseItemTypes.Contains((BaseItem)defenderWeapon.m_nBaseItem);
-            var shieldBlock = defenderOffhand != null &&
-                             defender.m_pStats.HasFeat((ushort)FeatType.Bulwark) == 1 &&
-                             Item.ShieldBaseItemTypes.Contains((BaseItem)defenderOffhand.m_nBaseItem);
 
-            if (!saberBlock && !shieldBlock)
+            if (!saberBlock)
                 return false;
 
             defender.m_ScriptVars.SetInt(new CExoString("RESOLVE_ATTACK_ROLL_DEFLECT_BLASTER"), 1);
 
             var deflectRoll = Random.Next(1, 100);
-            var deflectChance = 0;
+            var deflectChance = SaberDeflectChance;
 
-            if (saberBlock) deflectChance += SaberDeflectChance;
-            if (shieldBlock) deflectChance += ShieldDeflectChance;
+            // Soresu (and any form with a deflection package) improves the odds.
+            var defenderStance = Stance.GetActiveStance(defender.m_idSelf);
+            if (defenderStance != null)
+                deflectChance += defenderStance.DeflectMod;
 
             var deflected = deflectRoll <= deflectChance;
 
@@ -616,11 +615,28 @@ namespace SWLOR.Game.Server.Native
             {
                 if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingMastery) == 1)
                     criticalBonus += CrushingMasteryBonus;
-                else if (attacker.m_pStats.HasFeat((ushort)FeatType.CrushingStyle) == 1)
-                    criticalBonus += CrushingStyleBonus;
             }
 
-            return criticalBonus;
+            // Stance crit bonuses (lightsaber forms / combat doctrines). GetActiveStance
+            // returns null unless the wielded weapon matches the active stance's family,
+            // and Teräs Käsi's empty-hand stance works with no weapon at all.
+            {
+                var stance = Stance.GetActiveStance(attacker.m_idSelf);
+                if (stance != null)
+                    criticalBonus += stance.CritMod;
+            }
+
+            // Implant crit bonuses (Ocular Targeting's prototype tier).
+            {
+                var implants = Implant.GetImplantPackage(attacker.m_idSelf);
+                if (implants != null)
+                    criticalBonus += implants.CritMod;
+            }
+
+            // Crit-economy ceiling: weapon threat + Improved Critical + Precision Aim +
+            // a level-6 stance (up to 20%) can otherwise stack past the point where
+            // every swing threatens - crits must stay an event, not the baseline.
+            return Math.Min(criticalBonus, 75);
         }
 
         private static AbilityType GetWeaponStyleAbilityType(CNWSItem weapon, CNWSCreature attacker)
@@ -630,23 +646,6 @@ namespace SWLOR.Game.Server.Native
 
             if (weapon == null)
                 return AbilityType.Invalid;
-
-            var playerId = attacker.m_pUUID.GetOrAssignRandom().ToString();
-            if (Item.LightsaberBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleLightsaber))
-                    return AbilityType.Perception;
-            }
-            else if (Item.SaberstaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (Ability.IsAbilityToggled(playerId, AbilityToggleType.StrongStyleSaberstaff))
-                    return AbilityType.Perception;
-            }
-            else if (Item.StaffBaseItemTypes.Contains((BaseItem)weapon.m_nBaseItem))
-            {
-                if (attacker.m_pStats.HasFeat((ushort)FeatType.FlurryStyle) == 1)
-                    return AbilityType.Agility;
-            }
 
             return AbilityType.Invalid;
         }

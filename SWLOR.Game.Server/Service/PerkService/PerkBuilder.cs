@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using SWLOR.Game.Server.Enumeration;
-using SWLOR.Game.Server.Service.BeastMasteryService;
 using SWLOR.Game.Server.Service.SkillService;
 using SWLOR.NWN.API.NWScript.Enum;
 
@@ -187,6 +186,19 @@ namespace SWLOR.Game.Server.Service.PerkService
         }
 
         /// <summary>
+        /// Adds a requirement that the player must have a free implant slot (or already
+        /// own this implant line) to purchase the perk.
+        /// </summary>
+        /// <returns>A perk builder with the configured options.</returns>
+        public PerkBuilder RequirementImplantSlot()
+        {
+            var requirement = new PerkRequirementImplantSlot(_activePerk.Type);
+            _activeLevel.Requirements.Add(requirement);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds a requirement that the player must have leveled a specific other perk.
         /// </summary>
         /// <param name="mustHavePerkType">The type of perk the player must have.</param>
@@ -214,26 +226,27 @@ namespace SWLOR.Game.Server.Service.PerkService
         }
 
         /// <summary>
-        /// Adds a requirement that the beast must meet a level requirement.
+        /// Adds a requirement that the player must have a minimum rank in ANY ONE of the given skills.
         /// </summary>
-        /// <param name="level">The level to require</param>
+        /// <param name="requiredRank">The rank required in at least one of the skills.</param>
+        /// <param name="types">The skills that can satisfy the requirement.</param>
         /// <returns>A perk builder with the configured options.</returns>
-        public PerkBuilder RequirementBeastLevel(int level)
+        public PerkBuilder RequirementAnySkill(int requiredRank, params SkillType[] types)
         {
-            var requirement = new PerkRequirementBeastLevel(level);
+            var requirement = new PerkRequirementAnySkill(requiredRank, types);
             _activeLevel.Requirements.Add(requirement);
 
             return this;
         }
 
         /// <summary>
-        /// Adds a requirement that the beast must be of a certain role.
+        /// Adds a requirement that the player must have acquired a minimum amount of total SP.
         /// </summary>
-        /// <param name="role">The type of role to require</param>
+        /// <param name="requiredTotalSP">The total SP required.</param>
         /// <returns>A perk builder with the configured options.</returns>
-        public PerkBuilder RequirementBeastRole(BeastRoleType role)
+        public PerkBuilder RequirementTotalSP(int requiredTotalSP)
         {
-            var requirement = new PerkRequirementBeastRole(role);
+            var requirement = new PerkRequirementTotalSP(requiredTotalSP);
             _activeLevel.Requirements.Add(requirement);
 
             return this;

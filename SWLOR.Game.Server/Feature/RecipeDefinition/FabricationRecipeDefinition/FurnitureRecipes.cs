@@ -3610,27 +3610,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.FabricationRecipeDefinition
                 .Component("ref_jasioclase", 5)
                 .Component("elec_imperfect", 3);
 
-            // Beast Stables Terminal
-            _builder.Create(RecipeType.BeastStablesTerminal, SkillType.Fabrication)
-                .Category(RecipeCategoryType.Crafting)
-                .Resref("structure_0270")
-                .Level(50)
-                .Quantity(1)
-                .RequirementPerk(PerkType.FurnitureBlueprints, 5)
-                .Component("ref_jasioclase", 5)
-                .Component("elec_imperfect", 3);
-
-            // Incubator
-            _builder.Create(RecipeType.Incubator, SkillType.Fabrication)
-                .Category(RecipeCategoryType.Crafting)
-                .Resref("structure_0271")
-                .Level(50)
-                .Quantity(1)
-                .RequirementPerk(PerkType.FurnitureBlueprints, 5)
-                .Component("zinsiam", 6)
-                .Component("elec_imperfect", 6)
-                .Component("diamond", 2);
-
             // DNA Extractor V
             _builder.Create(RecipeType.DNAExtractor5, SkillType.Fabrication)
                 .Category(RecipeCategoryType.Tool)

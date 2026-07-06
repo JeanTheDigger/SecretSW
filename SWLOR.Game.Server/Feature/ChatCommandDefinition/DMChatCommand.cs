@@ -8,6 +8,8 @@ using SWLOR.Game.Server.Feature.GuiDefinition.RefreshEvent;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.ChatCommandService;
+using SWLOR.Game.Server.Service.NPCService;
+using SWLOR.Game.Server.Service.WorldEventService;
 using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.LogService;
 using Faction = SWLOR.Game.Server.Service.Faction;
@@ -28,6 +30,13 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         {
             CopyTargetItem();
             Day();
+            EventOpen();
+            EventClose();
+            EventList();
+            GrantKnighthood();
+            RevokeKnighthood();
+            TrialsBegin();
+            PermaRestore();
             Night();
             GetPlot();
             Kill();
@@ -91,6 +100,216 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                 .Action((user, target, location, args) =>
                 {
                     SetTime(8, 0, 0, 0);
+                });
+        }
+
+        private void TrialsBegin()
+        {
+            _builder.Create("trialsbegin")
+                .Description($"Starts the Trials quest for the targeted player (requires Phase 1 complete). Spawn a creature and set its QUEST_NPC_GROUP_ID to {(int)NPCGroupType.TrialsGuardian} (Trials Guardian) to stage the fight.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has already completed the Trials.");
+                        return;
+                    }
+
+                    // Prerequisites (Phase 1 finished, not already on the quest) are
+                    // enforced by the quest system, with feedback sent to the player.
+                    Quest.AcceptQuest(target, Feature.QuestDefinition.TrialsQuestDefinition.QuestId);
+                    SendMessageToPC(user, $"The Trials have been offered to {GetName(target)}.");
+                });
+        }
+
+        private void GrantKnighthood()
+        {
+            _builder.Create("grantknighthood")
+                .Description("Marks a character as having completed the Trials, unlocking Phase 2: ranks 51-100, event SP, and perma-death exposure. Stands in for the Trials quest chain until that content exists.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has already completed the Trials.");
+                        return;
+                    }
+
+                    if (dbPlayer.TotalSPAcquired < Skill.Phase1Cap)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has not finished Phase 1 ({dbPlayer.TotalSPAcquired}/{Skill.Phase1Cap} SP). The Trials unlock at {Skill.Phase1Cap}.");
+                        return;
+                    }
+
+                    dbPlayer.HasCompletedTrials = true;
+                    DB.Set(dbPlayer);
+
+                    SendMessageToPC(target, ColorToken.Green("You have passed the Trials. The path to mastery - and its dangers - are open to you."));
+                    SendMessageToPC(user, $"{GetName(target)} has been granted knighthood.");
+                    Log.Write(LogGroup.DM, $"{GetName(user)} granted knighthood to {GetName(target)} ({playerId}).");
+                });
+        }
+
+        private void RevokeKnighthood()
+        {
+            _builder.Create("revokeknighthood")
+                .Description("Clears a character's Trials completion flag, returning them to Phase 1 rules (mistake correction).")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (!dbPlayer.HasCompletedTrials)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} has not completed the Trials.");
+                        return;
+                    }
+
+                    dbPlayer.HasCompletedTrials = false;
+                    DB.Set(dbPlayer);
+
+                    SendMessageToPC(user, $"{GetName(target)}'s knighthood has been revoked.");
+                    Log.Write(LogGroup.DM, $"{GetName(user)} revoked knighthood from {GetName(target)} ({playerId}).");
+                });
+        }
+
+        private void PermaRestore()
+        {
+            _builder.Create("permarestore")
+                .Description("Restores a perma-dead character, clearing their flag and returning them to their home point.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .RequiresTarget()
+                .Action((user, target, location, args) =>
+                {
+                    if (!GetIsPC(target) || GetIsDM(target))
+                    {
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
+                        return;
+                    }
+
+                    var playerId = GetObjectUUID(target);
+                    var dbPlayer = DB.Get<Player>(playerId);
+                    if (dbPlayer == null || !dbPlayer.IsPermaDead)
+                    {
+                        SendMessageToPC(user, $"{GetName(target)} is not perma-dead.");
+                        return;
+                    }
+
+                    Death.RestorePermaDeadCharacter(target);
+                    SendMessageToPC(user, $"{GetName(target)} has been restored.");
+                });
+        }
+
+        private void EventOpen()
+        {
+            _builder.Create("eventopen")
+                .Description("Opens a world event in your current area. Usage: /eventopen <pve|pvp> <minutes> [knight|master|open]")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 2)
+                        return "Usage: /eventopen <pve|pvp> <minutes> [knight|master|open]";
+
+                    var type = args[0].ToLower();
+                    if (type != "pve" && type != "pvp")
+                        return "Event type must be 'pve' or 'pvp'.";
+
+                    if (!int.TryParse(args[1], out var minutes) || minutes < 1 || minutes > 1440)
+                        return "Minutes must be a number between 1 and 1440.";
+
+                    if (args.Length >= 3)
+                    {
+                        var bracket = args[2].ToLower();
+                        if (bracket != "knight" && bracket != "master" && bracket != "open")
+                            return "Bracket must be 'knight', 'master', or 'open'.";
+                    }
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    var area = GetArea(user);
+                    var type = args[0].ToLower() == "pvp"
+                        ? WorldEventType.PvP
+                        : WorldEventType.PvE;
+                    var minutes = int.Parse(args[1]);
+                    var bracket = WorldEventBracket.Open;
+                    if (args.Length >= 3)
+                    {
+                        bracket = args[2].ToLower() switch
+                        {
+                            "knight" => WorldEventBracket.Knight,
+                            "master" => WorldEventBracket.Master,
+                            _ => WorldEventBracket.Open
+                        };
+                    }
+
+                    WorldEvent.OpenEvent(area, type, minutes, bracket);
+                    SendMessageToPC(user, $"{bracket} event opened in {GetName(area)} for {minutes} minutes.");
+                });
+        }
+
+        private void EventClose()
+        {
+            _builder.Create("eventclose")
+                .Description("Closes the world event in your current area.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) =>
+                {
+                    var area = GetArea(user);
+                    if (!WorldEvent.IsEventZone(area))
+                    {
+                        SendMessageToPC(user, "There is no active event in this area.");
+                        return;
+                    }
+
+                    WorldEvent.CloseEvent(area);
+                    SendMessageToPC(user, $"Event closed in {GetName(area)}.");
+                });
+        }
+
+        private void EventList()
+        {
+            _builder.Create("eventlist")
+                .Description("Lists all active world events.")
+                .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) =>
+                {
+                    var any = false;
+                    foreach (var description in WorldEvent.GetActiveEventDescriptions())
+                    {
+                        SendMessageToPC(user, description);
+                        any = true;
+                    }
+
+                    if (!any)
+                        SendMessageToPC(user, "There are no active events.");
                 });
         }
 
@@ -545,7 +764,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             const int MaxAmount = 500000;
             
             _builder.Create("giverpxp", "xp")
-                .Description("Gives XP to a target player or beast.")
+                .Description("Gives XP to a target player.")
                 .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
                 .AvailableToAllOnTestEnvironment()
                 .RequiresTarget()
@@ -585,16 +804,9 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                         SendMessageToPC(target, $"A DM has awarded you with {amount} roleplay XP.");
                         Gui.PublishRefreshEvent(target, new RPXPRefreshEvent());
                     }
-                    else if (BeastMastery.IsPlayerBeast(target))
-                    {
-                        var player = GetMaster(target);
-                        BeastMastery.GiveBeastXP(target, amount, true);
-
-                        SendMessageToPC(player, $"A DM has awarded your beast with {amount} XP.");
-                    }
                     else
                     {
-                        SendMessageToPC(user, "Only players or beasts may be targeted with this command.");
+                        SendMessageToPC(user, "Only players may be targeted with this command.");
                     }
 
                 });

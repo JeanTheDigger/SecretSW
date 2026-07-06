@@ -56,7 +56,7 @@ namespace SWLOR.Game.Server.Feature.ShipModuleDefinition
                     var defense = Space.GetShipDefense(target, defenseBonus);
                     var defenderStat = GetAbilityScore(target, AbilityType.Vitality);
 
-                    var chanceToHit = Space.CalculateChanceToHit(activator, target);
+                    var chanceToHit = Space.CalculateChanceToHit(activator, target, ShipWeaponScale.CapitalGrade);
 
                     // Subcapital ships are harder to hit. Even with very high accuracy, the starting chance to hit is 50% and it caps out at 70% instead of 95%.
                     if (!targetShipStatus.CapitalShip)

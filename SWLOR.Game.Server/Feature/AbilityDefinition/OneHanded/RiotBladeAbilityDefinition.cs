@@ -45,19 +45,20 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             switch (level)
             {
                 case 1:
-                    dmg = 10;
+                    dmg = 14;
                     break;
                 case 2:
-                    dmg = 20;
+                    dmg = 26;
                     break;
                 case 3:
-                    dmg = 30;
+                    dmg = 38;
                     break;
                 default:
                     break;
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.OneHanded);
+            dmg += GetAbilityModifier(AbilityType.Might, activator);
 
             CombatPoint.AddCombatPoint(activator, target, SkillType.OneHanded, 3);
 

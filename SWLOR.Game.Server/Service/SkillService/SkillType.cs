@@ -19,7 +19,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "One-Handed",
-            50,
+            100,
             true,
             "Ability to use one-handed weapons like vibroblades, finesse vibroblades, and lightsabers.",
             true,
@@ -30,7 +30,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "Two-Handed",
-            50,
+            100,
             true,
             "Ability to use heavy weapons like heavy vibroblades, polearms, and saberstaffs in combat.",
             true,
@@ -40,7 +40,7 @@ namespace SWLOR.Game.Server.Service.SkillService
         TwoHanded = 2,
 
         [Skill(SkillCategoryType.Combat,
-            "Martial Arts", 50,
+            "Martial Arts", 100,
             true,
             "Ability to fight using katars and staves in combat.",
             true,
@@ -51,7 +51,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "Ranged",
-            50,
+            100,
             true,
             "Ability to use ranged weapons like pistols, shurikens, and rifles in combat.",
             true,
@@ -62,7 +62,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "Force",
-            50,
+            100,
             true,
             "Ability to use Force abilities.",
             true,
@@ -74,7 +74,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "Armor",
-            50,
+            100,
             true,
             "Ability to effectively wear and defend against attacks with armor.",
             true,
@@ -84,7 +84,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Utility,
             "Piloting",
-            50,
+            100,
             true,
             "Ability to pilot starships, follow navigation charts, and control starship systems.",
             true,
@@ -94,7 +94,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Utility,
             "First Aid",
-            50,
+            100,
             true,
             "Ability to treat bodily injuries in the field with healing kits and stim packs.",
             true,
@@ -104,7 +104,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Crafting,
             "Smithery",
-            50,
+            100,
             true,
             "Ability to create weapons and armor like vibroblades, blasters, and helmets.",
             true,
@@ -114,7 +114,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Crafting,
             "Fabrication",
-            50,
+            100,
             true,
             "Ability to create base structures and furniture.",
             true,
@@ -124,7 +124,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Crafting,
             "Gathering",
-            50,
+            100,
             true,
             "Ability to harvest raw materials and scavenge for supplies.",
             true,
@@ -134,7 +134,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Utility,
             "Leadership",
-            50,
+            100,
             true,
             "Ability to handle people, negotiate, and manage relations.",
             true,
@@ -142,12 +142,15 @@ namespace SWLOR.Game.Server.Service.SkillService
             false)]
         Leadership = 12,
 
+        // Beast Mastery has been removed from the game. The enum value and 2DA row are retained
+        // for serialized player-data integrity; the skill is inactive and no longer contributes
+        // to the skill cap. Droids (Engineering) carry the companion niche.
         [Skill(SkillCategoryType.Combat,
             "Beast Mastery",
             50,
-            true,
+            false,
             "Ability to tame wild animals, raise them, and train them.",
-            true,
+            false,
             false,
             false)]
         BeastMastery = 13,
@@ -324,7 +327,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Crafting,
             "Agriculture",
-            50,
+            100,
             true,
             "Ability to farm, fish, and cook.",
             true,
@@ -334,7 +337,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Crafting,
             "Engineering",
-            50,
+            100,
             true,
             "Ability to create starships, modules, droids, and other electronic & mechanical items.",
             true,
@@ -344,7 +347,7 @@ namespace SWLOR.Game.Server.Service.SkillService
 
         [Skill(SkillCategoryType.Combat,
             "Devices",
-            50,
+            100,
             true,
             "Ability to use grenades, bombs, and other electronics.",
             true,
@@ -373,6 +376,28 @@ namespace SWLOR.Game.Server.Service.SkillService
            false,
            false)]
            Ewokese = 35,
+
+        [Skill(SkillCategoryType.Combat,
+            "Slicing",
+            100,
+            true,
+            "Ability to slice droids, turrets, and electronic systems in combat.",
+            true,
+            false,
+            false,
+            CombatPointCategoryType.Utility)]
+        Slicing = 36,
+
+        [Skill(SkillCategoryType.Combat,
+            "Stealth",
+            100,
+            true,
+            "Ability to move unseen and strike from hiding.",
+            true,
+            false,
+            false,
+            CombatPointCategoryType.Utility)]
+        Stealth = 37,
     }
 
     public class SkillAttribute : Attribute

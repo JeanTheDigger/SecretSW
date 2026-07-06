@@ -150,16 +150,19 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
                 var playerSkill = dbPlayer.Skills[type];
 
+                var effectiveMaxRank = Skill.GetEffectiveMaxRank(dbPlayer, type);
+
                 _viewableSkills.Add(type);
                 skillNames.Add(skill.Name);
                 levels.Add(playerSkill.Rank);
                 titles.Add(GetTitle(playerSkill.Rank));
-                progresses.Add(CalculateProgress(type, playerSkill.Rank, playerSkill.XP));
-                rawXPAmounts.Add(CalculateRawXPAmounts(type, playerSkill.Rank, playerSkill.XP));
+                progresses.Add(CalculateProgress(playerSkill.Rank, playerSkill.XP, effectiveMaxRank));
+                rawXPAmounts.Add(CalculateRawXPAmounts(playerSkill.Rank, playerSkill.XP, effectiveMaxRank));
                 descriptions.Add(skill.Description);
-                decayLockTexts.Add(GetDecayLockText(playerSkill.IsLocked, skill.ContributesToSkillCap));
-                decayLockColors.Add(GetDecayLockColor(playerSkill.IsLocked, skill.ContributesToSkillCap));
-                decayLockButtonEnabled.Add(skill.ContributesToSkillCap);
+                // Skill decay has been removed from the game; the lock column is retired.
+                decayLockTexts.Add("N/A");
+                decayLockColors.Add(GuiColor.Grey);
+                decayLockButtonEnabled.Add(false);
                 distributeRPXPButtonEnabled.Add(dbPlayer.UnallocatedXP > 0);
                 distributeRPXPTooltips.Add($"Distribute RP XP ({dbPlayer.UnallocatedXP})");
             }
@@ -206,59 +209,28 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             return "Untrained";
         }
 
-        private float CalculateProgress(SkillType type, int rank, int xp)
+        private float CalculateProgress(int rank, int xp, int effectiveMaxRank)
         {
-            var skill = Skill.GetSkillDetails(type);
-            if (rank >= skill.MaxRank)
+            if (rank >= effectiveMaxRank)
                 return 1f;
 
             var nextLevelXP = Skill.GetRequiredXP(rank);
             return (float)xp / nextLevelXP;
         }
 
-        private string CalculateRawXPAmounts(SkillType type, int rank, int xp)
+        private string CalculateRawXPAmounts(int rank, int xp, int effectiveMaxRank)
         {
-            var skill = Skill.GetSkillDetails(type);
-            if (rank >= skill.MaxRank)
+            if (rank >= effectiveMaxRank)
                 return "0 / 0";
 
             var nextLevelXP = Skill.GetRequiredXP(rank);
             return $"{xp} / {nextLevelXP}";
         }
 
-        private string GetDecayLockText(bool isLocked, bool contributesToSkillCap)
-        {
-            if (!contributesToSkillCap)
-                return "N/A";
-
-            return isLocked ? "LOCKED" : "UNLOCKED";
-        }
-
-        private GuiColor GetDecayLockColor(bool isLocked, bool contributesToSkillCap)
-        {
-            if (!contributesToSkillCap)
-                return GuiColor.Grey;
-
-            if (isLocked)
-                return GuiColor.Red;
-            else
-                return GuiColor.Green;
-        }
-
         public Action ToggleDecayLock() => () =>
         {
-            var playerId = GetObjectUUID(Player);
-            var dbPlayer = DB.Get<Player>(playerId);
-            var index = NuiGetEventArrayIndex();
-            var selectedSkill = _viewableSkills[index];
-            var isLocked = !dbPlayer.Skills[selectedSkill].IsLocked;
-
-            dbPlayer.Skills[selectedSkill].IsLocked = isLocked;
-
-            DB.Set(dbPlayer);
-
-            DecayLockColors[index] = GetDecayLockColor(isLocked, true);
-            DecayLockTexts[index] = GetDecayLockText(isLocked, true);
+            // Skill decay has been removed from the game. The lock no longer has any effect.
+            FloatingTextStringOnCreature("Skill decay has been removed. Locking is no longer necessary.", Player, false);
         };
 
         public Action OnClickDistributeRPXP() => () =>
@@ -292,11 +264,12 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var dbPlayer = DB.Get<Player>(playerId);
                 var index = _viewableSkills.IndexOf(skill);
                 var pcSkill = dbPlayer.Skills[skill];
+                var effectiveMaxRank = Skill.GetEffectiveMaxRank(dbPlayer, skill);
 
                 Levels[index] = pcSkill.Rank;
                 Titles[index] = GetTitle(pcSkill.Rank);
-                Progresses[index] = CalculateProgress(skill, pcSkill.Rank, pcSkill.XP);
-                RawXPAmounts[index] = CalculateRawXPAmounts(skill, pcSkill.Rank, pcSkill.XP);
+                Progresses[index] = CalculateProgress(pcSkill.Rank, pcSkill.XP, effectiveMaxRank);
+                RawXPAmounts[index] = CalculateRawXPAmounts(pcSkill.Rank, pcSkill.XP, effectiveMaxRank);
             }
         }
 

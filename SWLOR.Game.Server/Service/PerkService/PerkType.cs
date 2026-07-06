@@ -300,10 +300,79 @@
         ForceTouch = 293,
         Innervate = 294,
         ForceLink = 295,
-        // 296 is free
+        ForceBarrier = 296,
         Research = 297,
         AdrenalStim = 298,
         ResearchProjects = 299,
         PommelStrike = 300,
+
+        // Lightsaber forms (Phase-1 levels 1-3; Phase-2 signatures come with holocron content)
+        FormShiiCho = 301,
+        FormMakashi = 302,
+        FormSoresu = 303,
+        FormAtaru = 304,
+        FormDjemSo = 305,
+        FormNiman = 306,
+        FormJuyo = 307,
+
+        // Standard combat doctrines (the class mirror of the lightsaber forms)
+        DoctrineDuelist = 308,
+        DoctrineJuggernaut = 309,
+        DoctrineTempest = 310,
+        DoctrineTerasKasi = 311,
+        DoctrineMarksman = 312,
+
+        // Cybernetic implants (Standard-only; slot-limited passive lines)
+        ImplantNeural = 313,
+        ImplantOcular = 314,
+        ImplantDermal = 315,
+        ImplantSkeletal = 316,
+        ImplantCardio = 317,
+        ImplantServo = 318,
+        ImplantCortical = 319,
+
+        // Space
+        FlightStances = 320,
+
+        // Force kit gap fills
+        ForceBreach = 321,
+        ForceAffliction = 322,
+        ForceChoke = 323,
+
+        // Capital ships are COMMANDED, not flown: gates on Leadership.
+        CapitalCommand = 324,
+
+        // Flight doctrines (class-neutral pilot arcs)
+        DoctrineInterceptor = 325,
+        DoctrineStrike = 326,
+        DoctrineEscort = 327,
+
+        // Devices Phase-2 tech
+        CarboniteProjector = 328,
+        CombatJetpack = 329,
+        OrbitalStrike = 330,
+
+        // Both classes: the attuned weapon that outlives its wielder.
+        SignatureWeapon = 331,
+
+        // Command doctrines (capital commanders' Leadership arcs)
+        DoctrineLineCommander = 332,
+        DoctrineFleetDefense = 333,
+        DoctrineWolfpack = 334,
+
+        // Engineering Phase-2: the droid master's second unit
+        DroidOverseer = 335,
+        // Ranged Phase-2 certification for event-loot disruptors
+        DisruptorCertification = 336,
+        // Devices toxin warfare
+        ToxinVials = 337,
+
+        // Slicing skill perks (Stage 7g).
+        Slice = 338,
+        SalvageProtocols = 339,
+
+        // Stealth skill perks (Stage 7g).
+        Concealment = 340,
+        Ambush = 341,
     }
 }

@@ -30,8 +30,61 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             ShockingShout();
             Rejuvenation();
             FrenziedShout();
+            CapitalCommand();
+            CommandDoctrines();
 
             return _builder.Build();
+        }
+
+        // The three command doctrine arcs. Levels 1-3 are the Phase-1 arc; levels 4-6
+        // unlock via command codices looted from fleet events, on Phase-2 Leadership gates.
+        // Orders are issued from a capital's bridge with /order.
+        private void CommandDoctrines()
+        {
+            BuildCommandDoctrine(PerkType.DoctrineLineCommander, "Line Commander Doctrine",
+                "/order alpha - a 12-second weapons surge for your capital ship: +{0} weapon power to every gun and crew seat aboard (60s cycle).", 2);
+
+            BuildCommandDoctrine(PerkType.DoctrineFleetDefense, "Fleet Defense Doctrine",
+                "/order brace - instantly restores your capital's shield rating (4 + Leadership/10 + {0}); from level 4, also repairs one condition step (30s cycle).", 1);
+
+            BuildCommandDoctrine(PerkType.DoctrineWolfpack, "Wolfpack Doctrine",
+                "/order wolfpack - every allied FIGHTER within 30m gains +{0} accuracy for 18 seconds (45s cycle). The glue between the two scales.", 1);
+        }
+
+        private void BuildCommandDoctrine(PerkType perkType, string name, string template, int perLevel)
+        {
+            var gates = new[] { 15, 30, 45, 60, 75, 90 };
+            var prices = new[] { 2, 3, 3, 5, 5, 6 };
+
+            var perk = _builder.Create(PerkCategoryType.Leadership, perkType)
+                .Name(name);
+
+            for (var level = 1; level <= 6; level++)
+            {
+                perk.AddPerkLevel()
+                    .Description(string.Format(template, perLevel * level))
+                    .Price(prices[level - 1])
+                    .RequirementSkill(SkillType.Leadership, gates[level - 1]);
+
+                if (level == 4)
+                    perk.RequirementUnlocked();
+            }
+        }
+
+        private void CapitalCommand()
+        {
+            _builder.Create(PerkCategoryType.Leadership, PerkType.CapitalCommand)
+                .Name("Capital Command")
+
+                .AddPerkLevel()
+                .Description("Certifies you to command light capital ships (gunboat and corvette-class hulls). Capital ships are commanded, not flown.")
+                .Price(3)
+                .RequirementSkill(SkillType.Leadership, 30)
+
+                .AddPerkLevel()
+                .Description("Certifies you to command heavy capital warships (Thranta, Trireme, Crusader-class hulls). Faction commissioning ceremonies are handled by staff until the commission system arrives.")
+                .Price(4)
+                .RequirementSkill(SkillType.Leadership, 45);
         }
 
         private void CityManagement()
@@ -173,12 +226,12 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.RousingShout)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (SOC)% HP.")
+                .Description("Revives an unconscious target with (20 + SOC modifier)% HP.")
                 .Price(2)
                 .RequirementSkill(SkillType.Leadership, 30)
 
                 .AddPerkLevel()
-                .Description("Revives an unconscious target with (2*SOC)% HP.")
+                .Description("Revives an unconscious target with (40 + 2x SOC modifier)% HP.")
                 .Price(2)
                 .RequirementSkill(SkillType.Leadership, 45);
         }
@@ -293,9 +346,9 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Shocking Shout")
 
                 .AddPerkLevel()
-                .Description("Attempts to stun all nearby enemies for 2 seconds with a will check of 12+SOC/2. (Max: 6 targets)")
+                .Description("Attempts to stun all nearby enemies for 2 seconds (scaling with your Social modifier, up to 4 seconds) with a will check of 22 + 2/3 of your Social modifier. Costs 5 STM. (Max: 6 targets)")
                 .Price(3)
-                .RequirementSkill(SkillType.Leadership, 25)
+                .RequirementSkill(SkillType.Leadership, 40)
                 .RequirementCharacterType(CharacterType.Standard)
                 .GrantsFeat(FeatType.ShockingShout);
         }

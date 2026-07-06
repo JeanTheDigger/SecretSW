@@ -1500,7 +1500,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 _hasBlueprint ? _activeBlueprint.Level : 0,
                 firstTime, 
                 qualityPercent);
-            Skill.GiveSkillXP(Player, recipe.Skill, xp, false, false);
+            Skill.GiveSkillXP(Player, recipe.Skill, xp, false, false, recipe.Level > 50);
 
             // Clean up and return to the Set Up mode.
             _itemPropertiesEnhancement1.Clear();
@@ -1671,7 +1671,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 false, 
                 0f);
             xp = (int)(xp * 0.15f);
-            Skill.GiveSkillXP(Player, recipe.Skill, xp, false, false);
+            Skill.GiveSkillXP(Player, recipe.Skill, xp, false, false, recipe.Level > 50);
 
             Log.Write(LogGroup.Crafting, $"{GetName(Player)} ({GetObjectUUID(Player)}) failed to craft '{_recipe}'.");
         }

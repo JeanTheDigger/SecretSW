@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SWLOR.Game.Server.Core;
@@ -16,14 +17,53 @@ namespace SWLOR.Game.Server.Service
     public static partial class Skill
     {
         /// <summary>
-        /// This is the maximum number of skill points a single character can have at any time.
+        /// The maximum number of skill points obtainable through the Phase 1 (daily activity) path.
+        /// Reaching this total marks the boundary between Phase 1 and Phase 2 progression.
         /// </summary>
-        public const int SkillCap = 350;
+        public const int Phase1Cap = 350;
 
         /// <summary>
-        /// This is the maximum number of AP a single character can earn in total. This must be evenly divisible into SkillCap.
+        /// The absolute maximum number of skill points a single character can ever acquire.
+        /// Points between Phase1Cap and AbsoluteCap come only from the endgame paths (events, deep content).
         /// </summary>
-        public static int APCap { get; } = SkillCap / 10;
+        public const int AbsoluteCap = 700;
+
+        /// <summary>
+        /// The per-skill rank ceiling while a character is still in Phase 1 (below Phase1Cap total SP).
+        /// </summary>
+        public const int Phase1PerSkillCap = 50;
+
+        /// <summary>
+        /// The maximum number of skill ranks that can be converted from activity XP per UTC day in Phase 1.
+        /// XP earned beyond the daily allowance is banked and converts on later days.
+        /// </summary>
+        public const int DailyRankLimit = 5;
+
+        /// <summary>
+        /// This is the maximum number of AP a single character can earn in total. This must be evenly divisible into AbsoluteCap.
+        /// </summary>
+        public static int APCap { get; } = AbsoluteCap / 10;
+
+        /// <summary>
+        /// Retrieves the rank ceiling currently in effect for a skill, based on the player's phase.
+        /// Non-cap skills (languages) always use their full MaxRank. Cap-contributing skills are
+        /// limited to Phase1PerSkillCap until the player crosses the Phase 1 boundary AND has
+        /// completed the Trials - reaching 350 SP unlocks the Trials, not the ranks themselves.
+        /// </summary>
+        /// <param name="dbPlayer">The player entity to evaluate.</param>
+        /// <param name="skill">The skill to evaluate.</param>
+        /// <returns>The effective maximum rank for this player and skill.</returns>
+        public static int GetEffectiveMaxRank(Player dbPlayer, SkillType skill)
+        {
+            var details = GetSkillDetails(skill);
+
+            if (!details.ContributesToSkillCap)
+                return details.MaxRank;
+
+            return dbPlayer.TotalSPAcquired >= Phase1Cap && dbPlayer.HasCompletedTrials
+                ? details.MaxRank
+                : Math.Min(Phase1PerSkillCap, details.MaxRank);
+        }
 
         /// <summary>
         /// Gives XP towards a specific skill to a player.
@@ -38,7 +78,8 @@ namespace SWLOR.Game.Server.Service
             SkillType skill, 
             int xp, 
             bool ignoreBonuses = false,
-            bool applyHenchmanPenalty = true)
+            bool applyHenchmanPenalty = true,
+            bool isEndgamePath = false)
         {
             if (skill == SkillType.Invalid || xp <= 0 || !GetIsPC(player) || GetIsDM(player)) return;
 
@@ -51,7 +92,6 @@ namespace SWLOR.Game.Server.Service
             var requiredXP = GetRequiredXP(pcSkill.Rank);
             var receivedRankUp = false;
             var bonusPercentage = 0f;
-            var decayedSkills = new List<SkillType>();
 
             if (!ignoreBonuses)
             {
@@ -122,55 +162,59 @@ namespace SWLOR.Game.Server.Service
                 return;
             }
             
-            var totalRanks = dbPlayer.Skills
-                .Where(x =>
-                {
-                    var detail = GetSkillDetails(x.Key);
-                    return detail.ContributesToSkillCap;
-                })
-                .Sum(x => x.Value.Rank);
-            var skillsPossibleToDecay = dbPlayer.Skills
-                .Where(x =>
-                {
-                    var detail = GetSkillDetails(x.Key);
+            // Reset the daily rank allowance at midnight UTC. The lazy check means offline
+            // players reset correctly the first time they earn XP on a new day.
+            if (dbPlayer.LastDailyReset.Date < DateTime.UtcNow.Date)
+            {
+                dbPlayer.RanksGainedToday = 0;
+                dbPlayer.LastDailyReset = DateTime.UtcNow;
+            }
 
-                    return !x.Value.IsLocked &&
-                           detail.ContributesToSkillCap &&
-                           x.Key != skill &&
-                           x.Value.Rank > 0;
-                }).Select(s => s.Key).ToList();
-
-            // If player is at the skill cap and no skills are available for decay, exit early.
-            if (details.ContributesToSkillCap && skillsPossibleToDecay.Count <= 0 && totalRanks >= SkillCap)
-                return;
+            var effectiveMaxRank = GetEffectiveMaxRank(dbPlayer, skill);
+            var inPhase1 = dbPlayer.TotalSPAcquired < Phase1Cap;
 
             SendMessageToPC(player, $"You earned {details.Name} skill experience. ({xp})");
             pcSkill.XP += xp;
-            // Skill is at cap. No additional XP can be acquired.
-            if (pcSkill.Rank >= details.MaxRank)
+
+            // Skill is at its effective rank ceiling. No additional XP can be banked.
+            if (pcSkill.Rank >= effectiveMaxRank)
             {
                 pcSkill.XP = 0;
             }
 
             while (pcSkill.XP >= requiredXP)
             {
-                if (details.ContributesToSkillCap && skillsPossibleToDecay.Count <= 0 && totalRanks >= SkillCap)
+                if (pcSkill.Rank >= effectiveMaxRank)
                     break;
+
+                if (details.ContributesToSkillCap)
+                {
+                    // Past the Phase 1 boundary, activity XP no longer converts to ranks - except for
+                    // endgame-path XP (deep gathering nodes, exotic recipes), which is throttled by its
+                    // content instead. Banked XP is retained either way.
+                    if (!inPhase1 && !isEndgamePath)
+                        break;
+
+                    // The daily allowance gates all Phase 1 conversions. Banked XP carries to the next day.
+                    if (inPhase1 && dbPlayer.RanksGainedToday >= DailyRankLimit)
+                        break;
+                }
 
                 receivedRankUp = true;
                 pcSkill.XP -= requiredXP;
 
-                if (dbPlayer.TotalSPAcquired < SkillCap && details.ContributesToSkillCap)
+                if (details.ContributesToSkillCap)
                 {
                     dbPlayer.UnallocatedSP++;
                     dbPlayer.TotalSPAcquired++;
+                    dbPlayer.RanksGainedToday++;
                 }
 
                 pcSkill.Rank++;
                 FloatingTextStringOnCreature($"Your {details.Name} skill level increased to rank {pcSkill.Rank}!", player, false);
 
                 requiredXP = GetRequiredXP(pcSkill.Rank);
-                if (pcSkill.Rank >= details.MaxRank)
+                if (pcSkill.Rank >= effectiveMaxRank)
                 {
                     pcSkill.XP = 0;
                 }
@@ -181,47 +225,13 @@ namespace SWLOR.Game.Server.Service
                 {
                     ApplyAbilityPoint(player, dbPlayer);
                 }
-                
-                totalRanks = dbPlayer.Skills
-                    .Where(x =>
-                    {
-                        var detail = GetSkillDetails(x.Key);
-                        return detail.ContributesToSkillCap;
-                    })
-                    .Sum(x => x.Value.Rank);
 
-                // If player is at the cap, pick a random skill out of the available decayable skills
-                // reduce its level by 1 and set XP to zero.
-                if (details.ContributesToSkillCap && totalRanks >= SkillCap)
-                {
-                    // Edge case: Part of the number of levels granted cannot be given because
-                    // there are no decayable skills to reduce. All excess XP is lost and we
-                    // no longer need to proceed with increasing the skill rank
-                    if (skillsPossibleToDecay.Count <= 0)
-                    {
-                        dbPlayer.Skills[skill].XP = 0;
-                        break;
-                    }
-
-                    var index = Random.Next(skillsPossibleToDecay.Count);
-                    var decaySkill = skillsPossibleToDecay[index];
-                    dbPlayer.Skills[decaySkill].XP = 0;
-                    dbPlayer.Skills[decaySkill].Rank--;
-
-                    if(!modifiedSkills.Contains(decaySkill))
-                        modifiedSkills.Add(decaySkill);
-
-                    if (dbPlayer.Skills[decaySkill].Rank <= 0)
-                        skillsPossibleToDecay.Remove(decaySkill);
-
-                    if(!decayedSkills.Contains(decaySkill))
-                        decayedSkills.Add(decaySkill);
-                }
+                inPhase1 = dbPlayer.TotalSPAcquired < Phase1Cap;
             }
 
-            // Safety check - Any excess XP over the required amount is lost.
-            requiredXP = GetRequiredXP(dbPlayer.Skills[skill].Rank);
-            if (dbPlayer.Skills[skill].XP > requiredXP)
+            // XP beyond the next rank's requirement is retained (banked) so it can convert when
+            // the daily allowance resets. Only a skill sitting at its effective ceiling discards XP.
+            if (dbPlayer.Skills[skill].Rank >= effectiveMaxRank && dbPlayer.Skills[skill].XP > 0)
             {
                 dbPlayer.Skills[skill].XP = 0;
             }
@@ -236,12 +246,56 @@ namespace SWLOR.Game.Server.Service
             {
                 EventsPlugin.SignalEvent("SWLOR_GAIN_SKILL_POINT", player);
             }
+        }
 
-            foreach (var decayedSkill in decayedSkills)
+        /// <summary>
+        /// Grants endgame skill ranks directly. This is the Phase 2 progression path, fed by
+        /// events and deep content. It bypasses the daily allowance entirely and only functions
+        /// once a player has crossed the Phase 1 boundary, up to the absolute cap.
+        /// </summary>
+        /// <param name="player">The player receiving the ranks.</param>
+        /// <param name="skill">The skill to grant ranks in.</param>
+        /// <param name="amount">The number of ranks to grant.</param>
+        public static void GiveEndgameSP(uint player, SkillType skill, int amount)
+        {
+            if (skill == SkillType.Invalid || amount <= 0 || !GetIsPC(player) || GetIsDM(player))
+                return;
+
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            var details = GetSkillDetails(skill);
+
+            if (!details.ContributesToSkillCap)
+                return;
+            if (dbPlayer.TotalSPAcquired < Phase1Cap || !dbPlayer.HasCompletedTrials)
+                return;
+
+            var pcSkill = dbPlayer.Skills[skill];
+            var effectiveMaxRank = GetEffectiveMaxRank(dbPlayer, skill);
+            var granted = 0;
+
+            while (granted < amount &&
+                   dbPlayer.TotalSPAcquired < AbsoluteCap &&
+                   pcSkill.Rank < effectiveMaxRank)
             {
-                EventsPlugin.PushEventData("SKILL_TYPE_ID", ((int)decayedSkill).ToString());
-                EventsPlugin.SignalEvent("SWLOR_SKILL_LOST_BY_DECAY", player);
+                pcSkill.Rank++;
+                pcSkill.XP = 0;
+                dbPlayer.UnallocatedSP++;
+                dbPlayer.TotalSPAcquired++;
+                granted++;
+
+                FloatingTextStringOnCreature($"Your {details.Name} skill level increased to rank {pcSkill.Rank}!", player, false);
+                ApplyAbilityPoint(player, dbPlayer);
             }
+
+            if (granted <= 0)
+                return;
+
+            dbPlayer.Skills[skill] = pcSkill;
+            DB.Set(dbPlayer);
+
+            Gui.PublishRefreshEvent(player, new SkillXPRefreshEvent(new List<SkillType> { skill }));
+            EventsPlugin.SignalEvent("SWLOR_GAIN_SKILL_POINT", player);
         }
 
         /// <summary>
@@ -252,8 +306,8 @@ namespace SWLOR.Game.Server.Service
         /// <param name="dbPlayer">The database entity.</param>
         private static void ApplyAbilityPoint(uint player, Player dbPlayer)
         {
-            // Total AP have been earned (350SP = 35AP)
-            if (dbPlayer.TotalAPAcquired >= SkillCap / 10) return;
+            // Total AP have been earned (700SP = 70AP)
+            if (dbPlayer.TotalAPAcquired >= APCap) return;
 
             if (dbPlayer.TotalSPAcquired % 10 == 0)
             {
@@ -300,11 +354,11 @@ namespace SWLOR.Game.Server.Service
 
             var playerId = GetObjectUUID(player);
             var dbPlayer = DB.Get<Player>(playerId);
-            var skillDetails = GetSkillDetails(skillType);
             var currentSkill = dbPlayer.Skills[skillType];
+            var effectiveMaxRank = GetEffectiveMaxRank(dbPlayer, skillType);
 
-            // If skill is already at maximum rank, no XP can be distributed
-            if (currentSkill.Rank >= skillDetails.MaxRank)
+            // If skill is already at its effective maximum rank, no XP can be distributed
+            if (currentSkill.Rank >= effectiveMaxRank)
                 return 0;
 
             var totalDistributableXP = 0;
@@ -312,7 +366,7 @@ namespace SWLOR.Game.Server.Service
             var currentXP = currentSkill.XP;
 
             // Calculate XP needed to fill remaining ranks
-            while (currentRank < skillDetails.MaxRank)
+            while (currentRank < effectiveMaxRank)
             {
                 var requiredXPForNextRank = GetRequiredXP(currentRank);
                 var xpNeededForThisRank = requiredXPForNextRank - currentXP;

@@ -65,6 +65,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.MartialArts);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             CombatPoint.AddCombatPoint(activator, target, SkillType.MartialArts, 3);
 
@@ -81,8 +82,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
                 0);
             ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Bludgeoning), target);
 
-            dc = Combat.CalculateSavingThrowDC(activator, SavingThrow.Reflex, dc);
-            var checkResult = ReflexSave(target, dc, SavingThrowType.None, activator);
+            dc = Combat.CalculateSavingThrowDC(activator, SavingThrow.Fortitude, dc);
+            var checkResult = FortitudeSave(target, dc, SavingThrowType.None, activator);
             if (checkResult == SavingThrowResultType.Failed)
             {
                 StatusEffect.Apply(activator, target, StatusEffectType.Poison, duration);

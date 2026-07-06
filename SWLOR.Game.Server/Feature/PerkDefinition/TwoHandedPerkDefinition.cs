@@ -42,7 +42,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             CircleSlash();
             DoubleStrike();
             ImprovedTwoWeaponFighting();
-            StrongStyleSaberstaff();
 
             return _builder.Build();
         }
@@ -247,7 +246,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Hard Slash")
 
                 .AddPerkLevel()
-                .Description("Instantly deals 16 DMG to your target.")
+                .Description("Instantly deals 16 DMG to your target and has a DC12 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(2)
                 .DroidAISlots(2)
                 .RequirementSkill(SkillType.TwoHanded, 5)
@@ -255,7 +254,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.HardSlash1)
 
                 .AddPerkLevel()
-                .Description("Instantly deals 24 DMG to your target.")
+                .Description("Instantly deals 24 DMG to your target and has a DC16 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(3)
                 .DroidAISlots(3)
                 .RequirementSkill(SkillType.TwoHanded, 20)
@@ -263,7 +262,7 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .GrantsFeat(FeatType.HardSlash2)
 
                 .AddPerkLevel()
-                .Description("Instantly deals 38 DMG to your target.")
+                .Description("Instantly deals 38 DMG to your target and has a DC20 Fortitude check to inflict Breach, reducing evasion for 30 seconds.")
                 .Price(3)
                 .DroidAISlots(4)
                 .RequirementSkill(SkillType.TwoHanded, 35)
@@ -776,31 +775,12 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Name("Improved Two Weapon Fighting (Two-Handed)")
 
                 .AddPerkLevel()
-                .Description("Grants an additional off-hand attack when dual wielding or using a double-sided weapon, and reduces the two-weapon fighting penalty to 0%/-10%. [Cross Skill]")
+                .Description("Grants an additional off-hand attack when dual wielding or using a double-sided weapon. [Cross Skill]")
                 .Price(4)
                 .RequirementSkill(SkillType.TwoHanded, 40)
                 .RequirementCannotHavePerk(PerkType.ImprovedTwoWeaponFightingOneHanded)
                 .GrantsFeat(FeatType.ImprovedTwoWeaponFighting);
         }
 
-        private void StrongStyleSaberstaff()
-        {
-            _builder.Create(PerkCategoryType.TwoHandedSaberstaff, PerkType.StrongStyleSaberstaff)
-                .Name("Strong Style (Saberstaff)")
-                .TriggerRefund((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleSaberstaff, false);
-                })
-                .TriggerPurchase((player) =>
-                {
-                    Ability.ToggleAbility(player, AbilityToggleType.StrongStyleSaberstaff, false);
-                })
-
-                .AddPerkLevel()
-                .RequirementCharacterType(CharacterType.ForceSensitive)
-                .Description("Saberstaff attacks use your Perception stat for accuracy and Might stat for damage while active. Additionally, your saberstaff damage is increased by your MGT modifier while active.")
-                .Price(1)
-                .GrantsFeat(FeatType.StrongStyleSaberstaff);
-        }
     }
 }

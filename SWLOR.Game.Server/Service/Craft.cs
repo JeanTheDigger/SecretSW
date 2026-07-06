@@ -763,7 +763,7 @@ namespace SWLOR.Game.Server.Service
                     {
                         var delta = dbJob.DateCompleted - now;
                         var completionTime = Time.GetTimeLongIntervals(delta, false);
-                        SendMessageToPC(player, $"Another player's incubation job is active. This job will complete in: {completionTime}.");
+                        SendMessageToPC(player, $"Another player's research job is active. This job will complete in: {completionTime}.");
                     }
                     else
                     {

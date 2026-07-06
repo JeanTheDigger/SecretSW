@@ -38,13 +38,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
         {
             int dmg;
             int dc;
-            const float Duration = 6f;
+            const float Duration = 3f;
 
             var stat = AbilityType.Perception;
-            if (Ability.IsAbilityToggled(activator, AbilityToggleType.StrongStyleLightsaber))
-            {
-                stat = AbilityType.Might;
-            }
 
             switch (level)
             {
@@ -64,6 +60,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.OneHanded);
+            dmg += GetAbilityModifier(stat, activator);
 
             CombatPoint.AddCombatPoint(activator, target, SkillType.OneHanded, 3);
 
@@ -94,7 +91,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             builder.Create(FeatType.PommelStrike1, PerkType.PommelStrike)
                 .Name("Pommel Strike I")
                 .Level(1)
-                .HasRecastDelay(RecastGroup.PommelStrike, 20f)
+                .HasRecastDelay(RecastGroup.PommelStrike, 30f)
                 .RequirementStamina(4)
                 .HasActivationDelay(0.5f)
                 .IsCastedAbility()
@@ -108,7 +105,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             builder.Create(FeatType.PommelStrike2, PerkType.PommelStrike)
                 .Name("Pommel Strike II")
                 .Level(2)
-                .HasRecastDelay(RecastGroup.PommelStrike, 20f)
+                .HasRecastDelay(RecastGroup.PommelStrike, 30f)
                 .RequirementStamina(6)
                 .HasActivationDelay(0.5f)
                 .IsCastedAbility()
@@ -122,7 +119,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.OneHanded
             builder.Create(FeatType.PommelStrike3, PerkType.PommelStrike)
                 .Name("Pommel Strike III")
                 .Level(3)
-                .HasRecastDelay(RecastGroup.PommelStrike, 20f)
+                .HasRecastDelay(RecastGroup.PommelStrike, 30f)
                 .RequirementStamina(8)
                 .HasActivationDelay(0.5f)
                 .IsCastedAbility()

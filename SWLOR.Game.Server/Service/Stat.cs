@@ -794,18 +794,18 @@ namespace SWLOR.Game.Server.Service
                 if (GetIsObjectValid(source))
                 {
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersStrike);
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            attack += sourceSOC;
+                            attack += 20 + sourceSOCMod * 4 / 3;
                             break;
                         case 2:
-                            attack += (int)(sourceSOC * 1.5f);
+                            attack += 30 + sourceSOCMod * 2;
                             break;
                         case 3:
-                            attack += sourceSOC * 2;
+                            attack += 40 + sourceSOCMod * 8 / 3;
                             break;
                     }
                 }
@@ -1008,6 +1008,18 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
 
+            // Stance and implant physical defense
+            if (type == CombatDamageType.Physical)
+            {
+                var stanceDefense = Stance.GetActiveStance(creature);
+                if (stanceDefense != null)
+                    defenseBonus += stanceDefense.DefensePhysicalMod;
+
+                var implantDefense = Implant.GetImplantPackage(creature);
+                if (implantDefense != null)
+                    defenseBonus += implantDefense.DefensePhysicalMod;
+            }
+
             defenseBonus = CalculateEffectDefense(creature, defenseBonus, type);
             defenseBonus = (int)(defenseBonus * rate) + equipmentDefense;
             return CalculateDefense(defenderStat, skillLevel, defenseBonus);
@@ -1111,6 +1123,18 @@ namespace SWLOR.Game.Server.Service
                 skillLevel = npcStats.Level;
             }
             
+            // Stance and implant physical defense
+            if (type == CombatDamageType.Physical)
+            {
+                var stanceDefense = Stance.GetActiveStance(creature.m_idSelf);
+                if (stanceDefense != null)
+                    defenseBonus += stanceDefense.DefensePhysicalMod;
+
+                var implantDefense = Implant.GetImplantPackage(creature.m_idSelf);
+                if (implantDefense != null)
+                    defenseBonus += implantDefense.DefensePhysicalMod;
+            }
+
             defenseBonus = CalculateEffectDefense(creature.m_idSelf, defenseBonus, type);
             defenseBonus = (int)(defenseBonus * rate) + equipmentDefense;
             return (int)(8 + (defenderStat * 1.5f) + skillLevel + defenseBonus);
@@ -1179,6 +1203,15 @@ namespace SWLOR.Game.Server.Service
             else if (GetActionMode(creature, ActionMode.ImprovedPowerAttack))
                 accuracyBonus -= 10;
 
+            // Stance and implant accuracy
+            var stance = Stance.GetActiveStance(creature);
+            if (stance != null)
+                accuracyBonus += stance.AccuracyMod;
+
+            var implants = Implant.GetImplantPackage(creature);
+            if (implants != null)
+                accuracyBonus += implants.AccuracyMod;
+
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
 
@@ -1239,6 +1272,15 @@ namespace SWLOR.Game.Server.Service
 
             accuracyBonus = CalculateEffectAccuracyNative(creature, accuracyBonus);
             
+            // Stance and implant accuracy
+            var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
+            if (stanceNative != null)
+                accuracyBonus += stanceNative.AccuracyMod;
+
+            var implantsNative = Implant.GetImplantPackage(creature.m_idSelf);
+            if (implantsNative != null)
+                accuracyBonus += implantsNative.AccuracyMod;
+
             return GetAccuracy(skillLevel, stat, accuracyBonus);
         }
 
@@ -1320,19 +1362,19 @@ namespace SWLOR.Game.Server.Service
                 var source = StatusEffect.GetEffectData<uint>(creature, StatusEffectType.SoldiersSpeed);
                 if (GetIsObjectValid(source))
                 {
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersSpeed);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            evasionBonus += sourceSOC / 2;
+                            evasionBonus += 10 + sourceSOCMod * 2 / 3;
                             break;
                         case 2:
-                            evasionBonus += sourceSOC;
+                            evasionBonus += 20 + sourceSOCMod * 4 / 3;
                             break;
                         case 3:
-                            evasionBonus += (int)(sourceSOC * 1.5f);
+                            evasionBonus += 30 + sourceSOCMod * 2;
                             break;
                     }
 
@@ -1372,17 +1414,17 @@ namespace SWLOR.Game.Server.Service
 
                 if (GetIsObjectValid(source))
                 {
-                    var sourceSOC = GetAbilityScore(source, AbilityType.Social);
+                    var sourceSOCMod = GetAbilityModifier(AbilityType.Social, source);
                     var perkLevel = Perk.GetPerkLevel(source, PerkType.SoldiersPrecision);
 
                     switch (perkLevel)
                     {
                         case 1:
-                            return sourceSOC / 2;
+                            return 10 + sourceSOCMod * 2 / 3;
                         case 2:
-                            return sourceSOC;
+                            return 20 + sourceSOCMod * 4 / 3;
                         case 3:
-                            return (int)(sourceSOC * 1.5f);
+                            return 30 + sourceSOCMod * 2;
                     }
                 }
             }
@@ -1428,6 +1470,15 @@ namespace SWLOR.Game.Server.Service
             evasionBonus += CalculateEffectEvasion(creature);
 
             Log.Write(LogGroup.Attack, $"Effect Evasion: {evasionBonus}");
+
+            // Stance and implant evasion
+            var stance = Stance.GetActiveStance(creature);
+            if (stance != null)
+                evasionBonus += stance.EvasionMod;
+
+            var implants = Implant.GetImplantPackage(creature);
+            if (implants != null)
+                evasionBonus += implants.EvasionMod;
 
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
@@ -1479,6 +1530,15 @@ namespace SWLOR.Game.Server.Service
 
             evasionBonus += CalculateEffectEvasion(creature.m_idSelf);
             
+            // Stance and implant evasion
+            var stanceNative = Stance.GetActiveStance(creature.m_idSelf);
+            if (stanceNative != null)
+                evasionBonus += stanceNative.EvasionMod;
+
+            var implantsNative = Implant.GetImplantPackage(creature.m_idSelf);
+            if (implantsNative != null)
+                evasionBonus += implantsNative.EvasionMod;
+
             return GetEvasion(skillLevel, stat, ac * 5 + evasionBonus);
         }
 
@@ -1648,11 +1708,6 @@ namespace SWLOR.Game.Server.Service
                 return Perk.GetPerkLevel(pc, PerkType.FlurryStyle);
             }
 
-            static int GetShieldBonus(uint pc)
-            {
-                return Perk.GetPerkLevel(pc, PerkType.ShieldMaster);
-            }
-
             if (GetIsDM(creature) || GetIsDMPossessed(creature))
                 return;
 
@@ -1716,14 +1771,8 @@ namespace SWLOR.Game.Server.Service
                 perkType = PerkType.SaberstaffMastery;
             }
 
-            if (Item.ShieldBaseItemTypes.Contains(offHandType)) 
-                numberOfAttacks += GetShieldBonus(creature);
-
             var effectiveMasteryLevel = Perk.GetPerkLevel(creature, perkType);
             numberOfAttacks += effectiveMasteryLevel;
-
-            // Beast Speed (1-3)
-            numberOfAttacks += Perk.GetPerkLevel(creature, PerkType.BeastSpeed);
 
             var bab = GetBABForAttacks(numberOfAttacks);
             CreaturePlugin.SetBaseAttackBonus(creature, bab);
@@ -1741,7 +1790,7 @@ namespace SWLOR.Game.Server.Service
             {
                 if (Item.OneHandedMeleeItemTypes.Contains(offhandType))
                     critMod += Perk.GetPerkLevel(player, PerkType.WailingBlows) * 3; // 15% for WB
-                else if(offhandType == BaseItem.Invalid || Item.ShieldBaseItemTypes.Contains(offhandType))
+                else if(offhandType == BaseItem.Invalid)
                     critMod += Perk.GetPerkLevel(player, PerkType.Duelist);
             }
 
@@ -1841,30 +1890,6 @@ namespace SWLOR.Game.Server.Service
             }
 
             return control;
-        }
-
-        /// <summary>
-        /// Calculates the base value for a particular type of saving throw.
-        /// This does not factor in stat modifiers.
-        /// </summary>
-        /// <param name="player">The player to check</param>
-        /// <param name="type">The type of saving throw.</param>
-        /// <param name="offHandItem">The off hand item equipped to the left hand.</param>
-        /// <returns>The base saving throw value</returns>
-        public static int CalculateBaseSavingThrow(uint player, SavingThrow type, uint offHandItem = OBJECT_INVALID)
-        {
-            if (!GetIsPC(player) || GetIsDM(player) || GetIsDMPossessed(player))
-                return 0;
-
-            var offHandType = GetBaseItemType(offHandItem);
-            var amount = 0;
-
-            if (Item.ShieldBaseItemTypes.Contains(offHandType))
-            {
-                amount += Perk.GetPerkLevel(player, PerkType.ShieldResistance);
-            }
-
-            return amount;
         }
 
         /// <summary>

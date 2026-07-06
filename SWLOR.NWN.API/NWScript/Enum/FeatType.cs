@@ -1804,6 +1804,79 @@ namespace SWLOR.NWN.API.NWScript.Enum
         ForceRage2 = 1837,
         StrongStyleLightsaber = 1838,
         StrongStyleSaberstaff = 1839,
+
+        // Lightsaber form toggles, reusing feat.2da rows orphaned by removed systems.
+        // Rename the rows when the HAKs are next rebuilt.
+        FormDjemSo = 1838,          // row: StrongStyleLightsaber
+        FormNiman = 1839,           // row: StrongStyleSaberstaff
+        FormShiiCho = 1887,         // row: Tame
+        FormMakashi = 1891,         // row: Snarl
+        FormSoresu = 1892,          // row: Growl
+        FormAtaru = 1893,           // row: SoothePet
+        FormJuyo = 1897,            // row: CallBeast
+
+        // Standard combat doctrine toggles, on more orphaned feat.2da rows.
+        DoctrineDuelist = 1888,     // row: Reward1
+        DoctrineJuggernaut = 1889,  // row: Reward2
+        DoctrineTempest = 1890,     // row: Reward3
+        DoctrineTerasKasi = 1894,   // row: ReviveBeast1
+        DoctrineMarksman = 1895,    // row: ReviveBeast2
+
+        // Implant capstone actives, on rows orphaned by the shield removal.
+        JumpJet = 1863,             // row: ShieldBash1
+        Overclock = 1864,           // row: ShieldBash2
+
+        // Force kit gap fills, on the remaining orphaned rows.
+        ForceBarrier = 1860,        // row: ShieldMaster
+        ForceBreach = 1865,         // row: ShieldBash3
+        ForceAffliction = 1869,     // row: Bulwark
+        ForceChoke = 1896,          // row: ReviveBeast3
+
+        // Devices Phase-2 tech, on the shield proficiency orphan rows.
+        CarboniteProjector = 1415,  // row: ShieldProficiency1
+        CombatJetpack = 1416,       // row: ShieldProficiency2
+        OrbitalStrike = 1417,       // row: ShieldProficiency3
+        ToxinFlask = 1418,          // row: ShieldProficiency4
+
+        // The L4/L5 stance signatures, on more dead beast-ability rows.
+        DisarmingSlash = 1910,      // row: SpinningClaw3
+        Determination = 1911,       // row: SpinningClaw4
+        Contention = 1912,          // row: SpinningClaw5
+        MakashiRiposte = 1918,      // row: FlameBreath1
+        BlasterReflection = 1919,   // row: FlameBreath2
+        TheResilience = 1920,       // row: FlameBreath3
+        SaberBarrier = 1921,        // row: FlameBreath4
+        Whirlwind = 1922,           // row: FlameBreath5
+        Counterforce = 1956,        // row: PoisonBreath1
+        Dominance = 1957,           // row: PoisonBreath2
+        ForceSynergy = 1958,        // row: PoisonBreath3
+        DrawCloser = 1959,          // row: PoisonBreath4
+        Ferocity = 1960,            // row: PoisonBreath5
+        VornskrsFury = 1961,        // row: IceBreath1
+        MeasuredCut = 1962,         // row: IceBreath2
+        PerfectParry = 1963,        // row: IceBreath3
+        BreachingAdvance = 1964,    // row: IceBreath4
+        Unstoppable = 1965,         // row: IceBreath5
+        TwinFeint = 1953,           // row: Hasten1
+        Bladestorm = 1954,          // row: Hasten2
+        MeridianStrike = 1955,      // row: Hasten3
+        IronBody = 1933,            // row: Anger1
+        CalledShotLegs = 1934,      // row: Anger2
+        PenetratingRound = 1935,    // row: Anger3
+
+        // Stance signature actives (level-6 capstones), on dead beast-ability rows.
+        SarlaccSweep = 1913,        // row: Bite1
+        DuelistsEnd = 1914,         // row: Bite2
+        CircleOfShelter = 1915,     // row: Bite3
+        HawkBatSwoop = 1916,        // row: Bite4
+        FallingAvalanche = 1917,    // row: Bite5
+        NimanBalance = 1943,        // row: Claw1
+        Vaapad = 1944,              // row: Claw2
+        Riposte = 1945,             // row: Claw3
+        StaggeringAdvance = 1946,   // row: Claw4
+        TwinCyclone = 1947,         // row: Claw5
+        ForceLock = 1908,           // row: SpinningClaw1
+        ExecutionShot = 1909,       // row: SpinningClaw2
         Doublehand2 = 1840,
         Doublehand3 = 1841,
         Doublehand4 = 1842,
@@ -1948,6 +2021,10 @@ namespace SWLOR.NWN.API.NWScript.Enum
         Sniff1 = 1979,
         Sniff2 = 1980,
         Sniff3 = 1981,
+
+        // Stage 7g recycled rows (dead beast feat rows; zero references verified).
+        Slice = 1966,       // EnduranceLink1
+        Ambush = 1979,      // Sniff1
         ForceTouch1 = 1982,
         ForceTouch2 = 1983,
         ForceTouch3 = 1984,

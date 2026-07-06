@@ -43,17 +43,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
                 .Component("elec_ruined", 2)
                 .Component("quadrenium", 1);
 
-            // Shield Bash I
-            _builder.Create(RecipeType.InstructionShieldBash1, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shbash1")
-                .Level(10)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 1)
-                .Component("jade", 1)
-                .Component("elec_ruined", 2)
-                .Component("quadrenium", 1);
-
             // Backstab I
             _builder.Create(RecipeType.InstructionBackstab1, SkillType.Engineering)
                 .Category(RecipeCategoryType.DroidInstruction)
@@ -269,17 +258,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
             _builder.Create(RecipeType.InstructionDoublehand2, SkillType.Engineering)
                 .Category(RecipeCategoryType.DroidInstruction)
                 .Resref("id_doublehand2")
-                .Level(20)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 2)
-                .Component("agate", 1)
-                .Component("elec_flawed", 2)
-                .Component("vintrium", 1);
-
-            // Bulwark
-            _builder.Create(RecipeType.InstructionBulwark, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_bulwark")
                 .Level(20)
                 .Quantity(1)
                 .RequirementPerk(PerkType.DroidEquipmentBlueprints, 2)
@@ -531,50 +509,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
                 .Component("elec_good", 2)
                 .Component("ionite", 1);
 
-            // Shield Master
-            _builder.Create(RecipeType.InstructionShieldMaster, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shmaster")
-                .Level(30)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 3)
-                .Component("citrine", 1)
-                .Component("elec_good", 2)
-                .Component("ionite", 1);
-
-            // Shield Bash II
-            _builder.Create(RecipeType.InstructionShieldBash2, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shbash2")
-                .Level(30)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 3)
-                .Component("citrine", 1)
-                .Component("elec_good", 2)
-                .Component("ionite", 1);
-
-            // Shield Resistance I
-            _builder.Create(RecipeType.InstructionShieldResistance1, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shresist1")
-                .Level(30)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 3)
-                .Component("citrine", 1)
-                .Component("elec_good", 2)
-                .Component("ionite", 1);
-
-            // Alacrity
-            _builder.Create(RecipeType.InstructionAlacrity, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_alacrity")
-                .Level(30)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 3)
-                .Component("citrine", 1)
-                .Component("elec_good", 2)
-                .Component("ionite", 1);
-
             // Backstab II
             _builder.Create(RecipeType.InstructionBackstab2, SkillType.Engineering)
                 .Category(RecipeCategoryType.DroidInstruction)
@@ -812,28 +746,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
             _builder.Create(RecipeType.InstructionDoublehand4, SkillType.Engineering)
                 .Category(RecipeCategoryType.DroidInstruction)
                 .Resref("id_doublehand4")
-                .Level(40)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 4)
-                .Component("ruby", 1)
-                .Component("elec_imperfect", 2)
-                .Component("katrium", 1);
-
-            // Shield Bash III
-            _builder.Create(RecipeType.InstructionShieldBash3, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shbash3")
-                .Level(40)
-                .Quantity(1)
-                .RequirementPerk(PerkType.DroidEquipmentBlueprints, 4)
-                .Component("ruby", 1)
-                .Component("elec_imperfect", 2)
-                .Component("katrium", 1);
-
-            // Shield Resistance II
-            _builder.Create(RecipeType.InstructionShieldResistance2, SkillType.Engineering)
-                .Category(RecipeCategoryType.DroidInstruction)
-                .Resref("id_shresist2")
                 .Level(40)
                 .Quantity(1)
                 .RequirementPerk(PerkType.DroidEquipmentBlueprints, 4)

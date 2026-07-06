@@ -38,26 +38,27 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.MartialArts
 
             int dmg;
             int dc;
-            const float Duration = 6f;
+            const float Duration = 3f;
 
             switch (level)
             {
                 default:
                 case 1:
                     dmg = 4;
-                    dc = 5;
+                    dc = 10;
                     break;
                 case 2:
                     dmg = 13;
-                    dc = 8;
+                    dc = 15;
                     break;
                 case 3:
                     dmg = 20;
-                    dc = 10;
+                    dc = 20;
                     break;
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.MartialArts);
+            dmg += GetAbilityModifier(GetHasFeat(FeatType.FlurryStyle, activator) ? AbilityType.Perception : AbilityType.Might, activator);
 
             Enmity.ModifyEnmityOnAll(activator, 250 * level);
             CombatPoint.AddCombatPoint(activator, target, SkillType.MartialArts, 3);

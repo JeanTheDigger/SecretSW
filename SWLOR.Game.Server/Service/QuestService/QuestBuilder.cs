@@ -205,6 +205,20 @@ namespace SWLOR.Game.Server.Service.QuestService
         }
 
         /// <summary>
+        /// Adds a prerequisite to the quest. If the player has not acquired this much total SP,
+        /// they will be unable to accept it.
+        /// </summary>
+        /// <param name="requiredTotalSP">The total SP required.</param>
+        /// <returns>A QuestBuilder with the configured options.</returns>
+        public QuestBuilder PrerequisiteTotalSP(int requiredTotalSP)
+        {
+            var prereq = new RequiredTotalSPPrerequisite(requiredTotalSP);
+            _activeQuest.Prerequisites.Add(prereq);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds an action to run when a player accepts a quest.
         /// </summary>
         /// <param name="action">The action to run when a player accepts a quest.</param>

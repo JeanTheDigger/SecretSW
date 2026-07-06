@@ -24,10 +24,9 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         IGuiRefreshable<UnequipItemRefreshEvent>,
         IGuiRefreshable<PlayerStatusRefreshEvent>,
         IGuiRefreshable<StatusEffectReceivedRefreshEvent>,
-        IGuiRefreshable<StatusEffectRemovedRefreshEvent>,
-        IGuiRefreshable<BeastGainXPRefreshEvent>
+        IGuiRefreshable<StatusEffectRemovedRefreshEvent>
     {
-        private const int MaxUpgrades = 10;
+        private const int MaxUpgrades = 12;
         private uint _target;
 
         public bool IsPlayerMode
@@ -546,44 +545,15 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 OffHandTooltip = "Est. Damage: N/A";
             }
 
-            AbilityType damageStat;
-            AbilityType accuracyStatOverride;
+            var damageStat = Item.GetWeaponDamageAbilityType(mainHandType);
+            var accuracyStatOverride = AbilityType.Invalid;
 
-            if (BeastMastery.IsPlayerBeast(_target))
+            // Flurry Style (Staff)
+            if (Item.StaffBaseItemTypes.Contains(mainHandType) &&
+                GetHasFeat(FeatType.FlurryStyle, _target))
             {
-                var beastType = BeastMastery.GetBeastType(_target);
-                var beastDetails = BeastMastery.GetBeastDetail(beastType);
-                damageStat = beastDetails.DamageStat;
-                accuracyStatOverride = beastDetails.AccuracyStat;
-                mainHand = GetItemInSlot(InventorySlot.CreatureArmor, _target);
-            }
-            else
-            {
-                damageStat = Item.GetWeaponDamageAbilityType(mainHandType);
-                accuracyStatOverride = AbilityType.Invalid;
-
-                // Strong Style (Lightsaber)
-                if (Item.LightsaberBaseItemTypes.Contains(mainHandType) &&
-                    Ability.IsAbilityToggled(_target, AbilityToggleType.StrongStyleLightsaber))
-                {
-                    damageStat = AbilityType.Might;
-                    accuracyStatOverride = AbilityType.Perception;
-                }
-                // Strong Style (Saberstaff)
-                if (Item.SaberstaffBaseItemTypes.Contains(mainHandType) &&
-                    Ability.IsAbilityToggled(_target, AbilityToggleType.StrongStyleSaberstaff))
-                {
-                    damageStat = AbilityType.Might;
-                    accuracyStatOverride = AbilityType.Perception;
-                }
-
-                // Flurry Style (Staff)
-                if (Item.StaffBaseItemTypes.Contains(mainHandType) &&
-                    GetHasFeat(FeatType.FlurryStyle, _target))
-                {
-                    damageStat = AbilityType.Perception;
-                    accuracyStatOverride = AbilityType.Agility;
-                }
+                damageStat = AbilityType.Perception;
+                accuracyStatOverride = AbilityType.Agility;
             }
             
             var mainHandSkill = Skill.GetSkillTypeByBaseItem(mainHandType);
@@ -638,17 +608,13 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var playerId = GetObjectUUID(_target);
                 var dbPlayer = DB.Get<Player>(playerId);
 
-                SP = $"{dbPlayer.TotalSPAcquired} / {Skill.SkillCap} ({dbPlayer.UnallocatedSP})";
-                APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";
-            }
-            else if (BeastMastery.IsPlayerBeast(_target))
-            {
-                var beastId = BeastMastery.GetBeastId(_target);
-                var dbBeast = DB.Get<Beast>(beastId);
+                // Tier title rides the class label: "Force Sensitive - Knight".
+                var baseType = GetClassByPosition(1, _target) == ClassType.Standard ? "Standard" : "Force Sensitive";
+                CharacterType = $"{baseType} - {CharacterTitle.GetTitle(dbPlayer)}";
 
-                SP = $"{dbBeast.Level} / {BeastMastery.MaxLevel} ({dbBeast.UnallocatedSP})";
-                APOrLevel = $"{dbBeast.Level} / {BeastMastery.MaxLevel}";
-                APOrLevelTooltip = $"XP: {dbBeast.XP} / {BeastMastery.GetRequiredXP(dbBeast.Level, dbBeast.XPPenaltyPercent)}";
+                var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+                SP = $"{dbPlayer.TotalSPAcquired} / {spCap} ({dbPlayer.UnallocatedSP})";
+                APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";
             }
         }
 
@@ -683,7 +649,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         {
             _target = GetIsObjectValid(initialPayload.Target) ? initialPayload.Target : Player;
             IsPlayerMode = initialPayload.IsPlayerMode;
-            ShowSP = IsPlayerMode || BeastMastery.IsPlayerBeast(_target);
+            ShowSP = IsPlayerMode;
             ShowAPOrLevel = ShowSP;
 
             LoadData();
@@ -702,23 +668,11 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var playerId = GetObjectUUID(_target);
             var dbPlayer = DB.Get<Player>(playerId);
 
-            SP = $"{dbPlayer.TotalSPAcquired} / {Skill.SkillCap} ({dbPlayer.UnallocatedSP})";
+            var spCap = dbPlayer.TotalSPAcquired < Skill.Phase1Cap ? Skill.Phase1Cap : Skill.AbsoluteCap;
+            SP = $"{dbPlayer.TotalSPAcquired} / {spCap} ({dbPlayer.UnallocatedSP})";
             APOrLevel = $"{dbPlayer.TotalAPAcquired} / {Skill.APCap} ({dbPlayer.UnallocatedAP})";
-            
+
             RefreshStats();
-        }
-
-        public void Refresh(BeastGainXPRefreshEvent payload)
-        {
-            if (!BeastMastery.IsPlayerBeast(_target))
-                return;
-
-            var beastId = BeastMastery.GetBeastId(_target);
-            var dbBeast = DB.Get<Beast>(beastId);
-
-            SP = $"{dbBeast.Level} / {BeastMastery.MaxLevel} ({dbBeast.UnallocatedSP})";
-            APOrLevel = $"{dbBeast.Level} / {BeastMastery.MaxLevel}";
-            APOrLevelTooltip = $"XP: {dbBeast.XP} / {BeastMastery.GetRequiredXP(dbBeast.Level, dbBeast.XPPenaltyPercent)}";
         }
 
         public void Refresh(EquipItemRefreshEvent payload)

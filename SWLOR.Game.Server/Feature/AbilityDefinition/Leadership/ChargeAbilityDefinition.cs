@@ -33,7 +33,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                 })
                 .HasImpactAction((activator, target, level, location) =>
                 {
-                    Ability.ApplyAura(activator, StatusEffectType.Charge, true, true, false);
+                    Ability.ApplyAura(activator, StatusEffectType.Charge, false, true, false);
                 });
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.PropertyService;
 using SWLOR.NWN.API.NWScript.Enum;
@@ -26,6 +27,25 @@ namespace SWLOR.Game.Server.Service.SpaceService
         public int IndustryBonus { get; set; }
         public bool HasDroidBay { get; set; }
         public bool CapitalShip { get; set; }
+
+        /// <summary>
+        /// When set, this frame's shield rating is authored explicitly instead of being
+        /// derived from the MaxShield pool band.
+        /// </summary>
+        public int? ShieldRatingOverride { get; set; }
+
+        /// <summary>
+        /// When set, this frame's damage threshold is authored explicitly instead of
+        /// being derived from its frame class.
+        /// </summary>
+        public int? DamageThresholdOverride { get; set; }
+
+        /// <summary>
+        /// Faction commission: when not Invalid, the pilot must hold at least
+        /// RequiredFactionStanding with this faction to use the ship.
+        /// </summary>
+        public FactionType RequiredFaction { get; set; }
+        public int RequiredFactionStanding { get; set; }
 
         public Dictionary<PerkType, int> RequiredPerks { get; set; }
 

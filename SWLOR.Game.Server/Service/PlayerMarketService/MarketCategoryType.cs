@@ -73,11 +73,11 @@ namespace SWLOR.Game.Server.Service.PlayerMarketService
         Food = 32,
         [MarketCategory("Fishing", true)]
         Fishing = 33,
-        [MarketCategory("Pet Food", true)]
+        [MarketCategory("Pet Food", false)] // Beast Mastery removed
         PetFood = 34,
-        [MarketCategory("Incubation", true)]
+        [MarketCategory("Incubation", false)] // Beast Mastery removed
         Incubation = 35,
-        [MarketCategory("Beast Egg", true)]
+        [MarketCategory("Beast Egg", false)] // Beast Mastery removed
         BeastEgg = 36,
         [MarketCategory("Blueprint", true)]
         Blueprint = 37,

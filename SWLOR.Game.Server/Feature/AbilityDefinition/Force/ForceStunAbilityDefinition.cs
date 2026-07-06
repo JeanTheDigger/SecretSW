@@ -27,14 +27,14 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             var dc = Combat.CalculateSavingThrowDC(source, SavingThrow.Will, 12);
             const string EffectTag = "StatusEffectType.ForceStun";
             var checkResult = WillSave(target, dc, SavingThrowType.None, source);
-            const float Duration = 6.1f;
+            const float Duration = 3f;
 
             if (checkResult == SavingThrowResultType.Failed)
             {
                 var effect = EffectDazed();
                 effect = EffectLinkEffects(effect, EffectVisualEffect(VisualEffect.Vfx_Dur_Iounstone_Blue));
                 effect = TagEffect(effect, EffectTag);
-                ApplyEffectToObject(DurationType.Temporary, effect, target, 6.1f);
+                ApplyEffectToObject(DurationType.Temporary, effect, target, Duration);
 
                 Ability.ApplyTemporaryImmunity(target, Duration, ImmunityType.Dazed);
             }
@@ -43,7 +43,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 var effect = EffectAccuracyDecrease(2);
                 effect = EffectLinkEffects(effect, EffectACDecrease(2));
                 effect = TagEffect(effect, EffectTag);
-                ApplyEffectToObject(DurationType.Temporary, effect, target, 6.1f);
+                ApplyEffectToObject(DurationType.Temporary, effect, target, Duration);
             }
 
             CombatPoint.AddCombatPoint(source, target, SkillType.Force, 3);

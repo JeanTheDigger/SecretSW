@@ -1,6 +1,9 @@
+using System;
+using System.Globalization;
 using SWLOR.Game.Server.Core;
 using SWLOR.Game.Server.Entity;
 using SWLOR.Game.Server.Service.LogService;
+using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.PropertyService;
 using SWLOR.NWN.API.NWScript.Enum;
 
@@ -55,6 +58,25 @@ namespace SWLOR.Game.Server.Service
             }
             else
             {
+                // Second Wind (Cardio Regulator prototype tier): a death to anything
+                // other than a player restarts the heart - once per 30 minutes.
+                if (!GetIsPC(hostile) && TrySecondWind(player))
+                    return;
+
+                // Lethal kills inside PvP event zones feed the Phase-2 endgame SP economy.
+                WorldEvent.ProcessPvPKill(hostile, player);
+
+                // Perma-death: dying inside an active event zone removes the character from play.
+                // Only those who have passed the Trials wager their life - the Order protects
+                // learners; an unflagged character in an event zone takes an ordinary death.
+                // The character is moved to limbo for admin review - never deleted automatically.
+                if (WorldEvent.IsEventZone(GetArea(player)) && HasCompletedTrials(player))
+                {
+                    ProcessPermaDeath(player);
+                    WriteAudit(player);
+                    return;
+                }
+
                 const string RespawnMessage = "You have died. Wait for another player to revive you or respawn to go to your registered medical center.";
                 PopUpDeathGUIPanel(player, true, true, 0, RespawnMessage);
 
@@ -80,6 +102,144 @@ namespace SWLOR.Game.Server.Service
             var xpLost = ApplyPenalties(player);
 
             WriteAudit(player, xpLost);
+        }
+
+        private const string SecondWindCooldownVariable = "SECOND_WIND_READY_AT";
+        private const int SecondWindCooldownMinutes = 30;
+
+        /// <summary>
+        /// The Cardio Regulator's prototype-tier passive: a fatal PvE blow restarts the
+        /// heart at a quarter strength, once per 30 minutes. Never fires on player kills
+        /// (the perma-death wager cannot be implanted away) - the caller enforces that.
+        /// </summary>
+        private static bool TrySecondWind(uint player)
+        {
+            if (Perk.GetPerkLevel(player, PerkType.ImplantCardio) < 6)
+                return false;
+
+            var raw = GetLocalString(player, SecondWindCooldownVariable);
+            if (!string.IsNullOrWhiteSpace(raw) &&
+                DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var readyAt) &&
+                DateTime.UtcNow < readyAt)
+            {
+                return false;
+            }
+
+            SetLocalString(player, SecondWindCooldownVariable,
+                DateTime.UtcNow.AddMinutes(SecondWindCooldownMinutes).ToString("O"));
+
+            ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
+            ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player) / 4), player);
+            DelayCommand(0.1f, () => Ability.ReapplyAuraEffectsForCreature(player));
+
+            FloatingTextStringOnCreature(ColorToken.Green("Your cardio regulator slams your heart back into rhythm. SECOND WIND!"), player, false);
+            Messaging.SendMessageNearbyToPlayers(player, $"{GetName(player)} gets back up!");
+
+            return true;
+        }
+
+        /// <summary>
+        /// The waypoint tag of the out-of-play holding area for perma-dead characters.
+        /// </summary>
+        public const string PermaDeathLimboWaypoint = "PERMADEATH_LIMBO";
+
+        /// <summary>
+        /// Determines whether a character has passed the Trials and is therefore exposed
+        /// to perma-death inside event zones.
+        /// </summary>
+        private static bool HasCompletedTrials(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+
+            return dbPlayer != null && dbPlayer.HasCompletedTrials;
+        }
+
+        /// <summary>
+        /// Flags a character as perma-dead and moves them to the limbo area.
+        /// The character file is never destroyed by the game - an admin either restores them
+        /// (bug escape hatch) or deletes them manually after review.
+        /// </summary>
+        private static void ProcessPermaDeath(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            dbPlayer.IsPermaDead = true;
+            DB.Set(dbPlayer);
+
+            // The signature weapon outlives its wielder: it drops as a lootable heirloom.
+            SignatureWeapon.DropHeirloom(player);
+
+            ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
+            ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player)), player);
+            SendToLimbo(player);
+
+            SendMessageToPC(player, ColorToken.Red("You have fallen. Your story ends here, pending review by the staff."));
+            Log.Write(LogGroup.Death, $"PERMADEATH: {GetName(player)} ({playerId})");
+        }
+
+        /// <summary>
+        /// Moves a character to the perma-death limbo area and holds them there.
+        /// If the limbo waypoint is missing from the module, the character is held in place instead.
+        /// </summary>
+        private static void SendToLimbo(uint player)
+        {
+            var waypoint = GetWaypointByTag(PermaDeathLimboWaypoint);
+
+            if (GetIsObjectValid(waypoint))
+            {
+                var location = GetLocation(waypoint);
+                AssignCommand(player, () => ActionJumpToLocation(location));
+            }
+            else
+            {
+                Log.Write(LogGroup.Error, $"Perma-death limbo waypoint '{PermaDeathLimboWaypoint}' is missing from the module.");
+            }
+
+            DelayCommand(2f, () =>
+            {
+                ApplyEffectToObject(DurationType.Permanent, EffectCutsceneImmobilize(), player);
+            });
+        }
+
+        /// <summary>
+        /// Perma-dead characters who log in are routed straight back to limbo.
+        /// They remain available for admin review but never re-enter play.
+        /// </summary>
+        [NWNEventHandler(ScriptName.OnModuleEnter)]
+        public static void EnforcePermaDeath()
+        {
+            var player = GetEnteringObject();
+            if (!GetIsPC(player) || GetIsDM(player)) return;
+
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            if (dbPlayer == null || !dbPlayer.IsPermaDead) return;
+
+            SendMessageToPC(player, ColorToken.Red("This character has fallen and awaits staff review."));
+            DelayCommand(1f, () => SendToLimbo(player));
+        }
+
+        /// <summary>
+        /// Clears a character's perma-death state and returns them to their home point.
+        /// Used by the DM restore tooling.
+        /// </summary>
+        public static void RestorePermaDeadCharacter(uint player)
+        {
+            var playerId = GetObjectUUID(player);
+            var dbPlayer = DB.Get<Player>(playerId);
+            dbPlayer.IsPermaDead = false;
+            DB.Set(dbPlayer);
+
+            for (var effect = GetFirstEffect(player); GetIsEffectValid(effect); effect = GetNextEffect(player))
+            {
+                if (GetEffectType(effect) == EffectTypeScript.CutsceneImmobilize)
+                    RemoveEffect(player, effect);
+            }
+
+            SendToHomePoint(player);
+            SendMessageToPC(player, "You have been restored by the staff. Welcome back.");
+            Log.Write(LogGroup.Death, $"PERMADEATH RESTORE: {GetName(player)} ({playerId})");
         }
 
         /// <summary>
@@ -135,7 +295,7 @@ namespace SWLOR.Game.Server.Service
         /// Teleports player to his or her last home point.
         /// </summary>
         /// <param name="player">The player to teleport</param>
-        private static void SendToHomePoint(uint player)
+        public static void SendToHomePoint(uint player)
         {
             var playerId = GetObjectUUID(player);
             var entity = DB.Get<Player>(playerId);
@@ -167,8 +327,14 @@ namespace SWLOR.Game.Server.Service
             var dbPlayer = DB.Get<Player>(playerId);
             int multiplier;
 
-            // 300+
-            if (dbPlayer.TotalSPAcquired >= 300)
+            // 600+
+            if (dbPlayer.TotalSPAcquired >= 600)
+                multiplier = 65;
+            // 450 - 599
+            else if (dbPlayer.TotalSPAcquired >= 450)
+                multiplier = 55;
+            // 300 - 449
+            else if (dbPlayer.TotalSPAcquired >= 300)
                 multiplier = 45;
             // 200 - 299
             else if (dbPlayer.TotalSPAcquired >= 200)

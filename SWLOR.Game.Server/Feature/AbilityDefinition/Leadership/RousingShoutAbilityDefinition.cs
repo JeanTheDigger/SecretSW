@@ -43,7 +43,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                 })
                 .HasImpactAction((activator, target, _, _) =>
                 {
-                    var social = GetAbilityScore(activator, AbilityType.Social);
+                    var socMod = GetAbilityModifier(AbilityType.Social, activator);
                     var targetMaxHP = GetMaxHitPoints(target);
                     int hp;
                     var perkLevel = Perk.GetPerkLevel(activator, PerkType.RousingShout);
@@ -55,10 +55,10 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                             hp = 0;
                             break;
                         case 2:
-                            hp = (int)(social * 0.01f * targetMaxHP);
+                            hp = (int)((20 + socMod * 4f / 3f) * 0.01f * targetMaxHP);
                             break;
                         case 3:
-                            hp = (int)(2 * social * 0.01f * targetMaxHP);
+                            hp = (int)((40 + socMod * 8f / 3f) * 0.01f * targetMaxHP);
                             break;
                     }
 

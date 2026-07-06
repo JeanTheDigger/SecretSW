@@ -62,6 +62,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             }
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.Force);
+            dmg += GetAbilityModifier(AbilityType.Perception, activator);
 
             const float Delay = 1.2f;
             ClearAllActions();
@@ -75,10 +76,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             CombatPoint.AddCombatPoint(activator, target, SkillType.Force, 3);
 
             var stat = AbilityType.Perception;
-            if (Ability.IsAbilityToggled(activator, AbilityToggleType.StrongStyleLightsaber))
-            {
-                stat = AbilityType.Might;
-            }
 
             var attackerStat = Combat.GetPerkAdjustedAbilityScore(activator);
             var attack = Stat.GetAttack(activator, stat, SkillType.Force);
