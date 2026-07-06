@@ -90,8 +90,8 @@ namespace SWLOR.Game.Server.Feature.MigrationDefinition
                 var shipItem = ObjectPlugin.Deserialize(dbShip.SerializedItem);
                 var shipBonuses = Space.GetShipBonuses(shipItem);
 
-                dbShip.Status.Shield = Space.CalculateShieldRating(shipDetail.MaxShield + shipBonuses.Shield);
-                dbShip.Status.MaxShield = Space.CalculateShieldRating(shipDetail.MaxShield + shipBonuses.Shield);
+                dbShip.Status.Shield = Space.CalculateShieldRating(shipDetail, shipBonuses.Shield);
+                dbShip.Status.MaxShield = Space.CalculateShieldRating(shipDetail, shipBonuses.Shield);
                 dbShip.Status.Hull = shipDetail.MaxHull + shipBonuses.Hull;
                 dbShip.Status.MaxHull = shipDetail.MaxHull + shipBonuses.Hull;
                 dbShip.Status.DamageThreshold = Space.CalculateDamageThreshold(shipDetail);

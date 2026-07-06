@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.PerkService;
 using SWLOR.Game.Server.Service.PropertyService;
 using SWLOR.Game.Server.Service.SpaceService;
@@ -99,6 +100,23 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .LowPowerNodes(5)
                 .ShipConfigurationNodes(1)
                 .InteriorLayout(PropertyLayoutType.Hound);
+
+            _builder.Create("sdeed_prospect")
+                .ItemResref("sdeed_prospect")
+                .Name("Prospector")
+                .Appearance(AppearanceType.SWLORShipRepublicGunshipC)
+                .RequirePerk(PerkType.Starships, 2)
+                .MaxArmor(120)
+                .MaxCapacitor(160)
+                .MaxShield(70)
+                .ShieldRating(14)
+                .DamageThreshold(36)
+                .Evasion(3)
+                .ShieldRechargeRate(10)
+                .HighPowerNodes(2)
+                .LowPowerNodes(3)
+                .ShipConfigurationNodes(1)
+                .InteriorLayout(PropertyLayoutType.Mule);
 
             _builder.Create("sdeed_panther")
                 .ItemResref("sdeed_panther")
@@ -268,6 +286,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Republic Thranta Corvette")
                 .Appearance(AppearanceType.SWLORShipRepublicThranta)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.RepublicMilitary, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)
@@ -283,6 +302,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Sith Thranta Corvette")
                 .Appearance(AppearanceType.SWLORShipSithThranta)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.SithMilitary, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)
@@ -298,6 +318,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Thranta Corvette")
                 .Appearance(AppearanceType.SWLORShipNeutralThranta)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.Smuggler, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)
@@ -328,6 +349,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Chiss Trireme")
                 .Appearance(AppearanceType.SWLORShipChissTrireme)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.SithMilitary, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)
@@ -388,6 +410,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Jehavey'ir")
                 .Appearance(AppearanceType.SWLORShipMandalorianJehaveyFrigate)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.Mandalorian, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)
@@ -403,6 +426,7 @@ namespace SWLOR.Game.Server.Feature.ShipDefinition
                 .Name("Crusader Corvette")
                 .Appearance(AppearanceType.SWLORShipMandalorianCrusaderCorvette)
                 .RequirePerk(PerkType.CapitalCommand, 2)
+                .RequiresFactionStanding(FactionType.Mandalorian, 3000)
                 .MaxArmor(750)
                 .MaxCapacitor(500)
                 .MaxShield(750)

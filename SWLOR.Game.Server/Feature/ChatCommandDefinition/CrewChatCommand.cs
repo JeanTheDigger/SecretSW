@@ -108,6 +108,36 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                     Space.SalvageTarget(user);
                 });
 
+            _builder.Create("shiplayout")
+                .Description("Ship interior blueprints: /shiplayout <save|restore|status>. Save captures your ship's furnishing arrangement; restore re-places matching structure items from your inventory aboard a same-layout ship.")
+                .Permissions(AuthorizationLevel.Player)
+                .Validate((user, args) =>
+                {
+                    if (args.Length < 1)
+                        return "Usage: /shiplayout <save|restore|status>";
+
+                    var mode = args[0].ToLower();
+                    if (mode != "save" && mode != "restore" && mode != "status")
+                        return "Mode must be 'save', 'restore', or 'status'.";
+
+                    return string.Empty;
+                })
+                .Action((user, target, location, args) =>
+                {
+                    switch (args[0].ToLower())
+                    {
+                        case "save":
+                            ShipLayout.SaveLayout(user);
+                            break;
+                        case "restore":
+                            ShipLayout.RestoreLayout(user);
+                            break;
+                        default:
+                            ShipLayout.ShowStatus(user);
+                            break;
+                    }
+                });
+
             _builder.Create("attune")
                 .Description("Attunes you to the weapon in your main hand (requires the Signature Weapon perk). The bond grants bonus damage with that item alone - and it outlives you.")
                 .Permissions(AuthorizationLevel.Player)

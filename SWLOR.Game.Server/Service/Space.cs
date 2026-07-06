@@ -7,6 +7,7 @@ using SWLOR.Game.Server.Core.NWNX.Enum;
 using SWLOR.Game.Server.Entity;
 using SWLOR.Game.Server.Enumeration;
 using SWLOR.Game.Server.Service.DBService;
+using SWLOR.Game.Server.Service.FactionService;
 using SWLOR.Game.Server.Service.GuiService;
 using SWLOR.Game.Server.Service.LogService;
 using SWLOR.Game.Server.Service.PerkService;
@@ -980,6 +981,18 @@ namespace SWLOR.Game.Server.Service
                 if (dbPlayer.Perks[perkType] < requiredLevel) return false;
             }
 
+            // Faction commissions: heavy warships are faction assets.
+            if (shipDetails.RequiredFaction != FactionType.Invalid)
+            {
+                if (!dbPlayer.Factions.ContainsKey(shipDetails.RequiredFaction) ||
+                    dbPlayer.Factions[shipDetails.RequiredFaction].Standing < shipDetails.RequiredFactionStanding)
+                {
+                    var factionName = Faction.GetFactionDetail(shipDetails.RequiredFaction).Name;
+                    SendMessageToPC(player, $"This vessel is commissioned by the {factionName}. You lack the required standing ({shipDetails.RequiredFactionStanding}).");
+                    return false;
+                }
+            }
+
             foreach (var (_, shipModule) in playerShip.HighPowerModules)
             {
                 if (!CanPlayerUseShipModule(player, shipModule.ItemTag)) return false;
@@ -1258,11 +1271,27 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Frame-aware shield rating: an explicit .ShieldRating() override wins over the
+        /// pool band derivation. Module shield bonuses (authored on the pool scale)
+        /// convert on top in both cases.
+        /// </summary>
+        public static int CalculateShieldRating(ShipDetail shipDetail, int bonusShieldPool)
+        {
+            if (shipDetail.ShieldRatingOverride.HasValue)
+                return Math.Clamp(shipDetail.ShieldRatingOverride.Value + bonusShieldPool / 5, 5, 80);
+
+            return CalculateShieldRating(shipDetail.MaxShield + bonusShieldPool);
+        }
+
+        /// <summary>
         /// Derives a frame's damage threshold from its class until the frame catalog is
         /// authored per-hull: capitals 50, transport-weight hulls 30, fighters 15.
         /// </summary>
         public static int CalculateDamageThreshold(ShipDetail shipDetail)
         {
+            if (shipDetail.DamageThresholdOverride.HasValue)
+                return shipDetail.DamageThresholdOverride.Value;
+
             if (shipDetail.CapitalShip)
                 return 50;
 
@@ -1413,8 +1442,8 @@ namespace SWLOR.Game.Server.Service
             var shipStatus = new ShipStatus
             {
                 ItemTag = registeredEnemyType.ShipItemTag,
-                Shield = CalculateShieldRating(shipDetail.MaxShield),
-                MaxShield = CalculateShieldRating(shipDetail.MaxShield),
+                Shield = CalculateShieldRating(shipDetail, 0),
+                MaxShield = CalculateShieldRating(shipDetail, 0),
                 Hull = shipDetail.MaxHull,
                 MaxHull = shipDetail.MaxHull,
                 Capacitor = shipDetail.MaxCapacitor,
@@ -2487,6 +2516,9 @@ namespace SWLOR.Game.Server.Service
                     // property - is destroyed permanently. Characters never perma-die
                     // in space: pods always reach a dock.
                     DB.Set(dbPlayer);
+
+                    // The interior arrangement survives as a blueprint (/shiplayout).
+                    ShipLayout.SnapshotInterior(dbPlayerShip.OwnerPlayerId, dbProperty);
 
                     foreach (var player in instance.Players)
                     {

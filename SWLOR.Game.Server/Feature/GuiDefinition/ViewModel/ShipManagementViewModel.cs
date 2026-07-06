@@ -1337,8 +1337,8 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     Status = new ShipStatus
                     {
                         ItemTag = itemTag,
-                        Shield = Space.CalculateShieldRating(shipDetail.MaxShield + bonuses.Shield),
-                        MaxShield = Space.CalculateShieldRating(shipDetail.MaxShield + bonuses.Shield),
+                        Shield = Space.CalculateShieldRating(shipDetail, bonuses.Shield),
+                        MaxShield = Space.CalculateShieldRating(shipDetail, bonuses.Shield),
                         Hull = shipDetail.MaxHull + bonuses.Hull,
                         MaxHull = shipDetail.MaxHull + bonuses.Hull,
                         Capacitor = shipDetail.MaxCapacitor + bonuses.Capacitor,
