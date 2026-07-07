@@ -89,6 +89,7 @@ namespace SWLOR.Game.Server.Service
 
             GetOrAddSide(match, sideName).PlayerIds.Add(uuid);
             ReconcilePlayer(match, area, player);
+            RegroupSideParty(match, area, sideName);
         }
 
         /// <summary>
@@ -120,12 +121,16 @@ namespace SWLOR.Game.Server.Service
 
             var players = Area.GetPlayersInArea(area);
 
-            // Reset standard faction reputation for PCs (same three factions Death.cs resets).
+            // Reset standard faction reputation for PCs (same three factions Death.cs resets) and dissolve
+            // the side parties we force-grouped.
             foreach (var player in players)
             {
                 SetStandardFactionReputation(StandardFaction.Commoner, 100, player);
                 SetStandardFactionReputation(StandardFaction.Merchant, 100, player);
                 SetStandardFactionReputation(StandardFaction.Defender, 100, player);
+
+                if (FindPlayerSide(match, player) != null)
+                    Party.ForceRemove(player);
             }
 
             // Clear personal reputation across every combatant + companion pair, both directions.
@@ -165,8 +170,12 @@ namespace SWLOR.Game.Server.Service
                 return;
 
             // Only re-assert for players who are actually on a side.
-            if (FindPlayerSide(match, player) != null)
+            var side = FindPlayerSide(match, player);
+            if (side != null)
+            {
                 ReconcilePlayer(match, area, player);
+                RegroupSideParty(match, area, side);
+            }
         }
 
         private static SideData GetOrAddSide(Match match, string sideName)
@@ -256,6 +265,36 @@ namespace SWLOR.Game.Server.Service
 
                     SetMutualRelation(npc, other, sameSide);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Force-groups a side's present PCs into one NWN party so they share the party HUD, party-scoped
+        /// kill credit, Enmity friendly-fire suppression, and party auras. Picks the first present, valid PC
+        /// on the side as the party anchor and adds the rest to it; the Party.IsInParty guard + ForceAdd's
+        /// idempotency make repeated calls (on each join / area-enter) safe. NPCs are never party-grouped
+        /// (engine AddToParty is PC-only) — they are handled entirely by reputation.
+        ///
+        /// v1 limitation: a PC arriving already in an open-world party, or switching sides mid-match, is not
+        /// reconciled here — end and restart the match for a clean regroup.
+        /// </summary>
+        private static void RegroupSideParty(Match match, uint area, string sideName)
+        {
+            var members = new List<uint>();
+            foreach (var player in Area.GetPlayersInArea(area))
+            {
+                if (GetIsObjectValid(player) && FindPlayerSide(match, player) == sideName)
+                    members.Add(player);
+            }
+
+            if (members.Count <= 1)
+                return;
+
+            var anchor = members[0];
+            for (var i = 1; i < members.Count; i++)
+            {
+                if (!Party.IsInParty(anchor, members[i]))
+                    Party.ForceAdd(anchor, members[i]);
             }
         }
 
