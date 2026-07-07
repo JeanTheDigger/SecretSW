@@ -25,7 +25,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         private void ObjectiveTest()
         {
             _builder.Create("objtest")
-                .Description("(DM) Mission objective test: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | end")
+                .Description("(DM) Mission objective test: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | eliminate [single|lives|tickets] [n] | end")
                 .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
                 .AvailableToAllOnTestEnvironment()
                 .Action((user, target, location, args) =>
@@ -34,7 +34,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
 
                     if (args.Length == 0)
                     {
-                        SendMessageToPC(user, "Usage: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | end");
+                        SendMessageToPC(user, "Usage: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | eliminate [single|lives|tickets] [n] | end");
                         return;
                     }
 
@@ -115,11 +115,31 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                             var ticks = args.Length >= 3 && int.TryParse(args[2], out var t) ? t : 5;
                             Mission.AddObjective(area, new SliceObjective(args[1], ticks));
                             break;
+                        case "eliminate":
+                            var mode = EliminationMode.SingleElimination;
+                            var lives = 1;
+                            if (args.Length >= 2)
+                            {
+                                switch (args[1].ToLower())
+                                {
+                                    case "lives":
+                                        mode = EliminationMode.LimitedLives;
+                                        lives = args.Length >= 3 && int.TryParse(args[2], out var lv) ? lv : 3;
+                                        break;
+                                    case "tickets":
+                                        mode = EliminationMode.SharedTickets;
+                                        lives = args.Length >= 3 && int.TryParse(args[2], out var tk) ? tk : 5;
+                                        break;
+                                    // "single" (or anything else) falls through to the default single-elim.
+                                }
+                            }
+                            Mission.AddObjective(area, new EliminateObjective(area, mode, lives));
+                            break;
                         case "end":
                             Mission.EndRun(area);
                             break;
                         default:
-                            SendMessageToPC(user, "Unknown type. Use: kill | boss | destroy | reach | retrieve | protect | rescue | escort | slice | end.");
+                            SendMessageToPC(user, "Unknown type. Use: kill | boss | destroy | reach | retrieve | protect | rescue | escort | slice | eliminate | end.");
                             break;
                     }
                 });

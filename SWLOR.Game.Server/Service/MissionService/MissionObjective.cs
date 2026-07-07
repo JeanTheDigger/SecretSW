@@ -40,6 +40,12 @@ namespace SWLOR.Game.Server.Service.MissionService
         public virtual void OnCreatureKilled(uint creature) { }
 
         /// <summary>
+        /// Called when a PLAYER dies (routed from the module death event, not the creature death event).
+        /// PvP win-conditions (e.g. eliminate the opposing side) override this to count eliminations.
+        /// </summary>
+        public virtual void OnPlayerDied(uint player) { }
+
+        /// <summary>
         /// Called when any placeable is destroyed. Objectives that track destruction override this.
         /// </summary>
         public virtual void OnPlaceableDestroyed(uint placeable) { }

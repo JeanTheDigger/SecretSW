@@ -51,6 +51,36 @@ namespace SWLOR.Game.Server.Service
         public static bool HasMatch(uint area) => _matchesByArea.ContainsKey(area);
 
         /// <summary>
+        /// Returns the side name a player belongs to in the area's match (by UUID, so it survives reconnect),
+        /// or null if there is no match or the player is on no side. Read by PvP win-condition objectives.
+        /// </summary>
+        public static string GetPlayerSide(uint area, uint player)
+        {
+            return _matchesByArea.TryGetValue(area, out var match) ? FindPlayerSide(match, player) : null;
+        }
+
+        /// <summary>
+        /// Returns the names of all sides registered in the area's match (empty if no match).
+        /// </summary>
+        public static IReadOnlyCollection<string> GetSideNames(uint area)
+        {
+            return _matchesByArea.TryGetValue(area, out var match)
+                ? new List<string>(match.Sides.Keys)
+                : new List<string>();
+        }
+
+        /// <summary>
+        /// Returns the number of PCs registered to a side (its roster size, by UUID). 0 if no match/side.
+        /// </summary>
+        public static int GetSidePlayerCount(uint area, string sideName)
+        {
+            if (_matchesByArea.TryGetValue(area, out var match) && match.Sides.TryGetValue(sideName, out var side))
+                return side.PlayerIds.Count;
+
+            return 0;
+        }
+
+        /// <summary>
         /// Starts a two-side match in an area: flips it to Full-PvP (so PCs can damage PCs, which also allows
         /// within-side friendly fire), enables friendly-fire AoE, and flags it. Idempotent.
         /// </summary>

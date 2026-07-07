@@ -72,6 +72,13 @@ namespace SWLOR.Game.Server.Service
             RouteAndEvaluate(o => o.OnPlaceableDestroyed(placeable));
         }
 
+        [NWNEventHandler(ScriptName.OnModuleDeath)]
+        public static void OnPlayerDied()
+        {
+            var player = GetLastPlayerDied();
+            RouteAndEvaluate(o => o.OnPlayerDied(player));
+        }
+
         [NWNEventHandler(ScriptName.OnModuleAcquire)]
         public static void OnItemAcquired()
         {
