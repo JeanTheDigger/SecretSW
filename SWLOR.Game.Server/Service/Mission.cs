@@ -123,7 +123,11 @@ namespace SWLOR.Game.Server.Service
                 return;
             }
 
-            if (run.Objectives.Count > 0 && run.Objectives.All(o => o.IsComplete))
+            // Success is evaluated over the completable (non-fail-condition) objectives only: a
+            // fail-condition rider like "keep the VIP alive" must never gate completion, it can only
+            // fail the mission (handled above). Guard against a run made up solely of riders.
+            var completable = run.Objectives.Where(o => !o.IsFailCondition).ToList();
+            if (completable.Count > 0 && completable.All(o => o.IsComplete))
             {
                 run.Finished = true;
                 Announce(run.Area, "*** All mission objectives complete! ***");

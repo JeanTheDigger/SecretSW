@@ -25,7 +25,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         private void ObjectiveTest()
         {
             _builder.Create("objtest")
-                .Description("(DM) Mission objective test: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | end")
+                .Description("(DM) Mission objective test: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | end")
                 .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
                 .AvailableToAllOnTestEnvironment()
                 .Action((user, target, location, args) =>
@@ -34,7 +34,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
 
                     if (args.Length == 0)
                     {
-                        SendMessageToPC(user, "Usage: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | end");
+                        SendMessageToPC(user, "Usage: /objtest kill <tag> <count> | boss <tag> | destroy <tag> | reach <tag> [radius] | retrieve <itemTag> <extractTag> | protect <tag> [seconds] | rescue <npcTag> <extractTag> | escort <npcTag> <extractTag> | slice <tag> [ticks] | end");
                         return;
                     }
 
@@ -81,11 +81,45 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                             }
                             Mission.AddObjective(area, new RetrieveObjective(args[1], args[2]));
                             break;
+                        case "protect":
+                            if (args.Length < 2)
+                            {
+                                SendMessageToPC(user, "Usage: /objtest protect <tag> [seconds]");
+                                return;
+                            }
+                            var surviveSeconds = args.Length >= 3 && int.TryParse(args[2], out var s) ? s : 0;
+                            Mission.AddObjective(area, new ProtectObjective(args[1], surviveSeconds));
+                            break;
+                        case "rescue":
+                            if (args.Length < 3)
+                            {
+                                SendMessageToPC(user, "Usage: /objtest rescue <npcTag> <extractTag>");
+                                return;
+                            }
+                            Mission.AddObjective(area, new RescueObjective(args[1], args[2], startsCaptive: true));
+                            break;
+                        case "escort":
+                            if (args.Length < 3)
+                            {
+                                SendMessageToPC(user, "Usage: /objtest escort <npcTag> <extractTag>");
+                                return;
+                            }
+                            Mission.AddObjective(area, new RescueObjective(args[1], args[2], startsCaptive: false));
+                            break;
+                        case "slice":
+                            if (args.Length < 2)
+                            {
+                                SendMessageToPC(user, "Usage: /objtest slice <tag> [ticks]");
+                                return;
+                            }
+                            var ticks = args.Length >= 3 && int.TryParse(args[2], out var t) ? t : 5;
+                            Mission.AddObjective(area, new SliceObjective(args[1], ticks));
+                            break;
                         case "end":
                             Mission.EndRun(area);
                             break;
                         default:
-                            SendMessageToPC(user, "Unknown type. Use: kill | boss | destroy | reach | retrieve | end.");
+                            SendMessageToPC(user, "Unknown type. Use: kill | boss | destroy | reach | retrieve | protect | rescue | escort | slice | end.");
                             break;
                     }
                 });

@@ -22,6 +22,14 @@ namespace SWLOR.Game.Server.Service.MissionService
         public bool Failed { get; protected set; }
 
         /// <summary>
+        /// True if this objective is a fail-condition rider rather than a goal to complete: it exists only
+        /// to be able to FAIL the mission (e.g. "keep the VIP alive"), and must NOT gate mission success.
+        /// Mission success is evaluated over the non-fail-condition objectives only, but ANY objective that
+        /// enters the Failed state fails the whole mission. Defaults to false (a normal completable goal).
+        /// </summary>
+        public virtual bool IsFailCondition => false;
+
+        /// <summary>
         /// A short, human-readable description including current progress (shown to players).
         /// </summary>
         public abstract string Description { get; }
