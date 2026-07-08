@@ -132,17 +132,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
 				.Component("ref_tilarium", 2)
 				.Component("elec_ruined", 1);
 
-			// Basic Mining Laser
-			_builder.Create(RecipeType.BasicMiningLaser, SkillType.Engineering)
-				.Category(RecipeCategoryType.ShipModule)
-				.Resref("min_laser_b")
-				.Level(1)
-				.Quantity(1)
-				.RequirementPerk(PerkType.StarshipBlueprints, 1)
-				.EnhancementSlots(RecipeEnhancementType.Module, 1)
-				.Component("ref_tilarium", 1)
-				.Component("elec_ruined", 1);
-
 			// Basic Missile Launcher
 			_builder.Create(RecipeType.BasicMissileLauncher, SkillType.Engineering)
 				.Category(RecipeCategoryType.ShipModule)
@@ -398,17 +387,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
 				.RequirementPerk(PerkType.StarshipBlueprints, 2)
 				.EnhancementSlots(RecipeEnhancementType.Module, 1)
 				.Component("ref_currian", 2)
-				.Component("elec_flawed", 1);
-
-			//  Mining Laser I
-			_builder.Create(RecipeType.MiningLaser1, SkillType.Engineering)
-				.Category(RecipeCategoryType.ShipModule)
-				.Resref("min_laser_1")
-				.Level(11)
-				.Quantity(1)
-				.RequirementPerk(PerkType.StarshipBlueprints, 2)
-				.EnhancementSlots(RecipeEnhancementType.Module, 1)
-				.Component("ref_currian", 1)
 				.Component("elec_flawed", 1);
 
 			//  Missile Launcher I
@@ -668,17 +646,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
 				.Component("ref_idailia", 2)
 				.Component("elec_good", 1);
 
-			//  Mining Laser II
-			_builder.Create(RecipeType.MiningLaser2, SkillType.Engineering)
-				.Category(RecipeCategoryType.ShipModule)
-				.Resref("min_laser_2")
-				.Level(21)
-				.Quantity(1)
-				.RequirementPerk(PerkType.StarshipBlueprints, 3)
-				.EnhancementSlots(RecipeEnhancementType.Module, 2)
-				.Component("ref_idailia", 1)
-				.Component("elec_good", 1);
-
 			//  Missile Launcher II
 			_builder.Create(RecipeType.MissileLauncher2, SkillType.Engineering)
 				.Category(RecipeCategoryType.ShipModule)
@@ -936,17 +903,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
 				.Component("ref_barinium", 2)
 				.Component("elec_imperfect", 1);
 
-			//  Mining Laser III
-			_builder.Create(RecipeType.MiningLaser3, SkillType.Engineering)
-				.Category(RecipeCategoryType.ShipModule)
-				.Resref("min_laser_3")
-				.Level(31)
-				.Quantity(1)
-				.RequirementPerk(PerkType.StarshipBlueprints, 4)
-				.EnhancementSlots(RecipeEnhancementType.Module, 2)
-				.Component("ref_barinium", 1)
-				.Component("elec_imperfect", 1);
-
 			//  Missile Launcher III
 			_builder.Create(RecipeType.MissileLauncher3, SkillType.Engineering)
 				.Category(RecipeCategoryType.ShipModule)
@@ -1202,17 +1158,6 @@ namespace SWLOR.Game.Server.Feature.RecipeDefinition.EngineeringRecipeDefinition
 				.RequirementPerk(PerkType.StarshipBlueprints, 5)
 				.EnhancementSlots(RecipeEnhancementType.Module, 2)
 				.Component("ref_gostian", 2)
-				.Component("elec_high", 1);
-
-			//  Mining Laser IV
-			_builder.Create(RecipeType.MiningLaser4, SkillType.Engineering)
-				.Category(RecipeCategoryType.ShipModule)
-				.Resref("min_laser_4")
-				.Level(41)
-				.Quantity(1)
-				.RequirementPerk(PerkType.StarshipBlueprints, 5)
-				.EnhancementSlots(RecipeEnhancementType.Module, 2)
-				.Component("ref_gostian", 1)
 				.Component("elec_high", 1);
 
 			//  Missile Launcher IV

@@ -16,8 +16,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
             DefensiveModules(builder);
             OffensiveModules(builder);
             EnergyManagement(builder);
-            MiningModules(builder);
-            StarshipMining(builder);
             IntuitivePiloting(builder);
 
             return builder.Build();
@@ -191,59 +189,6 @@ namespace SWLOR.Game.Server.Feature.PerkDefinition
                 .Price(5)
                 .RequirementSkill(SkillType.Piloting, 40)
                 .GrantsFeat(FeatType.EnergyManagement2);
-        }
-
-        private void MiningModules(PerkBuilder builder)
-        {
-            builder.Create(PerkCategoryType.Piloting, PerkType.MiningModules)
-                .Name("Mining Modules")
-
-                .AddPerkLevel()
-                .Description("Enables you to attach tier 1 mining modules on starships.")
-                .Price(1)
-                .GrantsFeat(FeatType.MiningModules1)
-
-                .AddPerkLevel()
-                .Description("Enables you to attach tier 2 mining modules on starships.")
-                .Price(1)
-                .RequirementSkill(SkillType.Piloting, 10)
-                .GrantsFeat(FeatType.MiningModules2)
-
-                .AddPerkLevel()
-                .Description("Enables you to attach tier 3 mining modules on starships.")
-                .Price(2)
-                .RequirementSkill(SkillType.Piloting, 20)
-                .GrantsFeat(FeatType.MiningModules3)
-
-                .AddPerkLevel()
-                .Description("Enables you to attach tier 4 mining modules on starships.")
-                .Price(3)
-                .RequirementSkill(SkillType.Piloting, 30)
-                .GrantsFeat(FeatType.MiningModules4)
-
-                .AddPerkLevel()
-                .Description("Enables you to attach tier 5 mining modules on starships.")
-                .Price(3)
-                .RequirementSkill(SkillType.Piloting, 40)
-                .GrantsFeat(FeatType.MiningModules5);
-        }
-
-        private void StarshipMining(PerkBuilder builder)
-        {
-            builder.Create(PerkCategoryType.Piloting, PerkType.StarshipMining)
-                .Name("Starship Mining")
-
-                .AddPerkLevel()
-                .Description("Mining yield improves by 1 unit per cycle.")
-                .Price(5)
-                .RequirementSkill(SkillType.Piloting, 20)
-                .GrantsFeat(FeatType.StarshipMining1)
-
-                .AddPerkLevel()
-                .Description("Mining yield improves by 2 units per cycle.")
-                .Price(5)
-                .RequirementSkill(SkillType.Piloting, 40)
-                .GrantsFeat(FeatType.StarshipMining2);
         }
 
         private void IntuitivePiloting(PerkBuilder builder)
