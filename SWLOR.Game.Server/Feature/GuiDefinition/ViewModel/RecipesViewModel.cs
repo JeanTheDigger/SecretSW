@@ -175,12 +175,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             set => Set(value);
         }
 
-        public bool IsInResearchMode
-        {
-            get => Get<bool>();
-            set => Set(value);
-        }
-
         public string ActionButtonText
         {
             get => Get<string>();
@@ -216,18 +210,13 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             _selectedBlueprintItem = OBJECT_INVALID;
             _craftingFilter = initialPayload?.Skill ?? SkillType.Invalid;
             
-            ShowSelectBlueprint = _mode == RecipesUIMode.Crafting || _mode == RecipesUIMode.Research;
+            ShowSelectBlueprint = _mode == RecipesUIMode.Crafting;
             IsSkillEnabled = _craftingFilter == SkillType.Invalid;
 
             if (_mode == RecipesUIMode.Crafting)
             {
                 ActionButtonText = "Craft Item";
                 IsCraftOrResearchVisible = _craftingFilter != SkillType.Invalid;
-            }
-            else if (_mode == RecipesUIMode.Research)
-            {
-                ActionButtonText = "Research";
-                IsCraftOrResearchVisible = true;
             }
             else
             {
@@ -263,9 +252,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             var skills = new GuiBindingList<GuiComboEntry>();
             skills.Add(new GuiComboEntry("<All Skills>", 0));
 
-            var set = _mode == RecipesUIMode.Research 
-                ? Skill.GetActiveResearchableCraftingSkills() 
-                : Skill.GetActiveCraftingSkills();
+            var set = Skill.GetActiveCraftingSkills();
 
             foreach (var (type, detail) in set)
             {
@@ -319,40 +306,18 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             {
                 var skill = (SkillType)SelectedSkillId;
                 var category = (RecipeCategoryType)SelectedCategoryId;
-                if (_mode == RecipesUIMode.Research)
-                {
-                    recipes = Craft.GetResearchableRecipesBySkillAndCategory(skill, category);
-                }
-                else
-                {
-                    recipes = Craft.GetRecipesBySkillAndCategory(skill, category);
-                }
+                recipes = Craft.GetRecipesBySkillAndCategory(skill, category);
             }
             // Only skill selected
             else if (SelectedSkillId > 0)
             {
                 var skill = (SkillType)SelectedSkillId;
-
-                if (_mode == RecipesUIMode.Research)
-                {
-                    recipes = Craft.GetAllResearchableRecipesBySkill(skill);
-                }
-                else
-                {
-                    recipes = Craft.GetAllRecipesBySkill(skill);
-                }
+                recipes = Craft.GetAllRecipesBySkill(skill);
             }
             // Neither filters selected
             else
             {
-                if (_mode == RecipesUIMode.Research)
-                {
-                    recipes = Craft.GetAllResearchableRecipes();
-                }
-                else
-                {
-                    recipes = Craft.GetAllRecipes();
-                }
+                recipes = Craft.GetAllRecipes();
             }
 
             // Search text filter
@@ -391,9 +356,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             if (ShowOnlyCraftableRecipes)
             {
                 recipes = recipes
-                    .Where(x => _mode == RecipesUIMode.Research
-                        ? Craft.CanPlayerResearchRecipe(Player, x.Key)
-                        : Craft.CanPlayerCraftRecipe(Player, x.Key))
+                    .Where(x => Craft.CanPlayerCraftRecipe(Player, x.Key))
                     .ToDictionary(x => x.Key, y => y.Value);
             }
             
@@ -411,9 +374,7 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
 
             foreach (var (type, detail) in recipes)
             {
-                var canCraft = _mode == RecipesUIMode.Research
-                    ? Craft.CanPlayerResearchRecipe(Player, type)
-                    : Craft.CanPlayerCraftRecipe(Player, type);
+                var canCraft = Craft.CanPlayerCraftRecipe(Player, type);
                 var name = $"{Cache.GetItemNameByResref(detail.Resref)} [Lvl. {detail.Level}]";
 
                 recipeNames.Add(name);
@@ -525,26 +486,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                 var payload = new CraftPayload(recipe, _selectedBlueprintItem);
                 Gui.TogglePlayerWindow(Player, GuiWindowType.Craft, payload, TetherObject);
             }
-            else if (_mode == RecipesUIMode.Research)
-            {
-                if (_currentRecipeIndex <= -1)
-                    return;
-
-                var recipeType = _recipeTypes[_currentRecipeIndex];
-                var recipe = Craft.GetRecipe(recipeType);
-
-                if (recipe.EnhancementType != RecipeEnhancementType.Weapon &&
-                    recipe.EnhancementType != RecipeEnhancementType.Armor &&
-                    recipe.EnhancementType != RecipeEnhancementType.Food)
-                {
-                    SendMessageToPC(Player, $"Cannot research that recipe type.");
-                    return;
-                }
-
-                var propertyId = Property.GetPropertyId(TetherObject);
-                var payload = new ResearchPayload(propertyId, OBJECT_INVALID, recipeType);
-                Gui.TogglePlayerWindow(Player, GuiWindowType.Research, payload, TetherObject);
-            }
         };
 
         private bool ValidateBlueprint(uint item)
@@ -578,25 +519,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     return false;
                 }
             }
-            else if (_mode == RecipesUIMode.Research)
-            {
-                var researchLevel = Perk.GetPerkLevel(Player, PerkType.Research);
-                var requiredLevel = recipe.Level / 10 + 1;
-                if (requiredLevel > 5)
-                    requiredLevel = 5;
-
-                if (researchLevel < requiredLevel)
-                {
-                    FloatingTextStringOnCreature($"Research level {requiredLevel} required.", Player, false);
-                    return false;
-                }
-
-                if (blueprint.Level >= Craft.MaxResearchLevel)
-                {
-                    FloatingTextStringOnCreature($"Blueprint cannot be researched any more.", Player, false);
-                    return false;
-                }
-            }
 
             return true;
         }
@@ -618,21 +540,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
                     DisplayRecipeDetail(blueprint.Recipe, blueprint);
 
                     CanCraftOrResearchRecipe = Craft.CanPlayerCraftRecipe(Player, blueprint.Recipe);
-                });
-            }
-            else if (_mode == RecipesUIMode.Research)
-            {
-                Targeting.EnterTargetingMode(Player, ObjectType.Item, "Select the blueprint you wish to research.", item =>
-                {
-                    if (!ValidateBlueprint(item))
-                        return;
-                    
-                    Gui.CloseWindow(Player, GuiWindowType.Recipes, Player);
-
-                    var blueprint = Craft.GetBlueprintDetails(item);
-                    var propertyId = Property.GetPropertyId(TetherObject);
-                    var payload = new ResearchPayload(propertyId, item, blueprint.Recipe);
-                    Gui.TogglePlayerWindow(Player, GuiWindowType.Research, payload, TetherObject);
                 });
             }
         };
@@ -662,8 +569,6 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             
             if(_mode == RecipesUIMode.Crafting)
                 CanCraftOrResearchRecipe = Craft.CanPlayerCraftRecipe(Player, recipe);
-            else if (_mode == RecipesUIMode.Research)
-                CanCraftOrResearchRecipe = Craft.CanPlayerResearchRecipe(Player, recipe);
         }
 
         private void ClearRecipeDetail()

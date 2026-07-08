@@ -55,7 +55,7 @@ namespace SWLOR.Game.Server.Service.GuiService
         Stables = 50,
         TrainingStore = 51,
         Incubator = 52,
-        Research = 53,
+        // 53 was Research (removed).
         TargetDescription = 54,
         MusicPicker = 55,
         Dice = 56,

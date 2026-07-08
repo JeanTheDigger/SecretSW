@@ -18,14 +18,11 @@ using SWLOR.NWN.API.NWNX;
 using SWLOR.NWN.API.NWScript.Enum;
 using SWLOR.NWN.API.NWScript.Enum.Item;
 using SWLOR.NWN.API.NWScript.Enum.Item.Property;
-using ResearchJob = SWLOR.Game.Server.Entity.ResearchJob;
 
 namespace SWLOR.Game.Server.Service
 {
     public static class Craft
     {
-        public const int MaxResearchLevel = 10;
-
         private static readonly Dictionary<RecipeType, RecipeDetail> _recipes = new();
         private static readonly Dictionary<RecipeCategoryType, RecipeCategoryAttribute> _allCategories = new();
         private static readonly Dictionary<RecipeCategoryType, RecipeCategoryAttribute> _activeCategories = new();
@@ -33,10 +30,6 @@ namespace SWLOR.Game.Server.Service
         private static readonly Dictionary<SkillType, Dictionary<RecipeCategoryType, Dictionary<RecipeType, RecipeDetail>>> _recipesBySkillAndCategory = new();
         private static readonly Dictionary<SkillType, Dictionary<RecipeCategoryType, RecipeCategoryAttribute>> _categoriesBySkill = new();
         private static readonly Dictionary<EnhancementSubType, EnhancementSubTypeAttribute> _enhancementSubTypes = new();
-
-        private static readonly Dictionary<RecipeType, RecipeDetail> _researchableRecipes = new();
-        private static readonly Dictionary<SkillType, Dictionary<RecipeType, RecipeDetail>> _researchableRecipesBySkill = new();
-        private static readonly Dictionary<SkillType, Dictionary<RecipeCategoryType, Dictionary<RecipeType, RecipeDetail>>> _researchableRecipesBySkillAndCategory = new();
 
         private static readonly RecipeLevelChart _levelChart = new();
         private static readonly HashSet<string> _componentResrefs = new();
@@ -111,11 +104,7 @@ namespace SWLOR.Game.Server.Service
                         continue;
                     }
 
-                    var isResearchable = IsResearchableRecipe(recipe);
-
                     _recipes[recipeType] = recipe;
-                    if (isResearchable)
-                        _researchableRecipes[recipeType] = recipe;
 
                     UpdateCraftingStatus(recipe);
 
@@ -123,13 +112,6 @@ namespace SWLOR.Game.Server.Service
                     if (!_recipesBySkill.ContainsKey(recipe.Skill))
                         _recipesBySkill[recipe.Skill] = new Dictionary<RecipeType, RecipeDetail>();
                     _recipesBySkill[recipe.Skill][recipeType] = recipe;
-
-                    if (isResearchable)
-                    {
-                        if (!_researchableRecipesBySkill.ContainsKey(recipe.Skill))
-                            _researchableRecipesBySkill[recipe.Skill] = new Dictionary<RecipeType, RecipeDetail>();
-                        _researchableRecipesBySkill[recipe.Skill][recipeType] = recipe;
-                    }
 
                     // Organize recipe by skill and category.
                     if(!_recipesBySkillAndCategory.ContainsKey(recipe.Skill))
@@ -139,18 +121,6 @@ namespace SWLOR.Game.Server.Service
                         _recipesBySkillAndCategory[recipe.Skill][recipe.Category] = new Dictionary<RecipeType, RecipeDetail>();
 
                     _recipesBySkillAndCategory[recipe.Skill][recipe.Category][recipeType] = recipe;
-
-                    if (isResearchable)
-                    {
-                        if(!_researchableRecipesBySkillAndCategory.ContainsKey(recipe.Skill))
-                            _researchableRecipesBySkillAndCategory[recipe.Skill] = new Dictionary<RecipeCategoryType, Dictionary<RecipeType, RecipeDetail>>();
-
-                        if (!_researchableRecipesBySkillAndCategory[recipe.Skill].ContainsKey(recipe.Category))
-                            _researchableRecipesBySkillAndCategory[recipe.Skill][recipe.Category] = new Dictionary<RecipeType, RecipeDetail>();
-
-                        _researchableRecipesBySkillAndCategory[recipe.Skill][recipe.Category][recipeType] = recipe;
-                    }
-
 
                     // Organize categories by skill based on whether there are any recipes under that category.
                     if (recipe.IsActive)
@@ -172,13 +142,6 @@ namespace SWLOR.Game.Server.Service
             }
             
             Console.WriteLine($"Loaded {_recipes.Count} recipes.");
-        }
-
-        private static bool IsResearchableRecipe(RecipeDetail recipe)
-        {
-            return recipe.EnhancementType == RecipeEnhancementType.Weapon ||
-                   recipe.EnhancementType == RecipeEnhancementType.Armor ||
-                   recipe.EnhancementType == RecipeEnhancementType.Food;
         }
 
         private static void CacheEnhancementSubTypes()
@@ -286,19 +249,9 @@ namespace SWLOR.Game.Server.Service
             return _recipes;
         }
 
-        public static Dictionary<RecipeType, RecipeDetail> GetAllResearchableRecipes()
-        {
-            return _researchableRecipes;
-        }
-
         public static Dictionary<RecipeType, RecipeDetail> GetAllRecipesBySkill(SkillType skill)
         {
             return _recipesBySkill[skill];
-        }
-
-        public static Dictionary<RecipeType, RecipeDetail> GetAllResearchableRecipesBySkill(SkillType skill)
-        {
-            return _researchableRecipesBySkill[skill];
         }
 
         /// <summary>
@@ -316,23 +269,6 @@ namespace SWLOR.Game.Server.Service
                 return new Dictionary<RecipeType, RecipeDetail>();
 
             return _recipesBySkillAndCategory[skill][category].ToDictionary(x => x.Key, y => y.Value);
-        }
-
-        /// <summary>
-        /// Retrieves all of the researchable recipes associated with a skill and category.
-        /// </summary>
-        /// <param name="skill">The skill to search by.</param>
-        /// <param name="category">The category to search by.</param>
-        /// <returns></returns>
-        public static Dictionary<RecipeType, RecipeDetail> GetResearchableRecipesBySkillAndCategory(SkillType skill, RecipeCategoryType category)
-        {
-            if (!_researchableRecipesBySkillAndCategory.ContainsKey(skill))
-                return new Dictionary<RecipeType, RecipeDetail>();
-
-            if (!_researchableRecipesBySkillAndCategory[skill].ContainsKey(category))
-                return new Dictionary<RecipeType, RecipeDetail>();
-
-            return _researchableRecipesBySkillAndCategory[skill][category].ToDictionary(x => x.Key, y => y.Value);
         }
 
         /// <summary>
@@ -477,22 +413,6 @@ namespace SWLOR.Game.Server.Service
             return true;
         }
 
-        /// <summary>
-        /// Determines whether a player can research a specific recipe.
-        /// </summary>
-        /// <param name="player">The player to check</param>
-        /// <param name="recipeType">The recipe to check</param>
-        /// <returns>true if the player can research the recipe, false otherwise</returns>
-        public static bool CanPlayerResearchRecipe(uint player, RecipeType recipeType)
-        {
-            var recipe = GetRecipe(recipeType);
-            var tier = recipe.Level / 10 + 1;
-            if (tier > 5)
-                tier = 5;
-
-            return Perk.GetPerkLevel(player, PerkType.Research) >= tier;
-        }
-        
         /// <summary>
         /// Retrieves a recipe's level detail by the given level number.
         /// </summary>
@@ -715,10 +635,9 @@ namespace SWLOR.Game.Server.Service
             throw new Exception("Unsupported enhancement type.");
         }
 
-        // The Research system (research terminals / research jobs / blueprint research) has been
-        // removed along with crafting. Its GUI, entity, and internal helpers remain as inert,
-        // unreachable code pending a build-verified cleanup; there is no longer any entry point
-        // that opens the research flow. Existing "research_term" placeables simply do nothing.
+        // The Research system (research terminals / research jobs / blueprint research) was removed
+        // along with crafting. Only CalculateResearchCost survives below, because the kept
+        // Engineering blueprint-crafting cost path (CalculateBlueprintCraftCreditCost) still uses it.
 
         /// <summary>
         /// Retrieves a blueprint detail object about an item.
@@ -835,45 +754,5 @@ namespace SWLOR.Game.Server.Service
             return CalculateResearchCost(blueprintDetail.Recipe, blueprintDetail.Level, 80, reductionBonus);
         }
 
-        /// <summary>
-        /// Calculates the credit cost to research a blueprint.
-        /// </summary>
-        /// <param name="recipe">The recipe to research</param>
-        /// <param name="blueprintLevel">The level of the blueprint</param>
-        /// <param name="reductionBonus">The % reduction towards credit cost to research</param>
-        /// <returns>The number of credits to charge the player to research the blueprint.</returns>
-        public static int CalculateBlueprintResearchCreditCost(RecipeType recipe, int blueprintLevel, int reductionBonus)
-        {
-            return CalculateResearchCost(recipe, blueprintLevel, 200, reductionBonus * 0.01f);
-        }
-
-        /// <summary>
-        /// Calculates the number of seconds it takes to research a blueprint.
-        /// </summary>
-        /// <param name="recipe">The recipe to research</param>
-        /// <param name="blueprintLevel">The level of the blueprint</param>
-        /// <param name="reductionBonus">The % reduction towards credit cost to research</param>
-        /// <returns>The number of seconds to wait before the blueprint is researched to the next level.</returns>
-        public static int CalculateBlueprintResearchSeconds(RecipeType recipe, int blueprintLevel, int reductionBonus)
-        {
-            return CalculateResearchCost(recipe, blueprintLevel, 200, reductionBonus * 0.01f);
-        }
-
-        /// <summary>
-        /// When a property is removed, also remove any associated research jobs.
-        /// </summary>
-        [NWNEventHandler(ScriptName.OnSwlorDeleteProperty)]
-        public static void OnRemoveProperty()
-        {
-            var propertyId = EventsPlugin.GetEventData("PROPERTY_ID");
-            var dbQuery = new DBQuery<ResearchJob>()
-                .AddFieldSearch(nameof(ResearchJob.ParentPropertyId), propertyId, false);
-            var dbJobs = DB.Search(dbQuery).ToList();
-
-            foreach (var dbJob in dbJobs)
-            {
-                DB.Delete<ResearchJob>(dbJob.Id);
-            }
-        }
     }
 }
