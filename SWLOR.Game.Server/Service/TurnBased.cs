@@ -22,6 +22,9 @@ namespace SWLOR.Game.Server.Service
         // Tunable; slows/roots will subtract from this in a later increment.
         private const float MoveBudgetMeters = 40f;
 
+        // How long an NPC's turn lasts (seconds) — enough to approach and land a swing or two before the loop advances.
+        private const float NpcTurnSeconds = 3f;
+
         private class Encounter
         {
             public uint Area;
@@ -292,12 +295,22 @@ namespace SWLOR.Game.Server.Service
             if (!GetIsObjectValid(active))
                 return;
 
-            // NPC turns are driven by AI in a later increment. For now they auto-pass so the loop advances.
+            // NPC turn: unfreeze it and let it attack its highest-enmity target — the engine approaches and
+            // swings on its own. The turn is bounded to NpcTurnSeconds, after which AdvanceTurn re-freezes it
+            // and moves on. If it has no enmity target it simply passes. (Proactive target acquisition and
+            // ability use for NPCs are later refinements.)
             if (!GetIsPC(active))
             {
+                Unfreeze(active);
+                Enmity.AttackHighestEnmityTarget(active);
                 foreach (var player in Area.GetPlayersInArea(enc.Area))
-                    SendMessageToPC(player, $"{GetName(active)} (NPC) - no AI turn yet, passing.");
-                DelayCommand(1.0f, () => AdvanceTurn(enc));
+                    SendMessageToPC(player, $"{GetName(active)} (NPC) takes its turn.");
+                DelayCommand(NpcTurnSeconds, () =>
+                {
+                    // Only advance if this same encounter is still running (guards against a mid-delay EndEncounter).
+                    if (_encountersByArea.TryGetValue(enc.Area, out var current) && current == enc)
+                        AdvanceTurn(enc);
+                });
                 return;
             }
 
