@@ -31,6 +31,16 @@ namespace SWLOR.Game.Server.Service
         {
             var enemy = OBJECT_SELF;
             var damager = GetLastDamager(enemy);
+
+            // Friendly-fire mission areas: a creature caught in an ally's AoE should not build
+            // enmity toward (and retaliate against) that ally. Only suppress when the damaged
+            // creature does not actually consider the damager an enemy. Scoped to flagged mission
+            // instances, so open-world aggro behavior is unchanged.
+            if (GetIsObjectValid(damager) &&
+                GetLocalBool(GetArea(enemy), Ability.FriendlyFireAreaVariable) &&
+                !GetIsReactionTypeHostile(damager, enemy))
+                return;
+
             var damage = GetTotalDamageDealt();
 
             ModifyEnmity(damager, enemy, damage);
