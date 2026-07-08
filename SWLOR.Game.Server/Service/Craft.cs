@@ -715,62 +715,11 @@ namespace SWLOR.Game.Server.Service
             throw new Exception("Unsupported enhancement type.");
         }
 
-        [NWNEventHandler(ScriptName.OnResearchTerminal)]
-        public static void UseResearchTerminal()
-        {
-            var player = GetLastUsedBy();
-            var playerId = GetObjectUUID(player);
-            var terminal = OBJECT_SELF;
-            var researchLevel = Perk.GetPerkLevel(player, PerkType.Research);
+        // The Research system (research terminals / research jobs / blueprint research) has been
+        // removed along with crafting. Its GUI, entity, and internal helpers remain as inert,
+        // unreachable code pending a build-verified cleanup; there is no longer any entry point
+        // that opens the research flow. Existing "research_term" placeables simply do nothing.
 
-            if (researchLevel <= 0)
-            {
-                SendMessageToPC(player, $"Perk 'Research I' is required to use research terminals.");
-                return;
-            }
-            
-            var propertyId = Property.GetPropertyId(terminal);
-
-            if (string.IsNullOrWhiteSpace(propertyId))
-            {
-                SendMessageToPC(player, $"This research terminal cannot be used.");
-                return;
-            }
-
-            var query = new DBQuery<ResearchJob>()
-                .AddFieldSearch(nameof(ResearchJob.ParentPropertyId), propertyId, false);
-            var dbJob = DB.Search(query)
-                .FirstOrDefault();
-
-            if (dbJob == null)
-            {
-                var payload = new RecipesPayload(RecipesUIMode.Research, SkillType.Invalid);
-                Gui.TogglePlayerWindow(player, GuiWindowType.Recipes, payload, terminal);
-            }
-            else
-            {
-                if (dbJob.PlayerId != playerId)
-                {
-                    var now = DateTime.UtcNow;
-                    if (dbJob.DateCompleted > now)
-                    {
-                        var delta = dbJob.DateCompleted - now;
-                        var completionTime = Time.GetTimeLongIntervals(delta, false);
-                        SendMessageToPC(player, $"Another player's research job is active. This job will complete in: {completionTime}.");
-                    }
-                    else
-                    {
-                        SendMessageToPC(player, $"Another player's research job is active. This job has completed.");
-                    }
-                }
-                else
-                {
-                    var payload = new ResearchPayload(propertyId, OBJECT_INVALID, RecipeType.Invalid);
-                    Gui.TogglePlayerWindow(player, GuiWindowType.Research, payload, terminal);
-                }
-            }
-        }
-        
         /// <summary>
         /// Retrieves a blueprint detail object about an item.
         /// If item is not a blueprint, resulting recipe type will be Invalid.

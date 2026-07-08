@@ -76,13 +76,17 @@ namespace SWLOR.Game.Server.Service.PerkService
         [PerkCategory("First Aid", true)]
         FirstAid = 23,
 
-        [PerkCategory("Smithery", true)]
+        // Smithery crafting has been removed from the game; the category is retired (no active
+        // perks). Enum value retained for serialized data integrity.
+        [PerkCategory("Smithery", false)]
         Smithery = 24,
 
         [PerkCategory("Cybertech", true)]
         Cybertech = 25,
 
-        [PerkCategory("Fabrication", true)]
+        // Fabrication crafting (and the Research perks that lived here) has been removed from the
+        // game; the category is retired (no active perks). Enum value retained for data integrity.
+        [PerkCategory("Fabrication", false)]
         Fabrication = 26,
 
         // Gathering has been removed from the game; the category is retired (no active perks).
@@ -102,7 +106,9 @@ namespace SWLOR.Game.Server.Service.PerkService
         [PerkCategory("General Perks", true)]
         General = 31,
 
-        [PerkCategory("Agriculture", true)]
+        // Agriculture crafting (cooking) has been removed from the game; the category is retired
+        // (no active perks). Enum value retained for serialized data integrity.
+        [PerkCategory("Agriculture", false)]
         Agriculture = 32,
 
         [PerkCategory("Engineering", true)]
