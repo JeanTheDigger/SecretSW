@@ -344,7 +344,7 @@ namespace SWLOR.Game.Server.Service.SkillService
             "Agriculture",
             100,
             false,
-            "Ability to farm, fish, and cook.",
+            "This skill has been removed from the game.",
             false,
             false,
             false)]

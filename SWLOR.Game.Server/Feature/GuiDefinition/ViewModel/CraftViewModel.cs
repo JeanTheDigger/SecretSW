@@ -437,53 +437,10 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
         private void LoadRequiredPerks()
         {
             var detail = Craft.GetRecipe(_recipe);
+            // Smithery, Fabrication, and Agriculture crafting were removed; Engineering is the only
+            // remaining crafting skill, so it is the only case a recipe's skill can be.
             switch (detail.Skill)
             {
-                case SkillType.Smithery:
-                    _rapidSynthesisPerk = PerkType.RapidSynthesisSmithery;
-                    _carefulSynthesisPerk = PerkType.CarefulSynthesisSmithery;
-                    
-                    _basicTouchPerk = PerkType.BasicTouchSmithery;
-                    _standardTouchPerk = PerkType.StandardTouchSmithery;
-                    _preciseTouchPerk = PerkType.PreciseTouchSmithery;
-
-                    _mastersMendPerk = PerkType.MastersMendSmithery;
-                    _steadyHandPerk = PerkType.SteadyHandSmithery;
-                    _muscleMemoryPerk = PerkType.MuscleMemorySmithery;
-
-                    _venerationPerk = PerkType.VenerationSmithery;
-                    _wasteNotPerk = PerkType.WasteNotSmithery;
-                    break;
-                case SkillType.Fabrication:
-                    _rapidSynthesisPerk = PerkType.RapidSynthesisFabrication;
-                    _carefulSynthesisPerk = PerkType.CarefulSynthesisFabrication;
-
-                    _basicTouchPerk = PerkType.BasicTouchFabrication;
-                    _standardTouchPerk = PerkType.StandardTouchFabrication;
-                    _preciseTouchPerk = PerkType.PreciseTouchFabrication;
-
-                    _mastersMendPerk = PerkType.MastersMendFabrication;
-                    _steadyHandPerk = PerkType.SteadyHandFabrication;
-                    _muscleMemoryPerk = PerkType.MuscleMemoryFabrication;
-
-                    _venerationPerk = PerkType.VenerationFabrication;
-                    _wasteNotPerk = PerkType.WasteNotFabrication;
-                    break;
-                case SkillType.Agriculture:
-                    _rapidSynthesisPerk = PerkType.RapidSynthesisCooking;
-                    _carefulSynthesisPerk = PerkType.CarefulSynthesisCooking;
-
-                    _basicTouchPerk = PerkType.BasicTouchCooking;
-                    _standardTouchPerk = PerkType.StandardTouchCooking;
-                    _preciseTouchPerk = PerkType.PreciseTouchCooking;
-
-                    _mastersMendPerk = PerkType.MastersMendCooking;
-                    _steadyHandPerk = PerkType.SteadyHandCooking;
-                    _muscleMemoryPerk = PerkType.MuscleMemoryCooking;
-
-                    _venerationPerk = PerkType.VenerationCooking;
-                    _wasteNotPerk = PerkType.WasteNotCooking;
-                    break;
                 case SkillType.Engineering:
                     _rapidSynthesisPerk = PerkType.RapidSynthesisEngineering;
                     _carefulSynthesisPerk = PerkType.CarefulSynthesisEngineering;
