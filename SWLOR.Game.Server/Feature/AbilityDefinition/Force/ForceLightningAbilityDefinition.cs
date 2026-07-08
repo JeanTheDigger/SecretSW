@@ -49,7 +49,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             var creature = GetFirstObjectInShape(Shape.Sphere, RadiusSize.Huge, GetLocation(target), true, ObjectType.Creature);
             while (GetIsObjectValid(creature) && count <= 5)
             {
-                if (GetIsReactionTypeHostile(creature, activator) && GetIsDead(creature) == false)
+                // Friendly-fire areas sweep living allies into the blast too; open world stays enemy-only.
+                if ((Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)) && GetIsDead(creature) == false)
                 {
                     var attackerStat = GetAbilityScore(activator, AbilityType.Willpower);
                     var defense = Stat.GetDefense(creature, CombatDamageType.Force, AbilityType.Willpower);
@@ -76,8 +77,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                         ApplyEffectToObject(DurationType.Instant, elecBurst, dTarget);
                     });
 
-                    CombatPoint.AddCombatPoint(activator, creature, SkillType.Force, 3);
-                    Enmity.ModifyEnmity(activator, creature, 100 * level + damage);
+                    // Enmity / combat points only for genuine enemies — a friendly-fired ally won't retaliate.
+                    if (GetIsReactionTypeHostile(creature, activator))
+                    {
+                        CombatPoint.AddCombatPoint(activator, creature, SkillType.Force, 3);
+                        Enmity.ModifyEnmity(activator, creature, 100 * level + damage);
+                    }
                     count++;
                 }
                 creature = GetNextObjectInShape(Shape.Sphere, RadiusSize.Huge, GetLocation(target), true, ObjectType.Creature);

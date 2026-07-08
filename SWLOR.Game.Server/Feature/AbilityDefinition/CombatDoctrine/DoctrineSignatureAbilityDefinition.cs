@@ -154,8 +154,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.CombatDoctrine
                     var creature = GetFirstObjectInShape(Shape.Sphere, 4.0f, location, true, ObjectType.Creature);
                     while (GetIsObjectValid(creature))
                     {
+                        // Friendly-fire areas sweep allies into the sweep too; open world stays enemy-only.
                         if (creature != activator && creature != target &&
-                            GetIsReactionTypeHostile(creature, activator))
+                            (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)))
                         {
                             DealDamage(activator, creature, 25, AbilityType.Might);
                         }
@@ -256,7 +257,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.CombatDoctrine
                       Combat.GetAbilityDamageBonus(activator, skill) +
                       GetAbilityModifier(attackerAbility, activator);
 
-            CombatPoint.AddCombatPoint(activator, target, skill, 3);
+            // Combat points only for genuine enemies — a friendly-fired ally (AoE spread) isn't a farm target.
+            if (GetIsReactionTypeHostile(target, activator))
+                CombatPoint.AddCombatPoint(activator, target, skill, 3);
 
             var attackerStat = GetAbilityScore(activator, attackerAbility);
             var attack = Stat.GetAttack(activator, attackerAbility, skill);
@@ -270,7 +273,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.CombatDoctrine
         {
             var damage = RollDamage(activator, target, baseDMG, attackerAbility);
             ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), target);
-            Enmity.ModifyEnmity(activator, target, 150 + damage);
+            // Enmity only for genuine enemies — a friendly-fired ally (AoE spread) won't retaliate.
+            if (GetIsReactionTypeHostile(target, activator))
+                Enmity.ModifyEnmity(activator, target, 150 + damage);
         }
 
         // Duelist capstone: turn their blade aside and answer - the opponent's aim suffers.
@@ -338,8 +343,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.CombatDoctrine
                     var creature = GetFirstObjectInShape(Shape.Sphere, 4.0f, location, true, ObjectType.Creature);
                     while (GetIsObjectValid(creature))
                     {
+                        // Friendly-fire areas sweep allies into the sweep too; open world stays enemy-only.
                         if (creature != activator && creature != target &&
-                            GetIsReactionTypeHostile(creature, activator))
+                            (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)))
                         {
                             DealDamage(activator, creature, 30, AbilityType.Might);
                         }

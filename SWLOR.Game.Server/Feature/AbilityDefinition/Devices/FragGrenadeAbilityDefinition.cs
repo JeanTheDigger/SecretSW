@@ -25,7 +25,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
         
         private void Impact(uint activator, uint target, int dmg, int dc, float bleedLength)
         {
-            if (GetFactionEqual(activator, target))
+            // In a friendly-fire area the blast hits everyone (allies included); otherwise skip same-faction.
+            if (!Ability.IsFriendlyFireArea(activator) && GetFactionEqual(activator, target))
                 return;
 
             dmg += Combat.GetAbilityDamageBonus(activator, SkillType.Devices);
@@ -60,8 +61,13 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                 });
             });
 
-            CombatPoint.AddCombatPoint(activator, target, SkillType.Devices, 3);
-            Enmity.ModifyEnmity(activator, target, 320);
+            // Only genuine enemies seed enmity / award combat points — a friendly-fired ally must not
+            // retaliate, and you can't farm SP by bombing your own side.
+            if (!GetFactionEqual(activator, target))
+            {
+                CombatPoint.AddCombatPoint(activator, target, SkillType.Devices, 3);
+                Enmity.ModifyEnmity(activator, target, 320);
+            }
         }
 
         private void FragGrenade1()

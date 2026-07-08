@@ -56,7 +56,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 ApplyEffectToObject(DurationType.Temporary, effect, target, 6f);
             }
             CombatPoint.AddCombatPointToAllTagged(activator, SkillType.Force, 3);
-            Enmity.ModifyEnmity(activator, target, 400);
+            // Enmity only for genuine enemies — a friendly-fired ally (swept in by AoE) won't retaliate.
+            if (GetIsReactionTypeHostile(target, activator))
+                Enmity.ModifyEnmity(activator, target, 400);
         }
 
         private static void MindTrick1(AbilityBuilder builder)
@@ -97,7 +99,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                     var targetCreature = GetFirstObjectInShape(Shape.Sphere, Radius, GetLocation(target), true);
                     while (GetIsObjectValid(targetCreature))
                     {
-                        if (GetIsReactionTypeHostile(targetCreature, activator) &&
+                        // Friendly-fire areas sweep allies into the spread too; open world stays enemy-only.
+                        if ((Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(targetCreature, activator)) &&
                             target != targetCreature)
                         {
                             ApplyMindTrick(activator, targetCreature);

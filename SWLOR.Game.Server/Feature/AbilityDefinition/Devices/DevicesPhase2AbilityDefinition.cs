@@ -122,7 +122,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                         var creature = GetFirstObjectInShape(Shape.Sphere, RadiusSize.Large, strikeLocation, true, ObjectType.Creature);
                         while (GetIsObjectValid(creature))
                         {
-                            if (creature != activator && GetIsReactionTypeHostile(creature, activator))
+                            // Friendly-fire areas sweep allies into the blast too; open world stays enemy-only.
+                            if (creature != activator && (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)))
                             {
                                 var dmg = 60 + perception * 4 + Combat.GetAbilityDamageBonus(activator, SkillType.Devices);
                                 var attackerStat = GetAbilityScore(activator, AbilityType.Perception);
@@ -137,8 +138,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
                                     ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Fire), damageTarget);
                                 });
 
-                                CombatPoint.AddCombatPoint(activator, creature, SkillType.Devices, 3);
-                                Enmity.ModifyEnmity(activator, creature, 150 + damage);
+                                // Enmity / combat points only for genuine enemies — no ally retaliation or farming.
+                                if (GetIsReactionTypeHostile(creature, activator))
+                                {
+                                    CombatPoint.AddCombatPoint(activator, creature, SkillType.Devices, 3);
+                                    Enmity.ModifyEnmity(activator, creature, 150 + damage);
+                                }
                             }
 
                             creature = GetNextObjectInShape(Shape.Sphere, RadiusSize.Large, strikeLocation, true, ObjectType.Creature);
