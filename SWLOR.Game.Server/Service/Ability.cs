@@ -223,6 +223,14 @@ namespace SWLOR.Game.Server.Service
                 return false;
             }
 
+            // Turn-based combat: one ability/item activation per turn (off-turn use is already blocked above
+            // by the freeze's SetCommandable(false)).
+            if (GetIsPC(activator) && TurnBased.IsActivationSpent(activator))
+            {
+                SendMessageToPC(activator, "You have already taken your action this turn.");
+                return false;
+            }
+
             // Must be within line of sight.
             if (GetIsObjectValid(target) && !LineOfSightObject(activator, target))
             {
