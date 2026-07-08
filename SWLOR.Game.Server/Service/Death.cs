@@ -29,6 +29,27 @@ namespace SWLOR.Game.Server.Service
             var player = GetLastPlayerDied();
             var hostile = GetLastHostileActor(player);
 
+            // Two-side PvP match intercept — runs BEFORE the reputation reset below (which would wipe the
+            // match's per-side personal reputation) and before the medcenter/XP-debt death path. Consults the
+            // Side match's life-state: a player with a life/ticket left respawns in the arena; an eliminated
+            // player falls through to the normal death handling (which removes them from the instance).
+            var deathArea = GetArea(player);
+            if (Side.HasMatch(deathArea) && Side.GetPlayerSide(deathArea, player) != null)
+            {
+                if (Side.RegisterDeath(deathArea, player) == SideDeathResult.Respawn)
+                {
+                    ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
+                    ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player)), player);
+                    DelayCommand(0.1f, () => Ability.ReapplyAuraEffectsForCreature(player));
+
+                    if (Side.TryGetRespawnLocation(deathArea, player, out var respawn))
+                        AssignCommand(player, () => ActionJumpToLocation(respawn));
+
+                    return; // stay in the instance; skip rep reset, medcenter, XP debt, death GUI
+                }
+                // Eliminated / out — fall through to the normal death path.
+            }
+
             SetStandardFactionReputation(StandardFaction.Commoner, 100, player);
             SetStandardFactionReputation(StandardFaction.Merchant, 100, player);
             SetStandardFactionReputation(StandardFaction.Defender, 100, player);
