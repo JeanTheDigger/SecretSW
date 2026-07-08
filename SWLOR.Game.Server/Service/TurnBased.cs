@@ -29,6 +29,7 @@ namespace SWLOR.Game.Server.Service
             public int CurrentIndex;
             public int Round = 1;
             public float RemainingMove;        // movement budget left for the combatant whose turn it is
+            public bool ActivationSpent;       // whether the active combatant has used its one ability/item this turn
         }
 
         // One encounter per area (the arena); plus a reverse lookup creature -> its encounter area.
@@ -54,6 +55,29 @@ namespace SWLOR.Game.Server.Service
             if (!_creatureToArea.TryGetValue(creature, out var area)) return false;
             if (!_encountersByArea.TryGetValue(area, out var enc)) return false;
             return enc.Order.Count > 0 && enc.Order[enc.CurrentIndex] == creature;
+        }
+
+        /// <summary>
+        /// True if it is this creature's turn AND they have already used their one ability/item activation.
+        /// Used by the ability/item activation paths to enforce one activation per turn.
+        /// </summary>
+        public static bool IsActivationSpent(uint creature)
+        {
+            if (!_creatureToArea.TryGetValue(creature, out var area)) return false;
+            if (!_encountersByArea.TryGetValue(area, out var enc)) return false;
+            return enc.Order.Count > 0 && enc.Order[enc.CurrentIndex] == creature && enc.ActivationSpent;
+        }
+
+        /// <summary>
+        /// Marks the active combatant's one-per-turn activation as spent. No-op if the creature isn't the
+        /// combatant currently taking its turn (so it's safe to call unconditionally from activation paths).
+        /// </summary>
+        public static void MarkActivationSpent(uint creature)
+        {
+            if (!_creatureToArea.TryGetValue(creature, out var area)) return;
+            if (!_encountersByArea.TryGetValue(area, out var enc)) return;
+            if (enc.Order.Count > 0 && enc.Order[enc.CurrentIndex] == creature)
+                enc.ActivationSpent = true;
         }
 
         /// <summary>
@@ -249,6 +273,7 @@ namespace SWLOR.Game.Server.Service
 
             Unfreeze(active);
             enc.RemainingMove = MoveBudgetMeters;
+            enc.ActivationSpent = false;
             SendMessageToPC(active, $"It is YOUR turn. /tbmove to move (budget {MoveBudgetMeters:0}m), /endturn when finished.");
             foreach (var player in Area.GetPlayersInArea(enc.Area))
             {

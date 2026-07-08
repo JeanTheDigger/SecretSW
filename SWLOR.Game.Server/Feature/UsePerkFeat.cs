@@ -92,6 +92,7 @@ namespace SWLOR.Game.Server.Feature
                     if(ability.DisplaysActivationMessage)
                         Messaging.SendMessageNearbyToPlayers(activator, $"{GetName(activator)} queues {ability.Name} for the next attack.");
                     QueueWeaponAbility(activator, ability, feat);
+                    TurnBased.MarkActivationSpent(activator);
                 }
             }
             // Concentration abilities are triggered once per tick.
@@ -164,6 +165,10 @@ namespace SWLOR.Game.Server.Feature
             AbilityDetail ability,
             Location targetLocation)
         {
+            // Turn-based combat: committing an activation consumes the actor's one action for the turn.
+            // No-op outside a turn-based encounter.
+            TurnBased.MarkActivationSpent(activator);
+
             // Handles displaying animation and visual effects.
             void ProcessAnimationAndVisualEffects(float delay)
             {
