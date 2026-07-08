@@ -1,11 +1,33 @@
 using System.Collections.Generic;
 using SWLOR.Game.Server.Core;
+using SWLOR.NWN.API.Engine;
 using SWLOR.NWN.API.NWNX;
 using SWLOR.NWN.API.NWScript.Enum;
 using SWLOR.NWN.API.NWScript.Enum.Associate;
 
 namespace SWLOR.Game.Server.Service
 {
+    /// <summary>
+    /// How elimination is scored for a two-side match (owned by the match, read by the death intercept and
+    /// the EliminateObjective so both agree on "respawn or out").
+    /// </summary>
+    public enum EliminationMode
+    {
+        SingleElimination, // one life each — first death takes a player out of the match
+        LimitedLives,      // N lives each — a player is out after their Nth death
+        SharedTickets      // a side shares a pool of N respawns; once empty, deaths are final
+    }
+
+    /// <summary>
+    /// Outcome of registering a player death in a match.
+    /// </summary>
+    public enum SideDeathResult
+    {
+        NotParticipant, // the dead PC is on no side / no match here — handle death normally
+        Respawn,        // the PC has a life/ticket left — respawn them in the arena
+        Eliminated      // the PC is out of the match (no respawn)
+    }
+
     /// <summary>
     /// Two-side hostility engine for PvP missions/arenas. A "side" is a Mission-owned team (a set of PC
     /// UUIDs plus a list of allied NPC objects) that is DELIBERATELY orthogonal to the NWN party — a side is
@@ -34,6 +56,8 @@ namespace SWLOR.Game.Server.Service
         {
             public readonly HashSet<string> PlayerIds = new(); // PC UUIDs
             public readonly List<uint> Npcs = new();           // allied NPC object ids
+            public Location SpawnLocation;                      // team respawn point (null = respawn in place)
+            public int Tickets;                                 // remaining shared respawn tickets (SharedTickets)
         }
 
         private class Match
@@ -41,6 +65,12 @@ namespace SWLOR.Game.Server.Service
             public uint Area;
             public PvPSetting OriginalPvP;
             public readonly Dictionary<string, SideData> Sides = new();
+
+            // Match life-state (single source of truth for the death intercept + EliminateObjective).
+            public EliminationMode Mode = EliminationMode.SingleElimination;
+            public int LivesOrTickets = 1;
+            public readonly Dictionary<string, int> LivesRemaining = new();   // PC UUID -> lives left (per-player modes)
+            public readonly Dictionary<string, HashSet<string>> EliminatedBySide = new(); // side -> eliminated UUIDs
         }
 
         private static readonly Dictionary<uint, Match> _matchesByArea = new();
@@ -81,10 +111,127 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Sets a side's team respawn point. Called at match spin-up (or via the DM test harness). If unset,
+        /// a respawning player is resurrected in place.
+        /// </summary>
+        public static void SetSpawn(uint area, string sideName, Location location)
+        {
+            if (_matchesByArea.TryGetValue(area, out var match))
+                GetOrAddSide(match, sideName).SpawnLocation = location;
+        }
+
+        /// <summary>
+        /// Gets the respawn location for a player's side, if one was set. False if no match / no side / no spawn.
+        /// </summary>
+        public static bool TryGetRespawnLocation(uint area, uint player, out Location location)
+        {
+            location = null;
+            if (!_matchesByArea.TryGetValue(area, out var match))
+                return false;
+
+            var side = FindPlayerSide(match, player);
+            if (side == null || match.Sides[side].SpawnLocation == null)
+                return false;
+
+            location = match.Sides[side].SpawnLocation;
+            return true;
+        }
+
+        /// <summary>
+        /// Registers a player death against the match's life-state and reports whether they respawn or are out.
+        /// Single source of truth consumed by BOTH the Death intercept (respawn vs. medcenter) and the
+        /// EliminateObjective (win check). A player already eliminated stays Eliminated.
+        /// </summary>
+        public static SideDeathResult RegisterDeath(uint area, uint player)
+        {
+            if (!_matchesByArea.TryGetValue(area, out var match))
+                return SideDeathResult.NotParticipant;
+
+            var side = FindPlayerSide(match, player);
+            if (side == null)
+                return SideDeathResult.NotParticipant;
+
+            var uuid = GetObjectUUID(player);
+            if (IsEliminated(match, side, uuid))
+                return SideDeathResult.Eliminated;
+
+            switch (match.Mode)
+            {
+                case EliminationMode.SharedTickets:
+                    var pool = match.Sides[side].Tickets;
+                    if (pool > 0)
+                    {
+                        match.Sides[side].Tickets = pool - 1; // spend a shared respawn, player stays in
+                        return SideDeathResult.Respawn;
+                    }
+                    Eliminate(match, side, uuid); // pool empty — this death is final
+                    return SideDeathResult.Eliminated;
+
+                default: // SingleElimination / LimitedLives
+                    var startingLives = match.Mode == EliminationMode.SingleElimination ? 1 : match.LivesOrTickets;
+                    var lives = (match.LivesRemaining.TryGetValue(uuid, out var l) ? l : startingLives) - 1;
+                    match.LivesRemaining[uuid] = lives;
+                    if (lives > 0)
+                        return SideDeathResult.Respawn;
+                    Eliminate(match, side, uuid);
+                    return SideDeathResult.Eliminated;
+            }
+        }
+
+        /// <summary>
+        /// Returns the sole side still in the fight (all others fully eliminated), or null if the match is not
+        /// yet decided. Requires at least two rostered sides. Read by the EliminateObjective on heartbeat.
+        /// </summary>
+        public static string GetMatchWinner(uint area)
+        {
+            if (!_matchesByArea.TryGetValue(area, out var match) || match.Sides.Count < 2)
+                return null;
+
+            string survivor = null;
+            var sidesStillIn = 0;
+
+            foreach (var kvp in match.Sides)
+            {
+                var rosterSize = kvp.Value.PlayerIds.Count;
+                if (rosterSize == 0)
+                    continue; // an empty side isn't in the fight
+
+                if (EliminatedCount(match, kvp.Key) < rosterSize)
+                {
+                    sidesStillIn++;
+                    survivor = kvp.Key;
+                }
+            }
+
+            return sidesStillIn == 1 ? survivor : null;
+        }
+
+        private static void Eliminate(Match match, string side, string uuid)
+        {
+            if (!match.EliminatedBySide.TryGetValue(side, out var set))
+            {
+                set = new HashSet<string>();
+                match.EliminatedBySide[side] = set;
+            }
+
+            set.Add(uuid);
+        }
+
+        private static bool IsEliminated(Match match, string side, string uuid)
+        {
+            return match.EliminatedBySide.TryGetValue(side, out var set) && set.Contains(uuid);
+        }
+
+        private static int EliminatedCount(Match match, string side)
+        {
+            return match.EliminatedBySide.TryGetValue(side, out var set) ? set.Count : 0;
+        }
+
+        /// <summary>
         /// Starts a two-side match in an area: flips it to Full-PvP (so PCs can damage PCs, which also allows
         /// within-side friendly fire), enables friendly-fire AoE, and flags it. Idempotent.
         /// </summary>
-        public static void StartMatch(uint area)
+        public static void StartMatch(uint area, EliminationMode mode = EliminationMode.SingleElimination, int livesOrTickets = 1)
         {
             if (!GetIsObjectValid(area) || _matchesByArea.ContainsKey(area))
                 return;
@@ -92,7 +239,9 @@ namespace SWLOR.Game.Server.Service
             var match = new Match
             {
                 Area = area,
-                OriginalPvP = AreaPlugin.GetPVPSetting(area)
+                OriginalPvP = AreaPlugin.GetPVPSetting(area),
+                Mode = mode,
+                LivesOrTickets = livesOrTickets <= 0 ? 1 : livesOrTickets
             };
             _matchesByArea[area] = match;
 
@@ -212,7 +361,7 @@ namespace SWLOR.Game.Server.Service
         {
             if (!match.Sides.TryGetValue(sideName, out var side))
             {
-                side = new SideData();
+                side = new SideData { Tickets = match.LivesOrTickets };
                 match.Sides[sideName] = side;
             }
 
