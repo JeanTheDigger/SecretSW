@@ -210,7 +210,12 @@ namespace SWLOR.Game.Server.Feature.LootTableDefinition
             _builder.Create("DANTOOINE_IRIAZ")
                 .AddItem("wild_meat", 10)
                 .AddItem("yotbean", 50)
-                .AddItem("wild_leg", 2);
+                .AddItem("wild_leg", 2)
+                // Re-sourced Engineering crafting materials (ground drops replacing removed gathering)
+                .AddItem("obsidian", 12, 1)
+                .AddItem("ionite", 12, 1)
+                .AddItem("ref_plagionite", 12, 1)
+                .AddItem("ref_idailia", 12, 1);
 
             _builder.Create("DANTOOINE_IRIAZ_RARES")
                 .IsRare()

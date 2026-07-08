@@ -53,7 +53,12 @@ namespace SWLOR.Game.Server.Feature.LootTableDefinition
                 .AddItem("lth_flawed", 20)
                 .AddItem("shyrack_wing", 10)
                 .AddItem("shyrack_meat", 30)
-                .AddItem("shyrack_tooth", 20);
+                .AddItem("shyrack_tooth", 20)
+                // Re-sourced Engineering crafting materials (ground drops replacing removed gathering)
+                .AddItem("crystal", 10, 1)
+                .AddItem("katrium", 12, 1)
+                .AddItem("ref_keromber", 12, 1)
+                .AddItem("ref_barinium", 12, 1);
         }
 
         private void Wraid()

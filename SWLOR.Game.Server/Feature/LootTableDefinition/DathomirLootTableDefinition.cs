@@ -413,7 +413,11 @@ namespace SWLOR.Game.Server.Feature.LootTableDefinition
                 .AddItem("lth_high", 5)
                 .AddItem("lth_imperfect", 10)
                 .AddItem("fiberp_high", 5)
-                .AddItem("fiberp_imperfect", 10);
+                .AddItem("fiberp_imperfect", 10)
+                // Re-sourced Engineering crafting materials (ground drops replacing removed gathering)
+                .AddItem("zinsiam", 12, 1)
+                .AddItem("ref_arda", 10, 1)
+                .AddItem("thor_crys", 4, 1);
 
             _builder.Create("DATHOMIR_SPRANTAL_RARES")
                 .IsRare()

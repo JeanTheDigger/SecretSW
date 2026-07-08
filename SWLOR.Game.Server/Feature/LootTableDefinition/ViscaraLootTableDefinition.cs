@@ -38,7 +38,11 @@ namespace SWLOR.Game.Server.Feature.LootTableDefinition
                 .AddItem("k_hound_fur", 25)
                 .AddItem("k_hound_tooth", 25)
                 .AddItem("lth_ruined", 15)
-                .AddItem("kath_meat_1", 15);
+                .AddItem("kath_meat_1", 15)
+                // Re-sourced Engineering crafting materials (ground drops replacing removed gathering)
+                .AddItem("aluminum", 15, 1)
+                .AddItem("quadrenium", 12, 1)
+                .AddItem("ref_tilarium", 12, 1);
 
             _builder.Create("VISCARA_KATH_HOUND_RARES")
                 .IsRare()

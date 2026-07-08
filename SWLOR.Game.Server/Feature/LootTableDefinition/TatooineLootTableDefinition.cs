@@ -30,7 +30,11 @@ namespace SWLOR.Game.Server.Feature.LootTableDefinition
                 .AddItem("womprattooth", 5)
                 .AddItem("wompratclaw", 5)
                 .AddItem("wompratmeat", 5)
-                .AddItem("womp_innards", 5);
+                .AddItem("womp_innards", 5)
+                // Re-sourced Engineering crafting materials (ground drops replacing removed gathering)
+                .AddItem("steel", 15, 1)
+                .AddItem("vintrium", 12, 1)
+                .AddItem("ref_currian", 12, 1);
         }
 
         private void Sandswimmer()
