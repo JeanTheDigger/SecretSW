@@ -25,6 +25,14 @@ namespace SWLOR.Game.Server.Service
             var damager = GetLastDamager(enemy);
             var damage = GetTotalDamageDealt();
 
+            // Friendly-fire guard: in a friendly-fire area, an ally/neutral clipped by AoE splash takes the
+            // damage but must NOT build enmity toward (i.e. turn on) the attacker. No-op in normal play, where
+            // non-hostiles never take ability damage.
+            if (GetIsObjectValid(damager) &&
+                GetLocalBool(GetArea(enemy), Ability.FriendlyFireAreaVariable) &&
+                !GetIsReactionTypeHostile(damager, enemy))
+                return;
+
             ModifyEnmity(damager, enemy, damage);
         }
 

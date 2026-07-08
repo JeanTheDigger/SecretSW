@@ -46,9 +46,13 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                 ApplyEffectToObject(DurationType.Temporary, effect, target, Duration);
             }
 
-            CombatPoint.AddCombatPoint(source, target, SkillType.Force, 3);
-
-            Enmity.ModifyEnmity(source, target, 850);
+            // Enmity / combat points only for genuine enemies — a friendly-fired ally (swept in by AoE in a
+            // friendly-fire area) must not retaliate or be farmed for SP.
+            if (GetIsReactionTypeHostile(target, source))
+            {
+                CombatPoint.AddCombatPoint(source, target, SkillType.Force, 3);
+                Enmity.ModifyEnmity(source, target, 850);
+            }
         }
         
         private static void ForceStun1(AbilityBuilder builder)
@@ -87,7 +91,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                     var targetCreature = GetFirstObjectInShape(Shape.Sphere, AOESize, GetLocation(target), true);
                     while (GetIsObjectValid(targetCreature))
                     {
-                        if (targetCreature != target && GetIsReactionTypeHostile(targetCreature, activator))
+                        if (targetCreature != target && (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(targetCreature, activator)))
                         {
                             // Apply to nearest other creature, then exit loop. 
                             Impact(activator, targetCreature);
@@ -117,7 +121,7 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                     var targetCreature = GetFirstObjectInShape(Shape.Sphere, AOESize, GetLocation(target), true);
                     while (GetIsObjectValid(targetCreature))
                     {
-                        if (targetCreature != target && GetIsReactionTypeHostile(targetCreature, activator))
+                        if (targetCreature != target && (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(targetCreature, activator)))
                         {
                             // Apply to nearest other creature, then move on to the next.
                             // Intentionally applying Force Stun I so that it doesn't continue to chain exponentially.

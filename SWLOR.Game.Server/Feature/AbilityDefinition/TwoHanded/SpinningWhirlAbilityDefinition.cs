@@ -61,7 +61,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
             var creature = GetFirstObjectInShape(Shape.Sphere, RadiusSize.Large, GetLocation(activator), true, ObjectType.Creature);
             while (GetIsObjectValid(creature) && count < 3)
             {
-                if(GetIsReactionTypeHostile(creature, activator))
+                // Friendly-fire areas sweep allies into the blast too; the open world stays enemy-only.
+                if(Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator))
                 {
                     var attackerStat = GetAbilityScore(activator, AbilityType.Might);
                     var attack = Stat.GetAttack(activator, AbilityType.Might, SkillType.TwoHanded);
@@ -80,8 +81,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.TwoHanded
                     DelayCommand(0.1f, () =>
                         ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), dTarget));
 
-                    CombatPoint.AddCombatPoint(activator, creature, SkillType.TwoHanded, 3);
-                    Enmity.ModifyEnmity(activator, creature, 100 * level + damage);
+                    // Enmity / combat points only for genuine enemies — a friendly-fired ally won't retaliate.
+                    if (GetIsReactionTypeHostile(creature, activator))
+                    {
+                        CombatPoint.AddCombatPoint(activator, creature, SkillType.TwoHanded, 3);
+                        Enmity.ModifyEnmity(activator, creature, 100 * level + damage);
+                    }
                     count++;
                 }
                 creature = GetNextObjectInShape(Shape.Sphere, RadiusSize.Large, GetLocation(activator), true, ObjectType.Creature);

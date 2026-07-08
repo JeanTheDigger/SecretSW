@@ -48,7 +48,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
             var creature = GetFirstObjectInShape(Shape.Sphere, RadiusSize.Medium, GetLocation(target), true, ObjectType.Creature);
             while (GetIsObjectValid(creature))
             {
-                if (GetDistanceBetween(target, creature) <= 4f && GetIsReactionTypeHostile(creature, activator))
+                // Friendly-fire areas sweep allies into the blast too (still within the 4m radius); open world stays enemy-only.
+                if (GetDistanceBetween(target, creature) <= 4f && (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)))
                 {
                     var attackerStat = GetAbilityScore(activator, AbilityType.Willpower);
                     var defense = Stat.GetDefense(target, CombatDamageType.Force, AbilityType.Willpower);
@@ -88,8 +89,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                         ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Pulse_Wind), target);
                     });
 
-                    CombatPoint.AddCombatPoint(activator, creature, SkillType.Force, 3);
-                    Enmity.ModifyEnmity(activator, creature, 250 * level + damage);
+                    // Enmity / combat points only for genuine enemies — a friendly-fired ally won't retaliate.
+                    if (GetIsReactionTypeHostile(creature, activator))
+                    {
+                        CombatPoint.AddCombatPoint(activator, creature, SkillType.Force, 3);
+                        Enmity.ModifyEnmity(activator, creature, 250 * level + damage);
+                    }
                 }
                 creature = GetNextObjectInShape(Shape.Sphere, RadiusSize.Medium, GetLocation(target), true , ObjectType.Creature);
             }

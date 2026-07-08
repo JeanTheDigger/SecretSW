@@ -197,8 +197,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                     var creature = GetFirstObjectInShape(Shape.Sphere, 4.0f, location, true, ObjectType.Creature);
                     while (GetIsObjectValid(creature))
                     {
+                        // Friendly-fire areas sweep allies into the whirlwind too; open world stays enemy-only.
                         if (creature != activator && creature != target &&
-                            GetIsReactionTypeHostile(creature, activator))
+                            (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(creature, activator)))
                         {
                             DealDamage(activator, creature, 25, AbilityType.Agility);
                         }
@@ -316,7 +317,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
                       Combat.GetAbilityDamageBonus(activator, skill) +
                       GetAbilityModifier(attackerAbility, activator);
 
-            CombatPoint.AddCombatPoint(activator, target, skill, 3);
+            // Combat points only for genuine enemies — a friendly-fired ally (AoE spread) isn't a farm target.
+            if (GetIsReactionTypeHostile(target, activator))
+                CombatPoint.AddCombatPoint(activator, target, skill, 3);
 
             var attackerStat = GetAbilityScore(activator, attackerAbility);
             var attack = Stat.GetAttack(activator, attackerAbility, skill);
@@ -330,7 +333,9 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Force
         {
             var damage = RollDamage(activator, target, baseDMG, attackerAbility);
             ApplyEffectToObject(DurationType.Instant, EffectDamage(damage, DamageType.Slashing), target);
-            Enmity.ModifyEnmity(activator, target, 150 + damage);
+            // Enmity only for genuine enemies — a friendly-fired ally (AoE spread) won't retaliate.
+            if (GetIsReactionTypeHostile(target, activator))
+                Enmity.ModifyEnmity(activator, target, 150 + damage);
         }
 
         // Form I capstone: one wide cut through everything in reach.

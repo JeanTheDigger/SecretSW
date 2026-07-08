@@ -23,7 +23,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
 
         private void Impact(uint activator, uint target, float slowLength, int immobilizeDC)
         {
-            if (GetFactionEqual(activator, target))
+            // In a friendly-fire area the blast hits everyone (allies included); otherwise skip same-faction.
+            if (!Ability.IsFriendlyFireArea(activator) && GetFactionEqual(activator, target))
                 return;
 
             var effect = EffectSlow();
@@ -39,8 +40,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
             
             ApplyEffectToObject(DurationType.Temporary, effect, target, slowLength);
 
-            CombatPoint.AddCombatPoint(activator, target, SkillType.Devices, 3);
-            Enmity.ModifyEnmity(activator, target, 150);
+            // Only genuine enemies seed enmity / award combat points (no ally retaliation, no self-side farming).
+            if (!GetFactionEqual(activator, target))
+            {
+                CombatPoint.AddCombatPoint(activator, target, SkillType.Devices, 3);
+                Enmity.ModifyEnmity(activator, target, 150);
+            }
         }
 
         private void AdhesiveGrenade1()

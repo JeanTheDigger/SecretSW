@@ -48,7 +48,8 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                             break;
                         }
 
-                        if (GetIsReactionTypeHostile(nearest, activator))
+                        // Friendly-fire areas sweep allies into the shout too; open world stays enemy-only.
+                        if (Ability.IsFriendlyFireArea(activator) || GetIsReactionTypeHostile(nearest, activator))
                         {
                             count++;
 
@@ -67,8 +68,12 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Leadership
                                 ApplyEffectToObject(DurationType.Instant, EffectVisualEffect(VisualEffect.Vfx_Imp_Head_Sonic), nearest);
                             }
 
-                            CombatPoint.AddCombatPoint(activator, nearest, SkillType.Leadership, 3);
-                            Enmity.ModifyEnmity(activator, nearest, 650);
+                            // Enmity / combat points only for genuine enemies — a friendly-fired ally won't retaliate.
+                            if (GetIsReactionTypeHostile(nearest, activator))
+                            {
+                                CombatPoint.AddCombatPoint(activator, nearest, SkillType.Leadership, 3);
+                                Enmity.ModifyEnmity(activator, nearest, 650);
+                            }
                         }
 
                         if (count >= MaxTargets)

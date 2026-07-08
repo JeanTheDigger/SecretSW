@@ -24,6 +24,24 @@ namespace SWLOR.Game.Server.Service
         private const int MaxNumberOfAuras = 4;
 
         /// <summary>
+        /// Area local flag (set by the mission/Side system on instance areas) that opts an area into
+        /// friendly-fire AoE: hostile area-of-effect abilities splash EVERY creature in the blast, not just
+        /// reputation/faction hostiles. Default false, so the open world is byte-for-byte unchanged. Kept here
+        /// so the ability definitions can consult it without depending on the mission system.
+        /// </summary>
+        public const string FriendlyFireAreaVariable = "MISSION_FRIENDLY_FIRE";
+
+        /// <summary>
+        /// True if the given creature is currently in a friendly-fire area (see FriendlyFireAreaVariable).
+        /// Used by AoE ability definitions to decide whether splash should hit allies too.
+        /// </summary>
+        public static bool IsFriendlyFireArea(uint creature)
+        {
+            var area = GetArea(creature);
+            return GetIsObjectValid(area) && GetLocalBool(area, FriendlyFireAreaVariable);
+        }
+
+        /// <summary>
         /// When the module caches, abilities will be cached and events will be scheduled.
         /// </summary>
         [NWNEventHandler(ScriptName.OnModuleCacheBefore)]
