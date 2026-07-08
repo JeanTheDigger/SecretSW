@@ -246,10 +246,6 @@ namespace SWLOR.Game.Server.Service
             if (tag == "PET_FOOD")
                 return MarketCategoryType.PetFood;
 
-            // Fishing Rods & Bait
-            if (Fishing.IsItemFishingRod(item) || Fishing.IsItemBait(item))
-                return MarketCategoryType.Fishing;
-
             // Blueprint
             if (Craft.GetBlueprintDetails(item).Recipe != RecipeType.Invalid)
                 return MarketCategoryType.Blueprint;

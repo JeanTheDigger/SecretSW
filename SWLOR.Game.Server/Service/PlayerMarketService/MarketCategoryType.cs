@@ -71,7 +71,7 @@ namespace SWLOR.Game.Server.Service.PlayerMarketService
         Saberstaff = 31,
         [MarketCategory("Food", true)]
         Food = 32,
-        [MarketCategory("Fishing", true)]
+        [MarketCategory("Fishing", false)] // Fishing removed
         Fishing = 33,
         [MarketCategory("Pet Food", false)] // Beast Mastery removed
         PetFood = 34,

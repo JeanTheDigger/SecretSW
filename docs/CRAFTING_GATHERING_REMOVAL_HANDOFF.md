@@ -97,11 +97,17 @@ All of this is currently unreachable but still compiled:
   once materials are vendor/loot-sourced). If undesired, remove/repoint them and
   their offering NPC dialogs (module data).
 
-### E. Deferred design decision
-- **Fishing** is coded on the now-inactive `Agriculture` skill (`Fishing.cs`
-  reads `Skills[Agriculture].Rank` and grants Agriculture XP). It still functions
-  but no longer gives meaningful progression. Decide: remove fishing (it fed
-  cooking) or decouple it from Agriculture into a standalone activity.
+### E. Fishing — removed
+Fishing was removed (it was built on the now-inactive `Agriculture` skill and
+fed cooking): deleted `Service/Fishing.cs`, `Service/FishingService/`,
+`Feature/FishingLocationDefinition/`, `FishingSpawnPointDefinition.cs`, and
+`FishingRodItemDefinition.cs`; removed the fishing-rod/bait branch from
+`PlayerMarket.cs` and retired `MarketCategoryType.Fishing`. Retained enum values
+(save-data): `PerkType.FishingRods`, `ActivityStatusType.Fishing`,
+`MarketCategoryType.Fishing`. Leftover module-data cleanup: the fishing quests
+(`MonCalaQuestDefinition.FishingGuildQuests`, the "Catch" tasks in
+`AgricultureGuildQuestDefinition`) and their guild NPC dialogs, plus the fishing
+rod/bait `.uti` items — see section D.
 
 ### F. Player skill points
 Per the BeastMastery precedent, ranks spent in the four retired skills are left
