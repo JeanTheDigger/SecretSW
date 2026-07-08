@@ -27,7 +27,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
         private void SideTest()
         {
             _builder.Create("sidetest")
-                .Description("(DM) Two-side PvP test: /sidetest start [single|lives N|tickets N] | join <side> | npc <side> (targets a creature) | spawn <side> | end")
+                .Description("(DM) Two-side PvP test: /sidetest start [single|lives N|tickets N] [lethal] | join <side> | npc <side> (targets a creature) | spawn <side> | end")
                 .Permissions(AuthorizationLevel.DM, AuthorizationLevel.Admin)
                 .AvailableToAllOnTestEnvironment()
                 .Action((user, target, location, args) =>
@@ -36,7 +36,7 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
 
                     if (args.Length == 0)
                     {
-                        SendMessageToPC(user, "Usage: /sidetest start [single|lives N|tickets N] | join <side> | npc <side> | spawn <side> | end");
+                        SendMessageToPC(user, "Usage: /sidetest start [single|lives N|tickets N] [lethal] | join <side> | npc <side> | spawn <side> | end");
                         return;
                     }
 
@@ -60,8 +60,17 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
                                     // "single" (or anything else) → single elimination.
                                 }
                             }
-                            Side.StartMatch(area, mode, lives);
-                            SendMessageToPC(user, $"Two-side match started ({mode}, {lives}). Full PvP + friendly fire.");
+                            // DM-declared PERMADEATH: eliminations inside a turn-based encounter permanently retire
+                            // the character. Consent-gated (a DM must type it); off by default.
+                            var lethal = false;
+                            foreach (var arg in args)
+                            {
+                                if (arg.ToLower() == "lethal")
+                                    lethal = true;
+                            }
+                            Side.StartMatch(area, mode, lives, lethal);
+                            var lethalNote = lethal ? " LETHAL: turn-based eliminations are PERMADEATH." : string.Empty;
+                            SendMessageToPC(user, $"Two-side match started ({mode}, {lives}). Full PvP + friendly fire.{lethalNote}");
                             break;
                         case "spawn":
                             if (args.Length < 2)
