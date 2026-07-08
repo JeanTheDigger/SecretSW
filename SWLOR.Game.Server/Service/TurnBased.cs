@@ -81,6 +81,36 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// Sends the viewer a text readout of the current encounter: round, the full initiative order with the
+        /// acting combatant marked and downed combatants flagged, and (when a PC is up) their remaining move
+        /// and whether their action is still available. A lightweight stand-in for the NUI turn HUD.
+        /// </summary>
+        public static void SendStatus(uint viewer)
+        {
+            if (!_creatureToArea.TryGetValue(viewer, out var area) ||
+                !_encountersByArea.TryGetValue(area, out var enc))
+            {
+                SendMessageToPC(viewer, "You are not in a turn-based encounter.");
+                return;
+            }
+
+            var lines = new List<string> { $"--- Turn-based combat: Round {enc.Round} ---" };
+            for (var i = 0; i < enc.Order.Count; i++)
+            {
+                var c = enc.Order[i];
+                var marker = i == enc.CurrentIndex ? "  <== acting now" : string.Empty;
+                var status = !GetIsObjectValid(c) || GetIsDead(c) ? " (down)" : string.Empty;
+                lines.Add($"{i + 1}. {GetName(c)}{status}{marker}");
+            }
+
+            var active = enc.Order.Count > 0 ? enc.Order[enc.CurrentIndex] : OBJECT_INVALID;
+            if (GetIsPC(active))
+                lines.Add($"Move left: {enc.RemainingMove:0}m | Action: {(enc.ActivationSpent ? "used" : "available")}");
+
+            SendMessageToPC(viewer, string.Join("\n", lines));
+        }
+
+        /// <summary>
         /// Initiative = effective Agility + Perception (GetAbilityScore includes gear/buffs) + d10.
         /// </summary>
         private static int RollInitiative(uint creature)

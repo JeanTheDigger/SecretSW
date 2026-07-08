@@ -20,8 +20,17 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             EndEncounter();
             EndTurn();
             Move();
+            Status();
 
             return _builder.Build();
+        }
+
+        private void Status()
+        {
+            _builder.Create("tbstatus")
+                .Description("Shows the current turn-based initiative order, round, and your remaining move/action.")
+                .Permissions(AuthorizationLevel.Player, AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) => TurnBased.SendStatus(user));
         }
 
         private void Move()
