@@ -214,47 +214,12 @@ namespace SWLOR.Game.Server.Service
                     }
                 }
 
-                // Resource and creature spawn tables can be placed as a local variable on the area.
+                // Creature spawn tables can be placed as a local variable on the area.
                 // If one is found, it will be registered.
-                RegisterAreaSpawnTable(area, "RESOURCE_SPAWN_TABLE_ID", CalculateResourceSpawnCount(area));
+                // Resource (harvesting/gathering) spawn tables have been removed from the game;
+                // any legacy RESOURCE_SPAWN_TABLE_ID area variables are now ignored.
                 RegisterAreaSpawnTable(area, "CREATURE_SPAWN_TABLE_ID", CalculateCreatureSpawnCount(area));
             }
-        }
-
-        /// <summary>
-        /// Determines the number of spawns to use in an area.
-        /// If an int local variable 'RESOURCE_SPAWN_COUNT' is found, use that number.
-        /// Otherwise the size of the area will be used to determine the count.
-        /// </summary>
-        /// <param name="area">The area to determine spawn counts for</param>
-        /// <returns>A positive integer indicating the number of resource spawns to use in a given area.</returns>
-        private static int CalculateResourceSpawnCount(uint area)
-        {
-            var count = GetLocalInt(area, "RESOURCE_SPAWN_COUNT");
-
-            // Found the local variable. Use that count.
-            if (count > 0) return count;
-
-            // Local variable wasn't found or was zero. 
-            // Determine the count by the size of the area.
-            var width = GetAreaSize(Dimension.Width, area);
-            var height = GetAreaSize(Dimension.Height, area);
-            var size = width * height;
-
-            if (size <= 12)
-                count = 2;
-            else if (size <= 32)
-                count = 6;
-            else if (size <= 64)
-                count = 10;
-            else if (size <= 256)
-                count = 25;
-            else if (size <= 512)
-                count = 40;
-            else if (size <= 1024)
-                count = 50;
-
-            return count;
         }
 
         private static int CalculateCreatureSpawnCount(uint area)

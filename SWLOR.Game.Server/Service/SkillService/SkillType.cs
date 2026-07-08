@@ -122,13 +122,17 @@ namespace SWLOR.Game.Server.Service.SkillService
             false)]
         Fabrication = 10,
 
+        // Gathering (harvesting/refining/scavenging) has been removed from the game. Gear and
+        // materials are now bought, earned through factions/DM events, or found in dungeons.
+        // The enum value and 2DA row are retained for serialized player-data integrity; the skill
+        // is inactive and no longer contributes to the skill cap.
         [Skill(SkillCategoryType.Crafting,
             "Gathering",
             100,
-            true,
+            false,
             "Ability to harvest raw materials and scavenge for supplies.",
-            true,
-            false, 
+            false,
+            false,
             false)]
         Gathering = 11,
 

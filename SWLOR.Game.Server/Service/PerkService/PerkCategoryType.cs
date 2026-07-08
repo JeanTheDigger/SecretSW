@@ -85,7 +85,9 @@ namespace SWLOR.Game.Server.Service.PerkService
         [PerkCategory("Fabrication", true)]
         Fabrication = 26,
 
-        [PerkCategory("Gathering", true)]
+        // Gathering has been removed from the game; the category is retired (no active perks).
+        // Enum value retained for serialized data integrity.
+        [PerkCategory("Gathering", false)]
         Gathering = 27,
 
         [PerkCategory("Leadership", true)]

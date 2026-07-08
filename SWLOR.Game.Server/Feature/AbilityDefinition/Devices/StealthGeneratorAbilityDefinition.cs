@@ -21,7 +21,6 @@ namespace SWLOR.Game.Server.Feature.AbilityDefinition.Devices
             return _builder.Build();
         }
 
-        [NWNEventHandler(ScriptName.OnHarvesterUsed)]
         [NWNEventHandler(ScriptName.OnPlayerDamaged)]
         public static void ClearInvisibility()
         {
