@@ -21,11 +21,16 @@ namespace SWLOR.Game.Server.Service
             var creature = OBJECT_SELF;
             var requester = StringToObject(EventsPlugin.GetEventData("INVITED_BY"));
 
-            AddToParty(requester, creature);
+            AddToPartyCache(requester, creature);
         }
 
-        private static void AddToParty(uint requester, uint creature)
+        private static void AddToPartyCache(uint requester, uint creature)
         {
+            // Idempotent: if the creature is already tracked (e.g. the engine also raised the party event
+            // for a scripted ForceAdd), do nothing rather than double-adding them to a party list.
+            if (_creatureToParty.ContainsKey(creature))
+                return;
+
             // This is a brand new party.
             // Add both the requester and the creature to the cache.
             // Mark the requester as the party leader.
@@ -60,7 +65,7 @@ namespace SWLOR.Game.Server.Service
             var owner = OBJECT_SELF;
             var associate = StringToObject(EventsPlugin.GetEventData("ASSOCIATE_OBJECT_ID"));
 
-            AddToParty(owner, associate);
+            AddToPartyCache(owner, associate);
         }
 
         /// <summary>
@@ -151,6 +156,35 @@ namespace SWLOR.Game.Server.Service
             {
                 _partyLeaders[partyId] = _parties[partyId].First();
             }
+        }
+
+        /// <summary>
+        /// Scripted party grouping (used by the two-side PvP engine): adds a PC to a party leader's party in
+        /// the ENGINE and keeps SWLOR's party cache in sync. Normal parties are formed via player invitations
+        /// (which raise the party events that feed the cache); a scripted <see cref="AddToParty"/> does not
+        /// reliably raise those events, so we update the cache ourselves. Both must be PCs (the engine
+        /// AddToParty only works on PCs). Idempotent via the guard in <see cref="AddToPartyCache"/>.
+        /// </summary>
+        /// <param name="leader">A PC already in (or who will anchor) the party.</param>
+        /// <param name="member">The PC to add to the leader's party.</param>
+        public static void ForceAdd(uint leader, uint member)
+        {
+            if (leader == member || !GetIsPC(leader) || !GetIsPC(member))
+                return;
+
+            AddToParty(member, leader); // engine grouping (API function; PC-only)
+            AddToPartyCache(leader, member); // cache (idempotent)
+        }
+
+        /// <summary>
+        /// Scripted counterpart to <see cref="ForceAdd"/>: removes a PC from their party in the ENGINE and
+        /// from SWLOR's cache. Used to dissolve two-side match parties on teardown.
+        /// </summary>
+        /// <param name="member">The PC to remove from whatever party they are in.</param>
+        public static void ForceRemove(uint member)
+        {
+            RemoveFromParty(member); // engine (API function)
+            RemoveCreatureFromParty(member); // cache (already guarded)
         }
 
         /// <summary>

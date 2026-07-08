@@ -107,6 +107,28 @@ namespace SWLOR.Game.Server.Feature
             if (string.IsNullOrWhiteSpace(dbPlayer.LocationAreaResref)) return;
 
             var locationArea = Area.GetAreaByResref(dbPlayer.LocationAreaResref);
+
+            // If the saved area no longer exists (e.g. a destroyed mission instance, or any vanished area),
+            // don't jump the player into the void. Fall back to their registered respawn point, then to the
+            // default respawn waypoint — mirroring Death.SendToHomePoint.
+            if (!GetIsObjectValid(locationArea))
+            {
+                var respawnArea = Area.GetAreaByResref(dbPlayer.RespawnAreaResref);
+                var fallback = GetIsObjectValid(respawnArea)
+                    ? Location(
+                        respawnArea,
+                        Vector3(dbPlayer.RespawnLocationX, dbPlayer.RespawnLocationY, dbPlayer.RespawnLocationZ),
+                        dbPlayer.RespawnLocationOrientation)
+                    : GetLocation(GetWaypointByTag("DTH_DEFAULT_RESPAWN_POINT"));
+
+                AssignCommand(player, () =>
+                {
+                    ClearAllActions();
+                    ActionJumpToLocation(fallback);
+                });
+                return;
+            }
+
             var position = Vector3(dbPlayer.LocationX, dbPlayer.LocationY, dbPlayer.LocationZ);
 
             var location = Location(locationArea, position, dbPlayer.LocationOrientation);
