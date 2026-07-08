@@ -100,13 +100,6 @@ namespace SWLOR.Game.Server.Service
                 if (social > 0)
                     bonusPercentage += social * 0.025f;
 
-                // Food bonus
-                var foodEffect = StatusEffect.GetEffectData<FoodEffectData>(player, StatusEffectType.Food);
-                if (foodEffect != null)
-                {
-                    bonusPercentage += foodEffect.XPBonusPercent * 0.01f;
-                }
-
                 // DM bonus
                 bonusPercentage += dbPlayer.DMXPBonus * 0.01f;
 

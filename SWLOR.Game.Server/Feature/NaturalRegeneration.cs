@@ -30,14 +30,6 @@ namespace SWLOR.Game.Server.Feature
                 var hpRegen = dbPlayer.HPRegen + vitalityBonus * 4;
                 var fpRegen = 1 + dbPlayer.FPRegen + vitalityBonus / 2;
                 var stmRegen = 1 + dbPlayer.STMRegen + vitalityBonus / 2;
-                var foodEffect = StatusEffect.GetEffectData<FoodEffectData>(player, StatusEffectType.Food);
-
-                if (foodEffect != null)
-                {
-                    hpRegen += foodEffect.HPRegen;
-                    fpRegen += foodEffect.FPRegen;
-                    stmRegen += foodEffect.STMRegen;
-                }
 
                 // Form VI (Niman) restores FP while held.
                 var stance = Stance.GetActiveStance(player);

@@ -115,12 +115,7 @@ namespace SWLOR.Game.Server.Service
 
                 if (!ignoreRecastReduction)
                 {
-                    var foodEffect = StatusEffect.GetEffectData<FoodEffectData>(activator, StatusEffectType.Food);
                     var recastReduction = dbPlayer.AbilityRecastReduction;
-                    if (foodEffect != null)
-                    {
-                        recastReduction += foodEffect.RecastReductionPercent;
-                    }
 
                     var recastPercentage = recastReduction * 0.01f;
                     if (recastPercentage > 0.5f)

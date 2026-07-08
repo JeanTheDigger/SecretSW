@@ -115,15 +115,6 @@ namespace SWLOR.Game.Server.Feature.StatusEffectDefinition
                     if (fpAmount < 1)
                         fpAmount = 1;
 
-                    var foodEffect = StatusEffect.GetEffectData<FoodEffectData>(target, StatusEffectType.Food);
-
-                    if (foodEffect != null)
-                    {
-                        hpAmount += foodEffect.RestRegen * 5;
-                        fpAmount += foodEffect.RestRegen * 2;
-                        stmAmount += foodEffect.RestRegen * 2;
-                    }
-
                     ApplyEffectToObject(DurationType.Instant, EffectHeal(hpAmount), target);
                     Stat.RestoreStamina(target, stmAmount);
                     Stat.RestoreFP(target, fpAmount);

@@ -51,7 +51,7 @@
         Shielding2 = 46,
         Shielding3 = 47,
         Shielding4 = 48,
-        Food = 49,
+        // 49 was Food (removed).
         ForceValor1 = 50,
         ForceValor2 = 51,
         ForceRage1 = 52,
