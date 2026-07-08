@@ -102,23 +102,31 @@ namespace SWLOR.Game.Server.Service.SkillService
             false)]
         FirstAid = 8,
 
+        // Smithery (hand-crafting of weapons and armor) has been removed from the game. Gear is
+        // now bought, earned through factions/DM events, or found in dungeons. The enum value and
+        // 2DA row are retained for serialized player-data integrity; the skill is inactive and no
+        // longer contributes to the skill cap.
         [Skill(SkillCategoryType.Crafting,
             "Smithery",
             100,
-            true,
+            false,
             "Ability to create weapons and armor like vibroblades, blasters, and helmets.",
-            true,
-            true,
-            true)]
+            false,
+            false,
+            false)]
         Smithery = 9,
 
+        // Fabrication (hand-crafting of structures and furniture) has been removed from the game.
+        // Furniture and structures are now bought or earned. The enum value and 2DA row are
+        // retained for serialized player-data integrity; the skill is inactive and no longer
+        // contributes to the skill cap.
         [Skill(SkillCategoryType.Crafting,
             "Fabrication",
             100,
-            true,
+            false,
             "Ability to create base structures and furniture.",
-            true,
-            true,
+            false,
+            false,
             false)]
         Fabrication = 10,
 
@@ -329,14 +337,17 @@ namespace SWLOR.Game.Server.Service.SkillService
             false)]
         KelDor = 30,
 
+        // Agriculture (farming, fishing, and cooking) has been removed from the game along with the
+        // food-buff system. The enum value and 2DA row are retained for serialized player-data
+        // integrity; the skill is inactive and no longer contributes to the skill cap.
         [Skill(SkillCategoryType.Crafting,
             "Agriculture",
             100,
-            true,
+            false,
             "Ability to farm, fish, and cook.",
-            true,
-            true,
-            true)]
+            false,
+            false,
+            false)]
         Agriculture = 31,
 
         [Skill(SkillCategoryType.Crafting,
