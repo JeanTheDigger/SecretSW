@@ -587,18 +587,10 @@ namespace SWLOR.Game.Server.Feature.GuiDefinition.ViewModel
             Accuracy = Stat.GetAccuracy(_target, mainHand, accuracyStatOverride, SkillType.Invalid);
             Evasion = Stat.GetEvasion(_target, SkillType.Invalid);
 
-            var smithery = Stat.CalculateControl(_target, SkillType.Smithery);
-            var engineering = Stat.CalculateControl(_target, SkillType.Engineering);
-            var fabrication = Stat.CalculateControl(_target, SkillType.Fabrication);
-            var agriculture = Stat.CalculateControl(_target, SkillType.Agriculture);
-
-            Control = $"{smithery}/{engineering}/{fabrication}/{agriculture}";
-
-            smithery = Stat.CalculateCraftsmanship(_target, SkillType.Smithery);
-            engineering = Stat.CalculateCraftsmanship(_target, SkillType.Engineering);
-            fabrication = Stat.CalculateCraftsmanship(_target, SkillType.Fabrication);
-            agriculture = Stat.CalculateCraftsmanship(_target, SkillType.Agriculture);
-            Craftsmanship = $"{smithery}/{engineering}/{fabrication}/{agriculture}";
+            // Smithery, Fabrication, and Agriculture crafting were removed from the game;
+            // Engineering is the only remaining active crafting skill.
+            Control = $"{Stat.CalculateControl(_target, SkillType.Engineering)}";
+            Craftsmanship = $"{Stat.CalculateCraftsmanship(_target, SkillType.Engineering)}";
         }
 
         private void RefreshAttributes()
