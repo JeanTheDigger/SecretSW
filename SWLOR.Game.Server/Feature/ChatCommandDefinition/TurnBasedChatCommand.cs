@@ -19,8 +19,17 @@ namespace SWLOR.Game.Server.Feature.ChatCommandDefinition
             StartEncounter();
             EndEncounter();
             EndTurn();
+            Move();
 
             return _builder.Build();
+        }
+
+        private void Move()
+        {
+            _builder.Create("tbmove")
+                .Description("Move on your turn: enters targeting mode to click a destination within your budget.")
+                .Permissions(AuthorizationLevel.Player, AuthorizationLevel.DM, AuthorizationLevel.Admin)
+                .Action((user, target, location, args) => TurnBased.BeginMove(user));
         }
 
         private void StartEncounter()
