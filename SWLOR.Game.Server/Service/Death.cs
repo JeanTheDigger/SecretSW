@@ -36,7 +36,8 @@ namespace SWLOR.Game.Server.Service
             var deathArea = GetArea(player);
             if (Side.HasMatch(deathArea) && Side.GetPlayerSide(deathArea, player) != null)
             {
-                if (Side.RegisterDeath(deathArea, player) == SideDeathResult.Respawn)
+                var result = Side.RegisterDeath(deathArea, player);
+                if (result == SideDeathResult.Respawn)
                 {
                     ApplyEffectToObject(DurationType.Instant, EffectResurrection(), player);
                     ApplyEffectToObject(DurationType.Instant, EffectHeal(GetMaxHitPoints(player)), player);
@@ -46,6 +47,22 @@ namespace SWLOR.Game.Server.Service
                         AssignCommand(player, () => ActionJumpToLocation(respawn));
 
                     return; // stay in the instance; skip rep reset, medcenter, XP debt, death GUI
+                }
+
+                // Eliminated. In a LETHAL match this is the permadeath moment — but ONLY inside a turn-based
+                // encounter (real-time combat is never permanent, by design), only on a genuine PC kill, and
+                // never when the finishing blow was a subdual "spare". Any of those failing falls through to the
+                // ordinary elimination path (subdual is caught by the Subdual branch below; non-lethal
+                // eliminations take the normal death handling that removes them from the instance).
+                if (result == SideDeathResult.Eliminated &&
+                    Side.IsLethalMatch(deathArea) &&
+                    TurnBased.HasEncounter(deathArea) &&
+                    GetIsPC(hostile) && !GetIsDM(hostile) && !GetIsDMPossessed(hostile) &&
+                    DB.Get<Player>(GetObjectUUID(hostile))?.Settings.IsSubdualModeEnabled != true)
+                {
+                    ProcessPermaDeath(player);
+                    WriteAudit(player);
+                    return;
                 }
                 // Eliminated / out — fall through to the normal death path.
             }

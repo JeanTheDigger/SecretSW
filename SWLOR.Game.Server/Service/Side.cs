@@ -79,6 +79,10 @@ namespace SWLOR.Game.Server.Service
             public int LivesOrTickets = 1;
             public readonly Dictionary<string, int> LivesRemaining = new();   // PC UUID -> lives left (per-player modes)
             public readonly Dictionary<string, HashSet<string>> EliminatedBySide = new(); // side -> eliminated UUIDs
+
+            // When true, an elimination taken inside a turn-based encounter is PERMADEATH (see the Death
+            // intercept). Default false; only ever set by an explicit consent act (DM-declared / LETHAL mission).
+            public bool Lethal;
         }
 
         private static readonly Dictionary<uint, Match> _matchesByArea = new();
@@ -87,6 +91,13 @@ namespace SWLOR.Game.Server.Service
         /// True if the given area currently has an active two-side match.
         /// </summary>
         public static bool HasMatch(uint area) => _matchesByArea.ContainsKey(area);
+
+        /// <summary>
+        /// True if the area's active match is flagged LETHAL — i.e. an elimination taken inside a turn-based
+        /// encounter permanently retires the character. False when there is no match. Read by the Death intercept.
+        /// </summary>
+        public static bool IsLethalMatch(uint area) =>
+            _matchesByArea.TryGetValue(area, out var match) && match.Lethal;
 
         /// <summary>
         /// Returns the side name a player belongs to in the area's match (by UUID, so it survives reconnect),
@@ -239,7 +250,7 @@ namespace SWLOR.Game.Server.Service
         /// Starts a two-side match in an area: flips it to Full-PvP (so PCs can damage PCs, which also allows
         /// within-side friendly fire), enables friendly-fire AoE, and flags it. Idempotent.
         /// </summary>
-        public static void StartMatch(uint area, EliminationMode mode = EliminationMode.SingleElimination, int livesOrTickets = 1)
+        public static void StartMatch(uint area, EliminationMode mode = EliminationMode.SingleElimination, int livesOrTickets = 1, bool lethal = false)
         {
             if (!GetIsObjectValid(area) || _matchesByArea.ContainsKey(area))
                 return;
@@ -249,7 +260,8 @@ namespace SWLOR.Game.Server.Service
                 Area = area,
                 OriginalPvP = AreaPlugin.GetPVPSetting(area),
                 Mode = mode,
-                LivesOrTickets = livesOrTickets <= 0 ? 1 : livesOrTickets
+                LivesOrTickets = livesOrTickets <= 0 ? 1 : livesOrTickets,
+                Lethal = lethal
             };
             _matchesByArea[area] = match;
 

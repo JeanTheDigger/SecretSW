@@ -51,6 +51,15 @@ namespace SWLOR.Game.Server.Service
         }
 
         /// <summary>
+        /// True if the given area currently has an active turn-based encounter. Used by the Death intercept to
+        /// enforce that permadeath can only occur in turn-based mode (real-time combat is never permanent).
+        /// </summary>
+        public static bool HasEncounter(uint area)
+        {
+            return _encountersByArea.ContainsKey(area);
+        }
+
+        /// <summary>
         /// True if it is currently this creature's turn to act.
         /// </summary>
         public static bool IsActiveTurn(uint creature)
