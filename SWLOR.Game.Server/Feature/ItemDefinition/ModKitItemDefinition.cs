@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using SWLOR.Game.Server.Core.Bioware;
+using SWLOR.Game.Server.Entity;
 using SWLOR.Game.Server.Service;
 using SWLOR.Game.Server.Service.CraftService;
 using SWLOR.Game.Server.Service.ItemService;
+using SWLOR.Game.Server.Service.SkillService;
 using SWLOR.NWN.API.Engine;
 using SWLOR.NWN.API.NWScript.Enum;
 using SWLOR.NWN.API.NWScript.Enum.Item;
@@ -102,6 +105,17 @@ namespace SWLOR.Game.Server.Feature.ItemDefinition
                                 return;
                             }
 
+                            // Gate the enhancement's tier behind the player's combat skill, replacing the
+                            // recipe-relative level check the crafting system used.
+                            var enhancementLevel = GetEnhancementLevel(enhancement);
+                            if (!MeetsSkillRequirement(user, enhancementType, enhancementLevel))
+                            {
+                                SendMessageToPC(user,
+                                    $"You need rank {enhancementLevel} in the relevant combat skill " +
+                                    $"({(enhancementType == ItemPropertyType.ArmorEnhancement ? "Armor" : "a weapon skill")}) to install this enhancement.");
+                                return;
+                            }
+
                             if (!InstallEnhancement(enhancement, baseItem, enhancementType))
                             {
                                 SendMessageToPC(user, "That enhancement cannot be installed into this item.");
@@ -133,6 +147,47 @@ namespace SWLOR.Game.Server.Feature.ItemDefinition
                 return ItemPropertyType.ArmorEnhancement;
 
             return ItemPropertyType.Invalid;
+        }
+
+        /// <summary>
+        /// Reads the enhancement item's level from its EnhancementLevel item property (0 if absent).
+        /// </summary>
+        private static int GetEnhancementLevel(uint enhancement)
+        {
+            for (var ip = GetFirstItemProperty(enhancement); GetIsItemPropertyValid(ip); ip = GetNextItemProperty(enhancement))
+            {
+                if (GetItemPropertyType(ip) == ItemPropertyType.EnhancementLevel)
+                    return GetItemPropertyCostTableValue(ip);
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// A player may only install an enhancement whose level they can back with combat skill: the
+        /// Armor skill for armor/shields, or their best weapon skill for weapons. Looted/bought gear
+        /// carries no recipe level, so this stands in for the recipe-relative check the crafting
+        /// system used to keep high-tier mods off low-investment characters.
+        /// </summary>
+        private static bool MeetsSkillRequirement(uint user, ItemPropertyType enhancementType, int enhancementLevel)
+        {
+            if (enhancementLevel <= 0)
+                return true;
+
+            var dbPlayer = DB.Get<Player>(GetObjectUUID(user));
+
+            var rank = enhancementType == ItemPropertyType.ArmorEnhancement
+                ? GetSkillRank(dbPlayer, SkillType.Armor)
+                : Math.Max(
+                    Math.Max(GetSkillRank(dbPlayer, SkillType.OneHanded), GetSkillRank(dbPlayer, SkillType.TwoHanded)),
+                    Math.Max(GetSkillRank(dbPlayer, SkillType.MartialArts), GetSkillRank(dbPlayer, SkillType.Ranged)));
+
+            return rank >= enhancementLevel;
+        }
+
+        private static int GetSkillRank(Player dbPlayer, SkillType skill)
+        {
+            return dbPlayer.Skills.ContainsKey(skill) ? dbPlayer.Skills[skill].Rank : 0;
         }
 
         /// <summary>
